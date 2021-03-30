@@ -17,10 +17,12 @@ body.login-pf {
     text-transform: uppercase;
 }
 
+/* ABLESTACK 브렌딩 추가 시작 */
 #brand:before {
-    content: "${NAME}";
+    content: "ABLESTACK Allo (v1.0.0)";
 }
 
 #index-brand:before {
-    content: "${NAME}";
+    content: "ABLESTACK Allo (v1.0.0)";
 }
+/* ABLESTACK 브렌딩 추가 끝 */
