@@ -9,10 +9,8 @@ EXTRA_DIST += $(centosbranding_DATA)
 # Opportunistically use fedora-logos
 install-data-hook::
 #	$(LN_S) -f /usr/share/pixmaps/system-logo-white.png $(DESTDIR)$(centosbrandingdir)/logo.png
-#	$(LN_S) -f /usr/share/pixmaps/fedora-logo-sprite.png $(DESTDIR)$(centosbrandingdir)/apple-touch-icon.png
-#	$(LN_S) -f /etc/favicon.png $(DESTDIR)$(centosbrandingdir)/favicon.ico
-
-# ABLESTACK 브렌딩 이미지 추가
 	$(LN_S) -f $(DESTDIR)$(centosbrandingdir)/images/logo.png $(DESTDIR)$(centosbrandingdir)/logo.png
-    $(LN_S) -f $(DESTDIR)$(centosbrandingdir)/images/apple-touch-icon.png $(DESTDIR)$(centosbrandingdir)/apple-touch-icon.png
-    $(DESTDIR)$(centosbrandingdir)/images/favicon.ico $(DESTDIR)$(centosbrandingdir)/favicon.ico
+#	$(LN_S) -f /usr/share/pixmaps/fedora-logo-sprite.png $(DESTDIR)$(centosbrandingdir)/apple-touch-icon.png
+	$(LN_S) -f $(DESTDIR)$(centosbrandingdir)/images/apple-touch-icon.png $(DESTDIR)$(centosbrandingdir)/apple-touch-icon.png
+#	$(LN_S) -f /etc/favicon.png $(DESTDIR)$(centosbrandingdir)/favicon.ico
+	$(DESTDIR)$(centosbrandingdir)/images/favicon.ico $(DESTDIR)$(centosbrandingdir)/favicon.ico
