@@ -285,7 +285,7 @@ class TestMachinesCreate(VirtualMachinesCase):
         # We don't want to use start_vm == False because if we get a separate install phase
         # virt-install will overwrite our changes.
 
-        if self.machine.image not in ["fedora-33", "fedora-34", "fedora-testing", "debian-testing"]:
+        if self.machine.image not in ["fedora-33", "fedora-34", "fedora-testing", "debian-testing", "rhel-9-0", "rhel-9-0-distropkg"]:
             # https://bugzilla.redhat.com/show_bug.cgi?id=1818089
             # After shutting it off virt-install will restart the domain and exit because of the above bug
             self.machine.execute("virsh destroy pxe-guest")
@@ -1383,7 +1383,7 @@ class TestMachinesCreate(VirtualMachinesCase):
         m.execute("virsh attach-interface --persistent VmNotInstalled bridge virbr0")
 
         # Change the os boot firmware configuration
-        supports_firmware_config = m.image in ['fedora-33', 'fedora-34', 'fedora-testing', 'centos-8-stream', 'rhel-8-4', 'rhel-8-4-distropkg', "rhel-8-5", "rhel-8-5-distropkg", 'debian-testing', 'ubuntu-stable', 'ubuntu-2004']
+        supports_firmware_config = m.image not in ['debian-stable']
         if supports_firmware_config:
             b.wait_in_text("#vm-VmNotInstalled-firmware", "BIOS")
             b.click("#vm-VmNotInstalled-firmware")
@@ -1437,7 +1437,7 @@ class TestMachinesCreate(VirtualMachinesCase):
         logfile = "/var/log/libvirt/qemu/VmNotInstalled.log"
         m.execute("> {0}".format(logfile))  # clear logfile
         self.performAction("VmNotInstalled", "forceOff", False)
-        if m.image not in ["fedora-33", "fedora-34", "fedora-testing", "debian-testing"]:
+        if m.image not in ["fedora-33", "fedora-34", "fedora-testing", "debian-testing", "rhel-9-0", "rhel-9-0-distropkg"]:
             # https://bugzilla.redhat.com/show_bug.cgi?id=1818089
             # After shutting it off virt-install will restart the domain and exit because of the above bug
             # We need to wait till it's restarted and shut if off again in order to edit the offline VM configuration

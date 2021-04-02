@@ -819,6 +819,9 @@ class MachineCase(unittest.TestCase):
         return int(v[0]) < version
 
     def setUp(self, restrict=True):
+        self.allowed_messages = self.default_allowed_messages
+        self.allowed_console_errors = self.default_allowed_console_errors
+        self.allow_core_dumps = False
 
         if os.getenv("MACHINE"):
             # apply env variable together if MACHINE envvar is set
@@ -967,19 +970,17 @@ class MachineCase(unittest.TestCase):
                         "xargs --no-run-if-empty -L1 loginctl terminate-session")
 
     def tearDown(self):
-        if self.machine.ssh_reachable:
+        if self.checkSuccess() and self.machine.ssh_reachable:
             self.check_journal_messages()
-        self.check_browser_errors()
+            self.check_browser_errors()
         shutil.rmtree(self.tmpdir)
 
     def login_and_go(self, path=None, user=None, host=None, superuser=True, urlroot=None, tls=False):
         self.machine.start_cockpit(host, tls=tls)
         self.browser.login_and_go(path, user=user, host=host, superuser=superuser, urlroot=urlroot, tls=tls)
 
-    allow_core_dumps = False
-
     # List of allowed journal messages during tests; these need to match the *entire* message
-    allowed_messages = [
+    default_allowed_messages = [
         # This is a failed login, which happens every time
         "Returning error-response 401 with reason `Sorry'",
 
@@ -1062,16 +1063,16 @@ class MachineCase(unittest.TestCase):
         r"#3\) With great power comes great responsibility.",
     ]
 
-    allowed_messages += os.environ.get("TEST_ALLOW_JOURNAL_MESSAGES", "").split(",")
+    default_allowed_messages += os.environ.get("TEST_ALLOW_JOURNAL_MESSAGES", "").split(",")
 
     # List of allowed console.error() messages during tests; these match substrings
-    allowed_console_errors = [
+    default_allowed_console_errors = [
         # HACK: These should be fixed, but debugging these is not trivial, and the impact is very low
         "Warning: .* setState.*on an unmounted component",
         "Warning: Can't perform a React state update on an unmounted component."
     ]
 
-    allowed_console_errors += os.environ.get("TEST_ALLOW_BROWSER_ERRORS", "").split(",")
+    default_allowed_console_errors += os.environ.get("TEST_ALLOW_BROWSER_ERRORS", "").split(",")
 
     def allow_journal_messages(self, *patterns):
         """Don't fail if the journal contains a entry completely matching the given regexp"""
@@ -1127,6 +1128,8 @@ class MachineCase(unittest.TestCase):
         syslog_ids = ["cockpit-ws", "cockpit-bridge"]
         if not self.allow_core_dumps:
             syslog_ids += ["systemd-coredump"]
+            self.allowed_messages.append("Resource limits disable core dumping for process.*")
+
         messages = machine.journal_messages(syslog_ids, 6, cursor=cursor)
         if "TEST_AUDIT_NO_SELINUX" not in os.environ:
             messages += machine.audit_messages("14", cursor=cursor)  # 14xx is selinux

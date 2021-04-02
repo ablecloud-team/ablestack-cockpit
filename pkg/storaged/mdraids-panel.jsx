@@ -22,7 +22,7 @@ import React from "react";
 
 import { SidePanelRow } from "./side-panel.jsx";
 import {
-    fmt_size, mdraid_name, block_name,
+    fmt_size, mdraid_name, block_name, validate_mdraid_name,
     get_available_spaces, prepare_available_spaces
 } from "./utils.js";
 import { dialog_open, TextInput, SelectOne, SelectSpaces } from "./dialog.jsx";
@@ -46,8 +46,7 @@ const MDRaidRow = ({ client, path }) => {
 
 export function mdraid_rows(client) {
     function cmp_mdraid(path_a, path_b) {
-        // TODO - ignore host part
-        return client.mdraids[path_a].Name.localeCompare(client.mdraids[path_b].Name);
+        return mdraid_name(client.mdraids[path_a]).localeCompare(mdraid_name(client.mdraids[path_b]));
     }
 
     return Object.keys(client.mdraids).sort(cmp_mdraid)
@@ -55,10 +54,28 @@ export function mdraid_rows(client) {
 }
 
 export function create_mdraid(client) {
+    function mdraid_exists(name) {
+        for (const p in client.mdraids) {
+            if (mdraid_name(client.mdraids[p]) == name)
+                return true;
+        }
+        return false;
+    }
+
+    let name;
+    for (let i = 0; i < 1000; i++) {
+        name = "raid" + i.toFixed();
+        if (!mdraid_exists(name))
+            break;
+    }
+
     dialog_open({
         Title: _("Create RAID device"),
         Fields: [
-            TextInput("name", _("Name"), { }),
+            TextInput("name", _("Name"), {
+                value: name,
+                validate: validate_mdraid_name,
+            }),
             SelectOne("level", _("RAID level"),
                       {
                           value: "raid5",
