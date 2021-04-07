@@ -4,7 +4,6 @@ set -eu
 
 echo "1..7"
 
-builddir=$(pwd)
 cd "${srcdir:-.}"
 fail=0
 
@@ -86,8 +85,10 @@ fi
 #
 # Bad paths or modifications in patternfly for fonts
 #
-
-if grep "\.\./fonts/OpenSans\|fonts/.*eot\|truetype" `ls dist/*/*.css $builddir/dist/*/*.css` >&2; then
+cssfiles="$(echo dist/*/*.css)"
+if [ -z "${cssfiles}" ]; then
+    echo "ok 5 patternfly-font-paths # skip dist/ not built"
+elif grep "\.\./fonts/OpenSans\|fonts/.*eot\|truetype" ${cssfiles} >&2; then
     echo "ERROR: invalid patternfly fonts paths found" >&2
     echo "not ok 5 patternfly-font-paths"
     fail=1
@@ -118,16 +119,17 @@ fi
 
 if [ -z "${PYTHON_STYLE_CHECKER-}" ]; then
     echo "ok 7 pycodestyle test # SKIP pycodestyle not installed"
+elif [ ! -e .git ]; then
+    echo "ok 7 pycodestyle test # SKIP not a git tree"
 else
     # all normal files which are either:
     #   - filename is *.py
     #   - executable matching ^#!/usr/bin/python3
-    PYFILES="$(find . -type f '(' -name '*.py' -o -executable -execdir grep -q '^#!/usr/bin/python3' '{}' ';' ')'  -print)"
+    PYFILES="$(git grep -lI '^#!.*python3') $(git ls-files "*.py")"
     # W504 and W503 are mutually exclusive (and both disabled by default)
     # explicitly giving '--ignore W504' here is actually more strict than the default
     # TODO: E402 should be fixed
-    # TODO: W605 should be fixed very soon...
-    out=$(python3 -m "$PYTHON_STYLE_CHECKER" --max-line-length=415 --ignore E402,W504,W605 $PYFILES) || true
+    out=$(python3 -m "$PYTHON_STYLE_CHECKER" --max-line-length=415 --ignore E402,W504 $PYFILES) || true
     if [ -n "$out" ]; then
         echo "$out" >&2
         echo "not ok 7 $PYTHON_STYLE_CHECKER test"
