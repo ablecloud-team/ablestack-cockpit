@@ -1061,6 +1061,11 @@ class MachineCase(unittest.TestCase):
         r"#1\) Respect the privacy of others.",
         r"#2\) Think before you type.",
         r"#3\) With great power comes great responsibility.",
+
+        # Something unknown sometimes goes wrong with PCP, see #15625
+        "pcp-archive: instance name lookup failed: .*",
+        "direct: instance name lookup failed: .*",
+        "pcp-archive: no such metric: .*"
     ]
 
     default_allowed_messages += os.environ.get("TEST_ALLOW_JOURNAL_MESSAGES", "").split(",")
@@ -1082,6 +1087,8 @@ class MachineCase(unittest.TestCase):
     def allow_hostkey_messages(self):
         self.allow_journal_messages('.*: .* host key for server is not known: .*',
                                     '.*: refusing to connect to unknown host: .*',
+                                    '.*: .* host key for server has changed to: .*',
+                                    '.*: host key for this server changed key type: .*',
                                     '.*: failed to retrieve resource: hostkey-unknown')
 
     def allow_restart_journal_messages(self):
@@ -1125,12 +1132,28 @@ class MachineCase(unittest.TestCase):
         machine = machine or self.machine
         # on main machine, only consider journal entries since test case start
         cursor = (machine == self.machine) and self.journal_start or None
-        syslog_ids = ["cockpit-ws", "cockpit-bridge"]
+
+        # Journald does not always set trusted fields like
+        # _SYSTEMD_UNIT or _EXE correctly for the last few messages of
+        # a dying process, so we filter by the untrusted but reliable
+        # SYSLOG_IDENTIFIER instead.
+
+        matches = [
+            "SYSLOG_IDENTIFIER=cockpit-ws",
+            "SYSLOG_IDENTIFIER=cockpit-bridge",
+            "SYSLOG_IDENTIFIER=cockpit/ssh",
+            "GLIB_DOMAIN=cockpit-ws",
+            "GLIB_DOMAIN=cockpit-bridge",
+            "GLIB_DOMAIN=cockpit-ssh",
+            "GLIB_DOMAIN=cockpit-pcp"
+        ]
+
         if not self.allow_core_dumps:
-            syslog_ids += ["systemd-coredump"]
+            matches += ["SYSLOG_IDENTIFIER=systemd-coredump"]
             self.allowed_messages.append("Resource limits disable core dumping for process.*")
 
-        messages = machine.journal_messages(syslog_ids, 6, cursor=cursor)
+        messages = machine.journal_messages(matches, 6, cursor=cursor)
+
         if "TEST_AUDIT_NO_SELINUX" not in os.environ:
             messages += machine.audit_messages("14", cursor=cursor)  # 14xx is selinux
 
@@ -1138,8 +1161,8 @@ class MachineCase(unittest.TestCase):
             # Debian images don't have any non-C locales (mostly deliberate, to test this scenario somewhere)
             self.allowed_messages.append("invalid or unusable locale: .*")
 
-        if self.image.startswith('fedora'):
-            # Fedora switched to dbus-broker
+        if self.image.startswith('fedora') or self.image.startswith('rhel-9'):
+            # Fedora and RHEL 9 have switched to dbus-broker
             self.allowed_messages.append("dbus-daemon didn't send us a dbus address; not installed?.*")
 
         if self.image in ['fedora-34']:

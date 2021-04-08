@@ -1,7 +1,7 @@
 /*
  * This file is part of Cockpit.
  *
- * Copyright (C) 2016 Red Hat, Inc.
+ * Copyright (C) 2021 Red Hat, Inc.
  *
  * Cockpit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -17,18 +17,14 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { logDebug } from './helpers.js';
-import LibvirtDbus from './libvirt-dbus.js';
+#pragma once
 
-/**
- * Helper for dispatching virt provider methods.
- *
- * Lazily initializes the virt provider and dispatches given method on it.
- */
-export function virt(method, action) {
-    const provider = LibvirtDbus;
-    return (dispatch) => {
-        logDebug(`Calling ${provider.name}.${method}`, action);
-        return dispatch(provider[method](action));
-    };
-}
+#include <gio/gio.h>
+
+void
+cockpit_socket_socketpair (GSocket **one,
+                           GSocket **two);
+
+void
+cockpit_socket_streampair (GIOStream **one,
+                           GIOStream **two);
