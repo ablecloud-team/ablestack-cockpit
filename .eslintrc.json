@@ -4,8 +4,8 @@
         "browser": true,
         "es6": true
     },
-    "extends": ["eslint:recommended", "standard", "standard-react", "plugin:jsx-a11y/recommended"],
-    "parser": "babel-eslint",
+    "extends": ["eslint:recommended", "standard", "standard-jsx", "standard-react", "plugin:jsx-a11y/recommended"],
+    "parser": "@babel/eslint-parser",
     "parserOptions": {
         "ecmaVersion": "7",
         "ecmaFeatures": {
@@ -52,12 +52,12 @@
 
         "jsx-a11y/anchor-is-valid": "off",
         "jsx-a11y/no-autofocus": "off",
-        "jsx-a11y/no-onchange": "off",
 
         "eqeqeq": "off",
         "import/no-webpack-loader-syntax": "off",
         "object-property-newline": "off",
         "react/jsx-no-bind": "off",
+        "react/jsx-wrap-multilines": "off",
 
         "cockpit/no-cockpit-all": "error"
     },

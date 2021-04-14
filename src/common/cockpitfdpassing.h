@@ -1,7 +1,7 @@
 /*
  * This file is part of Cockpit.
  *
- * Copyright (C) 2014 Red Hat, Inc.
+ * Copyright (C) 2021 Red Hat, Inc.
  *
  * Cockpit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -17,13 +17,21 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __COCKPIT_WEBCERTIFICATE_H__
-#define __COCKPIT_WEBCERTIFICATE_H__
+#pragma once
 
 #include <stdbool.h>
+#include <sys/socket.h>
 
-char *  cockpit_certificate_locate   (bool missing_ok, char **error);
-char *  cockpit_certificate_key_path (const char *certfile);
-int     cockpit_certificate_parse    (const char *file, char **cert, char **key);
+void
+cockpit_socket_msghdr_add_fd (struct msghdr  *msg,
+                              struct cmsghdr *cmsg,
+                              size_t          cmsgsize,
+                              int             fd);
 
-#endif /* __COCKPIT_WEBCERTIFICATE_H__ */
+bool
+cockpit_socket_send_fd (int socket_fd,
+                        int fd);
+
+int
+cockpit_socket_receive_fd (int  socket_fd,
+                           int *out_fd);

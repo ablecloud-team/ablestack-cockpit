@@ -248,7 +248,9 @@ const fs = require("fs");
 const copy = require("copy-webpack-plugin");
 const html = require('html-webpack-plugin');
 const miniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 const CockpitPoPlugin = require("./pkg/lib/cockpit-po-plugin");
 const IncludedModulesPlugin = require("./pkg/lib/included-modules-plugin");
 
@@ -342,13 +344,10 @@ function get_msggrep_options () {
     return undefined;
 }
 
-const cssProcessorOptions = production ? { } : { map: {inline: false} };
-
 const plugins = [
     new IncludedModulesPlugin((section || "") + "included-modules"),
     new copy(info.files),
-    new OptimizeCSSAssetsPlugin({cssProcessorOptions: cssProcessorOptions}),
-    new miniCssExtractPlugin("[name].css"),
+    new miniCssExtractPlugin({ filename: "[name].css" }),
     new CockpitPoPlugin({
         subdir: section,
         msggrep_options: get_msggrep_options(),
@@ -356,6 +355,9 @@ const plugins = [
         wrapper: (section === 'static/') ? 'window.cockpit_po = PO_DATA;' : undefined,
     }),
 ];
+
+if (eslint)
+    plugins.push(new ESLintPlugin({ extensions: ["js", "jsx"] }));
 
 if (section.startsWith('base1'))
     plugins.push(new copy(base1_fonts));
@@ -388,25 +390,6 @@ const aliases = {
 /* HACK: To get around redux warning about reminimizing code */
 if (production)
     aliases["redux/dist/redux"] = "redux/dist/redux.min.js";
-
-
-const babel_loader = {
-    loader: "babel-loader",
-    options: {
-        presets: [
-            ["@babel/env", {
-                "targets": {
-                    "chrome": "57",
-                    "firefox": "52",
-                    "safari": "10.3",
-                    "edge": "16",
-                    "opera": "44"
-                }
-            }],
-            "@babel/preset-react"
-        ]
-    }
-};
 
 /* check if sassc is available, to avoid unintelligible error messages */
 try {
@@ -448,14 +431,13 @@ module.exports = {
         ignored: /node_modules/
     },
 
+    optimization: {
+        minimize: production,
+        minimizer: [new TerserJSPlugin({ extractComments : false }), new CssMinimizerPlugin()],
+    },
+
     module: {
         rules: [
-            {
-                enforce: 'pre',
-                test: eslint ? /\.(js|jsx)$/ : /dont.match.me/,
-                exclude: /\/node_modules\/.*\//, // exclude external dependencies
-                loader: "eslint-loader"
-            },
             // bootstrap UI requires jQuery to be in the global namespace
             // only expose that to pages which need it, as we want to port to React and get rid of jQuery
             {
@@ -486,14 +468,14 @@ module.exports = {
             /* these modules need to be babel'ed, they cause bugs in their dist'ed form */
             {
                 test: /\/node_modules\/.*(react-table).*\.js$/,
-                use: babel_loader
+                use: "babel-loader"
             },
             {
                 test: /\.(js|jsx)$/,
                 // exclude external dependencies; it's too slow, and they are already plain JS except the above
                 // also exclude unit tests, we don't need it for them, just a waste and makes failures harder to read
                 exclude: /\/node_modules|\/test-/,
-                use: babel_loader
+                use: "babel-loader"
             },
             /* HACK: remove unwanted fonts from PatternFly's css */
             {
