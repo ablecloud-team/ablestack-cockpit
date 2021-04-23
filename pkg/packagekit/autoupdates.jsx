@@ -21,10 +21,9 @@ import cockpit from "cockpit";
 import React from "react";
 import PropTypes from 'prop-types';
 import {
-    Alert, Button, Flex, Form, FormGroup,
+    Alert, Button, Flex, FlexItem, Form, FormGroup,
     FormSelect, FormSelectOption,
-    Modal, Radio, Text, TextVariants,
-    TimePicker,
+    Modal, Radio, TimePicker,
 } from '@patternfly/react-core';
 
 import { install_dialog } from "cockpit-components-install-dialog.jsx";
@@ -100,7 +99,7 @@ class DnfImpl extends ImplBase {
                             if (output.indexOf("InactiveSec=1d\n") >= 0)
                                 this.day = this.time = "";
                             else
-                                this.supported = false;
+                                this.parsing_failed = true;
                         }
 
                         debug(`dnf getConfig: supported ${this.supported}, enabled ${this.enabled}, type ${this.type}, day ${this.day}, time ${this.time}, installed ${this.installed}; raw response '${output}'`);
@@ -117,8 +116,7 @@ class DnfImpl extends ImplBase {
     parseCalendar(spec) {
         // see systemd.time(7); we only support what we write, otherwise we treat it as custom config and "unsupported"
         const daysOfWeek = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-        // TODO: allow arbitrary minutes once we support that in the UI widget
-        const validTime = /^((|0|1)[0-9]|2[0-3]):00$/;
+        const validTime = /^((|0|1)[0-9]|2[0-3]):[0-5][0-9]$/;
 
         var words = spec.trim().toLowerCase()
                 .split(/\s+/);
@@ -137,7 +135,7 @@ class DnfImpl extends ImplBase {
         if (words.length == 1 && validTime.test(words[0]))
             this.time = words[0].replace(/^0+/, "");
         else
-            this.supported = false;
+            this.parsing_failed = true;
     }
 
     setConfig(enabled, type, day, time) {
@@ -214,7 +212,7 @@ class DnfImpl extends ImplBase {
 
 // Returns a promise for instantiating "backend"; this will never fail, if
 // automatic updates are not supported, backend will be null.
-function getBackend(forceReinit) {
+export function getBackend(forceReinit) {
     if (!getBackend.promise || forceReinit) {
         debug("getBackend() called first time or forceReinit passed, initializing promise");
         getBackend.promise = new Promise((resolve, reject) => {
@@ -247,101 +245,30 @@ function getBackend(forceReinit) {
     return getBackend.promise;
 }
 
-/**
- * Main React component
- *
- * Properties:
- * onInitialized(enabled): (optional): callback once backend knowsn whether automatic updates are enabled
- */
-export const AutoUpdatesBody = (props) => {
-    const { enabled, type, day, time } = props;
-    const days = {
-        "": "every day",
-        mon: "every Monday",
-        tue: "every Tuesday",
-        wed: "every Wednesday",
-        thu: "every Thursday",
-        fri: "every Friday",
-        sat: "every Saturday",
-        sun: "every Sunday"
-    };
-
-    let str;
-    if (enabled) {
-        str = type == "security" ? _("Security updates ") : _("Updates ");
-        str += cockpit.format(_("will be applied $0 at $1"), days[day], time);
-    } else {
-        str = _("Automatic updates are not set up");
-    }
-
-    return (<Text component={TextVariants.p}>{str}</Text>);
-};
-
-/**
- * Main React component
- *
- * Properties:
- * onInitialized(enabled): (optional): callback once backend knowsn whether automatic updates are enabled
- */
 export class AutoUpdates extends React.Component {
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             pending: false,
             showModal: false,
-            supported: undefined,
-            enabled: undefined,
-            type: undefined,
-            day: "everyday",
-            time: "00:00",
+            backend: props.backend,
+            enabled: props.backend && props.backend.enabled,
+            type: props.backend && props.backend.type,
+            day: props.backend && props.backend.day,
+            time: props.backend && props.backend.time && props.backend.time.padStart(5, "0"),
         };
         this.handleChange = this.handleChange.bind(this);
-        this.initializeBackend();
-    }
-
-    initializeBackend(forceReinit) {
-        return getBackend(forceReinit).then(b => {
-            const promise = this.setState({ backend: b, enabled: b && b.enabled, type: b && b.type, day: b && b.day, time: b && b.time && b.time.padStart(5, "0") }, () => {
-                this.debugBackendState("AutoUpdates: backend initialized");
-                return null;
-            });
-            if (this.props.onInitialized) {
-                this.props.onInitialized({
-                    autoUpdatesEnabled: b ? b.enabled : null,
-                    autoUpdatesType: b ? b.type : null,
-                    autoUpdatesDay: b ? b.day : null,
-                    autoUpdatesTime: b ? b.time : null,
-                });
-            }
-            return promise;
-        });
-    }
-
-    debugBackendState(prefix) {
-        if (this.state.backend)
-            debug(`${prefix}: state is (${this.state.enabled}, ${this.state.type}, ${this.state.day}, ${this.state.time})`);
     }
 
     handleChange() {
-        const { backend, enabled, type, day, time } = this.state;
-
-        this.debugBackendState(`handleChange(${enabled}, ${type}, ${day}, ${time})`);
+        const { enabled, type, day, time } = this.state;
 
         if (!validateTime(time))
             return;
 
         this.setState({ pending: true });
-        backend.setConfig(enabled, type, day, time)
-                .always((b) => {
-                    this.debugBackendState("handleChange: setConfig finished");
-                    if (this.props.onInitialized) {
-                        this.props.onInitialized({
-                            autoUpdatesEnabled: enabled,
-                            autoUpdatesType: type,
-                            autoUpdatesDay: day,
-                            autoUpdatesTime: time,
-                        });
-                    }
+        this.state.backend.setConfig(enabled, type, day, time)
+                .always(() => {
                     this.setState({ pending: false, showModal: false });
                 });
     }
@@ -404,22 +331,77 @@ export class AutoUpdates extends React.Component {
             </Form>
         );
 
+        let state = null;
+        if (!this.state.backend.enabled)
+            state = _("Disabled");
+        if (!this.state.backend.installed)
+            state = _("Not set up");
+
+        const days = {
+            "": "every day",
+            mon: "every Monday",
+            tue: "every Tuesday",
+            wed: "every Wednesday",
+            thu: "every Thursday",
+            fri: "every Friday",
+            sat: "every Saturday",
+            sun: "every Sunday"
+        };
+
+        let desc = null;
+
+        if (this.state.backend.enabled) {
+            desc = this.state.backend.type == "security" ? _("Security updates ") : _("Updates ");
+            desc += cockpit.format(_("will be applied $0 at $1"), days[this.state.backend.day], this.state.backend.time);
+        }
+
+        const self = this;
+
         return (<>
-            <Button variant="secondary"
-                    isDisabled={!enabled}
-                    onClick={() => {
-                        if (!this.state.backend.installed) {
-                            install_dialog(this.state.backend.packageName)
-                                    .then(() => {
-                                        this.initializeBackend(true);
+            <div id="autoupdates-settings">
+                {enabled && this.state.backend.parsing_failed &&
+                <Alert isInline
+                       variant="info"
+                       className="autoupdates-card-error"
+                       title={_("Failed to parse unit files for dnf-automatic.timer or dnf-automatic-install.timer. Please remove custom overrides to enable this feature.")} />}
+                <Flex alignItems={{ default: 'alignItemsCenter' }}>
+                    <Flex grow={{ default: 'grow' }} alignItems={{ default: 'alignItemsBaseline' }}>
+                        <FlexItem>
+                            <b>{_("Automatic updates")}</b>
+                        </FlexItem>
+                        <FlexItem>
+                            {state}
+                        </FlexItem>
+                    </Flex>
+                    <Flex>
+                        <Button variant="secondary"
+                                isDisabled={!enabled}
+                                isSmall
+                                onClick={() => {
+                                    if (!this.state.backend.installed) {
+                                        install_dialog(this.state.backend.packageName)
+                                                .then(() => {
+                                                    getBackend(true).then(b => {
+                                                        self.setState({
+                                                            backend: b,
+                                                            enabled: b.enabled,
+                                                            type: b.type,
+                                                            day: b.day,
+                                                            time: b.time && b.time.padStart(5, "0"),
+                                                            showModal: true,
+                                                        });
+                                                    });
+                                                }, () => null);
+                                    } else {
                                         this.setState({ showModal: true });
-                                    }, () => null);
-                        } else {
-                            this.setState({ showModal: true });
-                        }
-                    }}>
-                {_("Edit")}
-            </Button>
+                                    }
+                                }}>
+                            {!this.state.backend.installed ? _("Enable") : _("Edit")}
+                        </Button>
+                    </Flex>
+                </Flex>
+                {desc}
+            </div>
             <Modal position="top" variant="small" id="automatic-updates-dialog" isOpen={this.state.showModal}
                 title={_("Automatic updates")}
                 onClose={() => this.setState({ showModal: false })}
@@ -446,5 +428,5 @@ export class AutoUpdates extends React.Component {
 
 AutoUpdates.propTypes = {
     privileged: PropTypes.bool.isRequired,
-    onInitialized: PropTypes.func,
+    backend: PropTypes.object.isRequired,
 };

@@ -138,7 +138,7 @@ class LoginMessages extends React.Component {
             <Alert id='login-messages'
                    variant={this.state.messages.type}
                    isInline={!fail_count_message}
-                   className={!fail_count_message ? "no-title" : ""}
+                   className={!fail_count_message ? "login-messages" : ""}
                    actionClose={<AlertActionCloseButton onClose={this.close} />}
                    title={fail_count_message || last_log_item}
             >
@@ -243,7 +243,9 @@ class OverviewPage extends React.Component {
                 {this.state.rebootModal && <ShutdownModal onClose={() => this.setState({ rebootModal: false })} />}
                 {this.state.shutdownModal && <ShutdownModal shutdown onClose={() => this.setState({ shutdownModal: false })} />}
                 <Page>
-                    <SuperuserAlert />
+                    <PageSection variant={PageSectionVariants.light} padding={{ default: 'noPadding' }}>
+                        <SuperuserAlert />
+                    </PageSection>
                     <PageSection className='ct-overview-header' variant={PageSectionVariants.light}>
                         <div className='ct-overview-header-hostname'>
                             <h1>
@@ -260,8 +262,8 @@ class OverviewPage extends React.Component {
                         </div>
                     </PageSection>
                     <PageSection variant={PageSectionVariants.default}>
-                        <LoginMessages />
                         <Gallery className='ct-system-overview' hasGutter>
+                            <LoginMessages />
                             <MotdCard />
                             <HealthCard />
                             <UsageCard />

@@ -36,8 +36,8 @@ MAINTAINERCLEANFILES = \
 EXTRA_DIST = \
 	package.json \
 	package-lock.json \
-	node_modules/.stamp \
 	README.md \
+	tools/debian/copyright \
 	$(NULL)
 
 clean-local::
@@ -72,32 +72,6 @@ V_COPY_0 = @echo "  COPY    " $@;
 V_TAR = $(V_TAR_$(V))
 V_TAR_ = $(V_TAR_$(AM_DEFAULT_VERBOSITY))
 V_TAR_0 = @echo "  TAR     " $@;
-
-# We set SKIP_NODE to 1 if we should avoid buidling anything that
-# depends on node_modules/ having been created.  This allows doing
-# variable expansions like x_DATA = $(FILES$(SKIP_NODE)) which will
-# expand to $(FILES) in the normal case, and to the empty variable
-# $(FILES1) in the case SKIP_NODE is set.  This is similar to the tricks
-# used by automake for verbosity control (ie: V=1 et al).
-#
-# We give the user explicit control over this process via the NO_NPM
-# make variable.  As a user you should use `make NO_NPM=1` or `make
-# NO_NPM=0` to force the value one way or the other.  Otherwise, we
-# guess, depending on the presence of the `node_modules` directory.
-SKIP_NODE := $(shell "$(top_srcdir)/tools/should-skip-node" "$(NO_NPM)")
-SKIP_NODE_ERROR = $(error Couldn't decide if we should depend on node_modules or not)
-SKIP_NODE_SHELLSTATUS_0 = ok
-SKIP_NODE_CHECK_SHELLSTATUS := $(SKIP_NODE_ERROR$(SKIP_NODE_SHELLSTATUS_$(.SHELLSTATUS)))
-
-# Make sure this fails early, and with a good message
-distdir: $(BUILT_SOURCES)
-	@if test -n "$(SKIP_NODE)"; then \
-	  echo; \
-	  echo "Can't dist cockpit without node_modules.  Try running tools/npm-install."; \
-	  echo; \
-	  exit 1; \
-	fi
-	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 MV = mv -f
 
@@ -189,7 +163,7 @@ WEBPACK_CONFIG = $(srcdir)/webpack.config.js
 WEBPACK_INPUTS =
 WEBPACK_OUTPUTS =
 WEBPACK_INSTALL =
-WEBPACK_DEPS = $(WEBPACK_PACKAGES$(SKIP_NODE):%=$(top_srcdir)/dist/%/Makefile.deps)
+WEBPACK_DEPS = $(WEBPACK_PACKAGES:%=$(top_srcdir)/dist/%/Makefile.deps)
 
 # required for running unit and integration tests; commander and ws are deps of chrome-remote-interface
 WEBPACK_TEST_DEPS = \
@@ -199,7 +173,7 @@ WEBPACK_TEST_DEPS = \
 	node_modules/ws \
 	$(NULL)
 
-noinst_SCRIPTS += $(MANIFESTS$(SKIP_NODE))
+noinst_SCRIPTS += $(MANIFESTS)
 EXTRA_DIST += $(MANIFESTS) $(WEBPACK_DEPS) webpack.config.js
 
 # Nothing generates this directly, but it's included as a dependency in
@@ -208,7 +182,7 @@ EXTRA_DIST += $(MANIFESTS) $(WEBPACK_DEPS) webpack.config.js
 dist/%/Makefile.deps:
 	@true
 
-dist/%/manifest.json: $(WEBPACK_CONFIG) $(srcdir)/tools/webpack-make $(srcdir)/node_modules/.stamp
+dist/%/manifest.json: $(WEBPACK_CONFIG) $(srcdir)/tools/webpack-make $(srcdir)/package-lock.json
 	$(V_WEBPACK) $(WEBPACK_MAKE) -d dist/$*/Makefile.deps -c $(WEBPACK_CONFIG)
 
 -include $(WEBPACK_DEPS)
@@ -220,7 +194,7 @@ clean-local::
 maintainer-clean-local::
 	rm -rf dist/ node_modules/ package-lock.json
 
-node_modules/.stamp: package.json
+package-lock.json: package.json
 	@echo ''
 	@echo '    package.json changed'
 	@echo ''
@@ -322,13 +296,6 @@ include doc/man/Makefile-man.am
 dist-doc-hook:
 	@true
 
-else
-
-dist-doc-hook:
-	@echo "*** doc must be enabled (ie: --enable-doc) in order to make dist or distcheck"
-
-endif
-
 dist-hook:: dist-doc-hook
 	@true
 distcheck-hook:: dist-doc-hook
@@ -338,6 +305,13 @@ install-data-local:: dist/guide/html/index.html
 	$(INSTALL_DATA) $(dir $<)/* $(DESTDIR)$(htmldir)
 uninstall-local::
 	rm -rf $(DESTDIR)$(htmldir)
+
+else
+
+dist-doc-hook:
+	@echo "*** doc must be enabled (ie: --enable-doc) in order to make dist or distcheck"
+
+endif
 
 # See test/image-prepare
 dump-dist:
@@ -349,13 +323,16 @@ COMMITTED_DIST = \
 	test \
 	$(NULL)
 
+tools/debian/copyright: tools/debian/copyright.template $(MANIFESTS)
+	$(AM_V_GEN) $(srcdir)/tools/build-debian-copyright > $@.tmp
+	$(MV) $@.tmp $@
+
 # Build up the distribution using $COMMITTED_DIST and include node_modules licenses
 # also automatically update minimum base dependency in RPM spec file
 dist-hook:: $(MANIFESTS)
 	( cd $(srcdir); git ls-tree HEAD --name-only -r $(COMMITTED_DIST) || (echo $(COMMITTED_DIST) | tr ' ' '\n' ) ) | \
 		tar -C $(srcdir) -cf - -T - | tar -C $(distdir) -xf -
 	echo $(VERSION) > $(distdir)/.tarball
-	[ ! -d $(distdir)/tools/debian ] || $(srcdir)/tools/build-debian-copyright $(distdir) > $(distdir)/tools/debian/copyright
 	[ ! -e $(distdir)/tools/cockpit.spec ] || $(srcdir)/tools/gen-spec-dependencies $(distdir)/tools/cockpit.spec
 
 DIST_TAR_MAIN = tar --format=posix -cf - "$(distdir)"

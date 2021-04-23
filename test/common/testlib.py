@@ -965,9 +965,16 @@ class MachineCase(unittest.TestCase):
                         "done; until rmmod scsi_debug; do sleep 1; done")
 
         # Terminate all lingering Cockpit sessions
-        self.addCleanup(self.machine.execute,
-                        "loginctl --no-legend list-sessions | awk '/web console/ { print $1 }' | "
-                        "xargs --no-run-if-empty -L1 loginctl terminate-session")
+        def terminate_sessions():
+            sessions = self.machine.execute("loginctl --no-legend list-sessions | awk '/web console/ { print $1 }'").strip().split()
+            for s in sessions:
+                self.machine.execute("loginctl terminate-session %s" % s)
+                # Wait for it to be no longer active. Sometimes
+                # sessions are permanently stuck in state "closing",
+                # but that's fine since they won't do any harm.
+                m.execute("while loginctl show-session %s | grep -q 'State=active'; do sleep 1; done" % s)
+
+        self.addCleanup(terminate_sessions)
 
     def tearDown(self):
         if self.checkSuccess() and self.machine.ssh_reachable:
@@ -1000,9 +1007,6 @@ class MachineCase(unittest.TestCase):
         "GLib-GIO:ERROR:gdbusobjectmanagerserver\\.c:.*:g_dbus_object_manager_server_emit_interfaces_.*: assertion failed \\(error == NULL\\): The connection is closed \\(g-io-error-quark, 18\\)",
         "Error sending message: The connection is closed",
 
-        # Will go away with glib 2.43.2
-        ".*: couldn't write web output: Error sending data: Connection reset by peer",
-
         # PAM noise
         "cockpit-session: pam: Creating directory .*",
         "cockpit-session: pam: Changing password for .*",
@@ -1023,13 +1027,6 @@ class MachineCase(unittest.TestCase):
         # SELinux messages to ignore
         "(audit: )?type=1403 audit.*",
         "(audit: )?type=1404 audit.*",
-        # happens on Atomic (https://bugzilla.redhat.com/show_bug.cgi?id=1298157)
-        "(audit: )?type=1400 audit.*: avc:  granted .*",
-
-        # https://bugzilla.redhat.com/show_bug.cgi?id=1242656
-        "(audit: )?type=1400 .*denied.*comm=\"cockpit-ws\".*name=\"unix\".*dev=\"proc\".*",
-        "(audit: )?type=1400 .*denied.*comm=\"ssh-transport-c\".*name=\"unix\".*dev=\"proc\".*",
-        "(audit: )?type=1400 .*denied.*comm=\"cockpit-ssh\".*name=\"unix\".*dev=\"proc\".*",
 
         # apparmor loading
         "(audit: )?type=1400.*apparmor=\"STATUS\".*",
@@ -1065,6 +1062,7 @@ class MachineCase(unittest.TestCase):
         # Something unknown sometimes goes wrong with PCP, see #15625
         "pcp-archive: instance name lookup failed: .*",
         "direct: instance name lookup failed: .*",
+        "pcp-archive: couldn't create pcp archive context for.*",
         "pcp-archive: no such metric: .*"
     ]
 
@@ -1106,6 +1104,7 @@ class MachineCase(unittest.TestCase):
                                     ".*: failed to retrieve resource: terminated",
                                     ".*: external channel failed: terminated",
                                     'audit:.*denied.*comm="systemd-user-se".*nologin.*',
+                                    ".*No session for cookie",
 
                                     'localhost: dropping message while waiting for child to exit',
                                     '.*: GDBus.Error:org.freedesktop.PolicyKit1.Error.Failed: .*',

@@ -365,17 +365,6 @@ function update_indices() {
 }
 
 function init_model(callback) {
-    function wait_all(objects, callback) {
-        var obj = objects.pop();
-        if (obj) {
-            obj.wait(function () {
-                wait_all(objects, callback);
-            });
-        } else {
-            callback();
-        }
-    }
-
     function pull_time() {
         return cockpit.spawn(["date", "+%s"])
                 .then(function (now) {
@@ -393,13 +382,12 @@ function init_model(callback) {
                 var defer = cockpit.defer();
                 client.manager_lvm2 = proxy("Manager.LVM2", "Manager");
                 client.manager_iscsi = proxy("Manager.ISCSI.Initiator", "Manager");
-                wait_all([client.manager_lvm2, client.manager_iscsi],
-                         function () {
-                             client.features.lvm2 = client.manager_lvm2.valid;
-                             client.features.iscsi = (client.manager_iscsi.valid &&
+                Promise.allSettled([client.manager_lvm2.wait(), client.manager_iscsi.wait()]).then(() => {
+                    client.features.lvm2 = client.manager_lvm2.valid;
+                    client.features.iscsi = (client.manager_iscsi.valid &&
                                                       client.manager_iscsi.SessionsSupported !== false);
-                             defer.resolve();
-                         });
+                    defer.resolve();
+                });
                 return defer.promise;
             }, function(error) {
                 console.warn("Can't enable storaged modules", error.toString());
@@ -514,10 +502,10 @@ function init_model(callback) {
         }
     }
 
-    wait_all([client.manager,
-        client.mdraids, client.vgroups, client.drives,
-        client.blocks, client.blocks_ptable, client.blocks_lvm2, client.blocks_fsys
-    ], function () {
+    Promise.allSettled([client.manager.wait(),
+        client.mdraids.wait(), client.vgroups.wait(), client.drives.wait(),
+        client.blocks.wait(), client.blocks_ptable.wait(), client.blocks_lvm2.wait(), client.blocks_fsys.wait()
+    ]).then(() => {
         pull_time().then(function() {
             enable_features().then(function() {
                 query_fsys_info().then(function(fsys_info) {
@@ -836,27 +824,29 @@ function vdo_overlay() {
 
 client.vdo_overlay = vdo_overlay();
 
-function init_manager() {
-    var udisks = cockpit.dbus("org.freedesktop.UDisks2", { superuser: "try" });
-    var udisks_manager = udisks.proxy("org.freedesktop.UDisks2.Manager",
-                                      "/org/freedesktop/UDisks2/Manager", { watch: true });
+function init_client(manager, callback) {
+    if (client.manager)
+        return;
 
-    return udisks_manager.wait().then(function () {
-        return udisks_manager;
-    });
+    client.storaged_client = manager.client;
+    client.manager = manager;
+
+    init_proxies();
+    init_model(callback);
 }
 
 client.init = function init_storaged(callback) {
-    init_manager().then(function(manager) {
-        client.storaged_client = manager.client;
-        client.manager = manager;
+    const udisks = cockpit.dbus("org.freedesktop.UDisks2", { superuser: "try" });
+    const udisks_manager = udisks.proxy("org.freedesktop.UDisks2.Manager",
+                                        "/org/freedesktop/UDisks2/Manager", { watch: true });
 
-        init_proxies();
-        init_model(callback);
-    }, function() {
-        client.features = false;
-        callback();
-    });
+    udisks_manager.wait().then(() => init_client(udisks_manager, callback))
+            .catch(() => {
+                client.features = false;
+                callback();
+            });
+
+    udisks_manager.addEventListener("changed", () => init_client(udisks_manager, callback));
 };
 
 client.wait_for = function wait_for(cond) {
