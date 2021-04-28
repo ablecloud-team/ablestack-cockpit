@@ -808,14 +808,12 @@ class MachineCase(unittest.TestCase):
         if self.machine.execute("if test -e %s; then echo yes; fi" % path):
             self.write_file(path + '/override.json', '{ "preload": [%s]}' % ', '.join('"{0}"'.format(page) for page in pages))
 
-    def system_before(self, version, release=1):
+    def system_before(self, version):
         try:
-            v = self.machine.execute("rpm -q --qf '%{V}\\n' cockpit-system").split(".")
+            v = self.machine.execute("rpm -q --qf '%{V}' cockpit-system").split(".")
         except subprocess.CalledProcessError:
             return False
 
-        if int(v[0]) == version:
-            return int(v[1]) < release
         return int(v[0]) < version
 
     def setUp(self, restrict=True):
@@ -1164,7 +1162,7 @@ class MachineCase(unittest.TestCase):
             # Fedora and RHEL 9 have switched to dbus-broker
             self.allowed_messages.append("dbus-daemon didn't send us a dbus address; not installed?.*")
 
-        if self.image in ['fedora-34']:
+        if self.image in ['fedora-34', 'rhel-9-0']:
             # HACK: https://bugzilla.redhat.com/show_bug.cgi?id=1929259
             self.allow_journal_messages('audit:.*denied.*comm="pmdakvm" lockdown_reason="debugfs access".*')
 
