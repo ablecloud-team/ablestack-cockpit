@@ -85,7 +85,7 @@ Source0:        https://github.com/cockpit-project/cockpit/releases/download/%{v
 %if 0%{?rhel} >= 9 || 0%{?fedora}
 %define selinuxtype targeted
 %define with_selinux 1
-%define selinux_policy_version %(rpm --quiet -q selinux-policy && rpm -q --queryformat "%{V}" selinux-policy || echo 1)
+%define selinux_policy_version %(rpm --quiet -q selinux-policy && rpm -q --queryformat "%{V}-%{R}" selinux-policy || echo 1)
 %endif
 
 BuildRequires: gcc
@@ -208,8 +208,8 @@ install -D -p -m 644 AUTHORS COPYING README.md %{buildroot}%{_docdir}/cockpit/
 
 %if 0%{?with_selinux}
     install -D -m 644 %{name}.pp.bz2 %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
-    install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_session_selinux.8
-    install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_ws_selinux.8
+    install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_session_selinux.8cockpit
+    install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_ws_selinux.8cockpit
 %endif
 
 # only ship deprecated PatternFly API for stable releases
@@ -270,6 +270,7 @@ echo '%dir %{_datadir}/cockpit/playground' > tests.list
 find %{buildroot}%{_datadir}/cockpit/playground -type f >> tests.list
 
 echo '%dir %{_datadir}/cockpit/static' > static.list
+echo '%dir %{_datadir}/cockpit/static/fonts' >> static.list
 find %{buildroot}%{_datadir}/cockpit/static -type f >> static.list
 
 # when not building basic packages, remove their files
@@ -413,10 +414,9 @@ Provides: cockpit-shell = %{version}-%{release}
 Provides: cockpit-systemd = %{version}-%{release}
 Provides: cockpit-tuned = %{version}-%{release}
 Provides: cockpit-users = %{version}-%{release}
-Obsoletes: cockpit-dashboard
+Obsoletes: cockpit-dashboard < %{version}-%{release}
 %if 0%{?rhel}
 Provides: cockpit-networkmanager = %{version}-%{release}
-Obsoletes: cockpit-networkmanager
 Requires: NetworkManager >= 1.6
 Provides: cockpit-kdump = %{version}-%{release}
 Requires: kexec-tools
@@ -450,8 +450,10 @@ Summary: Cockpit Web Service
 Requires: glib-networking
 Requires: openssl
 Requires: glib2 >= 2.50.0
+%if 0%{?with_selinux}
 Requires: (selinux-policy >= %{selinux_policy_version} if selinux-policy-%{selinuxtype})
 Requires(post): (policycoreutils if selinux-policy-%{selinuxtype})
+%endif
 Conflicts: firewalld < 0.6.0-1
 Recommends: sscg >= 2.3
 Recommends: system-logos
@@ -474,8 +476,9 @@ authentication via sssd/FreeIPA.
 %dir %{_sysconfdir}/cockpit
 %config(noreplace) %{_sysconfdir}/cockpit/ws-certs.d
 %config(noreplace) %{_sysconfdir}/pam.d/cockpit
-%config %{_sysconfdir}/issue.d/cockpit.issue
-%config %{_sysconfdir}/motd.d/cockpit
+# created in %post, so that users can rm the files
+%ghost %{_sysconfdir}/issue.d/cockpit.issue
+%ghost %{_sysconfdir}/motd.d/cockpit
 %ghost /run/cockpit/motd
 %ghost %dir /run/cockpit
 %dir %{_datadir}/cockpit/motd
@@ -508,8 +511,8 @@ authentication via sssd/FreeIPA.
 
 %if 0%{?with_selinux}
     %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
-    %{_mandir}/man8/%{name}_session_selinux.8.*
-    %{_mandir}/man8/%{name}_ws_selinux.8.*
+    %{_mandir}/man8/%{name}_session_selinux.8cockpit.*
+    %{_mandir}/man8/%{name}_ws_selinux.8cockpit.*
     %ghost %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
 %endif
 
@@ -532,6 +535,13 @@ if %{_sbindir}/selinuxenabled 2>/dev/null; then
     %selinux_relabel_post -s %{selinuxtype}
 fi
 %endif
+
+# set up dynamic motd/issue symlinks on first-time install; don't bring them back on upgrades if admin removed them
+if [ "$1" = 1 ]; then
+    mkdir -p /etc/motd.d /etc/issue.d
+    ln -s /run/cockpit/motd /etc/motd.d/cockpit
+    ln -s /run/cockpit/motd /etc/issue.d/cockpit.issue
+fi
 
 %tmpfiles_create cockpit-tempfiles.conf
 %systemd_post cockpit.socket cockpit.service
