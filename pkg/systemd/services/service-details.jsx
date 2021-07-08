@@ -18,7 +18,6 @@
  */
 
 import React from "react";
-import moment from "moment";
 import PropTypes from "prop-types";
 import {
     Alert, Button,
@@ -32,6 +31,7 @@ import {
 
 import cockpit from "cockpit";
 import { systemd_client, SD_MANAGER, SD_OBJ } from "./services.jsx";
+import * as timeformat from "timeformat";
 
 import './service-details.scss';
 
@@ -172,6 +172,7 @@ class ServiceActions extends React.Component {
                           isOpen={this.state.isActionOpen}
                           isPlain
                           onSelect={() => this.setState({ isActionOpen: !this.state.isActionOpen })}
+                          position='right'
                           dropdownItems={actions} />
             </>
         );
@@ -360,7 +361,7 @@ export class ServiceDetails extends React.Component {
                     <div key="running" className="status-running">
                         <span className="pficon pficon-on-running status-icon" />
                         <span className="status">{ _("Running") }</span>
-                        <span className="side-note font-xs">{ _("Active since ") + moment(this.props.unit.ActiveEnterTimestamp / 1000).format('LLL') }</span>
+                        <span className="side-note font-xs">{ _("Active since ") + timeformat.dateTime(this.props.unit.ActiveEnterTimestamp / 1000) }</span>
                     </div>
                 );
             } else {
@@ -405,6 +406,15 @@ export class ServiceDetails extends React.Component {
                 <div key="enabled" className="status-enabled">
                     <span className="pficon pficon-ok status-icon" />
                     <span className="status">{ _("Automatically starts") }</span>
+                </div>
+            );
+        }
+
+        if (this.props.unit.NextRunTime || this.props.unit.LastTriggerTime) {
+            status.push(
+                <div className="service-unit-triggers">
+                    {this.props.unit.NextRunTime && <div className="service-unit-next-trigger">{cockpit.format("Next run: $0", this.props.unit.NextRunTime)}</div>}
+                    {this.props.unit.LastTriggerTime && <div className="service-unit-last-trigger">{cockpit.format("Last trigger: $0", this.props.unit.LastTriggerTime)}</div>}
                 </div>
             );
         }
@@ -466,13 +476,7 @@ export class ServiceDetails extends React.Component {
 
         const triggerRelationshipsList = relationshipsToList(triggerRelationships);
 
-        const extraRelationshipsList = (
-            <ExpandableSection id="service-details-show-relationships" toggleText={triggerRelationshipsList.length ? _("Show more relationships") : _("Show relationships")}>
-                <DescriptionList isHorizontal>
-                    {relationshipsToList(relationships)}
-                </DescriptionList>
-            </ExpandableSection>
-        );
+        const extraRelationshipsList = relationshipsToList(relationships);
 
         const conditions = this.props.unit.Conditions;
         const notMetConditions = [];
@@ -545,7 +549,12 @@ export class ServiceDetails extends React.Component {
                                 }
                                 {triggerRelationshipsList}
                             </DescriptionList>
-                            {extraRelationshipsList}
+                            {extraRelationshipsList.length
+                                ? <ExpandableSection id="service-details-show-relationships" toggleText={triggerRelationshipsList.length ? _("Show more relationships") : _("Show relationships")}>
+                                    <DescriptionList isHorizontal>
+                                        {extraRelationshipsList}
+                                    </DescriptionList>
+                                </ExpandableSection> : null}
                         </CardBody>
                     </>
                 }

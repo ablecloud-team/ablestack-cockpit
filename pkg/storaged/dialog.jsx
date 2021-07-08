@@ -226,11 +226,11 @@ import {
     Form, FormGroup,
     Radio,
     Select as TypeAheadSelect, SelectOption, SelectVariant,
-    Spinner,
+    Spinner, Split,
     TextInput as TextInputPF4,
     Tooltip, TooltipPosition,
 } from "@patternfly/react-core";
-import { InfoCircleIcon } from "@patternfly/react-icons";
+import { InfoCircleIcon, ExclamationTriangleIcon } from "@patternfly/react-icons";
 
 import { show_modal_dialog, apply_modal_dialog } from "cockpit-components-dialog.jsx";
 
@@ -238,6 +238,7 @@ import { fmt_size, block_name, format_size_and_text } from "./utils.js";
 import client from "./client.js";
 
 import "form-layout.scss";
+import "@patternfly/patternfly/components/HelperText/helper-text.css";
 
 const _ = cockpit.gettext;
 
@@ -253,7 +254,7 @@ const Row = ({ field, values, errors, onChange }) => {
         onChange(tag);
     }
 
-    const children = field.render(values[tag], change, validated);
+    const children = field.render(values[tag], change, validated, error);
 
     if (title || title == "") {
         let titleLabel = title;
@@ -271,14 +272,15 @@ const Row = ({ field, values, errors, onChange }) => {
                 { children }
             </FormGroup>
         );
-    } else {
+    } else if (!field.bare) {
         return (
             <FormGroup validated={validated}
-                       helperTextInvalid={error || explanation} hasNoPaddingTop={field.hasNoPaddingTop}>
+                       helperTextInvalid={error} helperText={explanation} hasNoPaddingTop={field.hasNoPaddingTop}>
                 { children }
             </FormGroup>
         );
-    }
+    } else
+        return children;
 };
 
 function is_visible(field, values) {
@@ -286,6 +288,14 @@ function is_visible(field, values) {
 }
 
 const Body = ({ body, fields, values, errors, isFormHorizontal, onChange }) => {
+    let error_alert = null;
+
+    if (errors && errors.toString() != "[object Object]") {
+        // This is a global error from a failed action
+        error_alert = <Alert variant='danger' isInline title={errors.toString()} />;
+        errors = null;
+    }
+
     function make_row(field, index) {
         if (field.length !== undefined)
             return make_rows(field, index);
@@ -307,6 +317,7 @@ const Body = ({ body, fields, values, errors, isFormHorizontal, onChange }) => {
 
     return (
         <>
+            { error_alert }
             { body || null }
             { make_rows(fields) }
         </>
@@ -316,6 +327,16 @@ const Body = ({ body, fields, values, errors, isFormHorizontal, onChange }) => {
 function flatten(arr1) {
     return arr1.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []);
 }
+
+const HelperTextWarning = ({ text }) =>
+    <div className="pf-c-helper-text">
+        <div className="pf-c-helper-text__item pf-m-warning">
+            <span className="pf-c-helper-text__item-icon">
+                <ExclamationTriangleIcon className="ct-icon-exclamation-triangle" />
+            </span>
+            <span className="pf-c-helper-text__item-text">{text}</span>
+        </div>
+    </div>;
 
 export const dialog_open = (def) => {
     const nested_fields = def.Fields || [];
@@ -375,13 +396,14 @@ export const dialog_open = (def) => {
                                         else
                                             return def.Action.action(visible_values, progress_callback);
                                     })
-                                    .catch(error => {
-                                        if (error.toString() != "[object Object]") {
-                                            return Promise.reject(error);
-                                        } else {
-                                            update(error, null);
-                                            return Promise.reject();
+                                    .catch(errors => {
+                                        if (errors && errors.toString() != "[object Object]") {
+                                            // Log errors from failed actions, for debugging and
+                                            // to allow the test suite to catch known issues.
+                                            console.warn(errors.toString());
                                         }
+                                        update(errors, null);
+                                        return Promise.reject();
                                     });
                         };
                         return client.run(func);
@@ -392,7 +414,7 @@ export const dialog_open = (def) => {
 
         const extra = <div>
             { def.Footer }
-            { def.Action && def.Action.Danger ? <Alert isInline variant='danger' title={def.Action.Danger} /> : null }
+            { def.Action && def.Action.Danger ? <HelperTextWarning text={def.Action.Danger} /> : null }
         </div>;
 
         return {
@@ -564,16 +586,17 @@ export const SelectOneRadio = (tag, title, options) => {
         title: title,
         options: options,
         initial_value: options.value || options.choices[0].value,
+        hasNoPaddingTop: true,
 
         render: (val, change) => {
             return (
-                <FormGroup isInline data-field={tag} data-field-type="select-radio">
+                <Split hasGutter data-field={tag} data-field-type="select-radio">
                     { options.choices.map(c => (
                         <Radio key={c.value} isChecked={val == c.value} data-data={c.value}
                             id={tag + '.' + c.value}
                             onChange={event => change(c.value)} label={c.title} />))
                     }
-                </FormGroup>
+                </Split>
             );
         }
     };

@@ -37,7 +37,6 @@ AC_CONFIG_AUX_DIR([tools])
 AC_CONFIG_MACRO_DIR([tools])
 
 AM_INIT_AUTOMAKE([1.9 foreign dist-xz no-dist-gzip subdir-objects tar-pax])
-AM_MAINTAINER_MODE([enable])
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -113,13 +112,13 @@ COCKPIT_PCP_LIBS="$COCKPIT_LIBS"
 AC_SUBST(COCKPIT_PCP_CFLAGS)
 AC_SUBST(COCKPIT_PCP_LIBS)
 
-COCKPIT_SESSION_CFLAGS="$KRB5_CFLAGS"
-COCKPIT_SESSION_LIBS="$KRB5_LIBS"
+COCKPIT_SESSION_CFLAGS="$KRB5_CFLAGS $LIBSYSTEMD_CFLAGS"
+COCKPIT_SESSION_LIBS="$KRB5_LIBS $LIBSYSTEMD_LIBS"
 AC_SUBST(COCKPIT_SESSION_CFLAGS)
 AC_SUBST(COCKPIT_SESSION_LIBS)
 
-PAM_COCKPIT_CERT_CFLAGS="$COCKPIT_CFLAGS $LIBSYSTEMD_CFLAGS"
-PAM_COCKPIT_CERT_LIBS="$LIBSYSTEMD_LIBS"
+PAM_COCKPIT_CERT_CFLAGS="$COCKPIT_CFLAGS"
+PAM_COCKPIT_CERT_LIBS=""
 AC_SUBST(PAM_COCKPIT_CERT_CFLAGS)
 AC_SUBST(PAM_COCKPIT_CERT_LIBS)
 
@@ -236,7 +235,6 @@ AC_SUBST([systemdunitdir], [$systemdunitdir])
 
 GETTEXT_PACKAGE=cockpit
 AC_SUBST([GETTEXT_PACKAGE])
-AM_GLIB_GNU_GETTEXT
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
 AC_PATH_PROG(MSGCAT, msgcat)
@@ -255,11 +253,6 @@ if test -x "$MSGCAT" -a -x "$MSGFMT" -a -x "$MSGMERGE" -a -x "$MSGGREP" -a -x "$
 else
   AC_MSG_ERROR([no. Please install gettext tools])
 fi
-
-# go
-
-AC_PATH_PROG([GOLANG], [go])
-AM_CONDITIONAL([WITH_GOLANG], [test -n "$GOLANG"])
 
 # usermod
 #
@@ -559,7 +552,6 @@ echo "
         admin group:                ${admin_group}
         selinux config type:        ${COCKPIT_SELINUX_CONFIG_TYPE}
 
-        Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building docs:              ${enable_doc}
         Debug mode:                 ${debug_status}
         Node environment:           ${NODE_ENV}
@@ -576,4 +568,5 @@ echo "
         ssh-agent:                  ${SSH_AGENT}
         usermod:                    ${USERMOD}
         chcon:                      ${CHCON}
-"
+
+Now type 'make' to compile cockpit."

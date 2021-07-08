@@ -176,7 +176,11 @@ class TestConnection(MachineCase):
 
         # Lets crash a systemd-crontrolled process and see if we get a proper backtrace in the logs
         # This helps with debugging failures in the tests elsewhere
-        m.execute("systemctl start systemd-hostnamed; pkill -e -SEGV systemd-hostnam")
+        m.execute("""mkdir -p /run/systemd/system/systemd-hostnamed.service.d
+                     printf '[Service]\nLimitCORE=infinity\n' > /run/systemd/system/systemd-hostnamed.service.d/core.conf
+                     systemctl daemon-reload
+                     systemctl restart systemd-hostnamed
+                     pkill -e -SEGV systemd-hostnam""")
         wait(lambda: m.execute("journalctl -b | grep 'Process.*systemd-hostnam.*of user.*dumped core.'"))
 
         # Make sure the core dumps exist in the directory, so we can download them
@@ -343,7 +347,7 @@ class TestConnection(MachineCase):
 
         # has proper keyUsage and SAN (both with sscg and with self-signed)
         output = m.execute("openssl s_client -showcerts -connect 172.27.0.15:9090 |"
-                           "openssl x509 -in - -noout -ext keyUsage,extendedKeyUsage,subjectAltName")
+                           "openssl x509 -noout -ext keyUsage,extendedKeyUsage,subjectAltName")
         # keyUsage
         self.assertIn("Digital Signature", output)
         self.assertIn("Key Encipherment", output)
@@ -360,7 +364,7 @@ class TestConnection(MachineCase):
         # Some operating systems fail SSL3 on the server side
         self.assertRegex(output, "Secure Renegotiation IS NOT supported|"
                          "ssl handshake failure|"
-                         "Option unknown option -ssl3|"
+                         "[uU]nknown option.* -ssl3|"
                          "null ssl method passed|"
                          "wrong version number")
 
@@ -552,10 +556,9 @@ class TestConnection(MachineCase):
             if m.image.startswith("debian") or m.image.startswith("ubuntu"):
                 m.execute("dpkg --install /var/tmp/build-results/cockpit-ws_*.deb")
             else:
-                # FIXME: current package complains about mode change on /run/cockpit and selinux
-                m.execute("if rpm -q cockpit-ws; then rpm -V --nomode cockpit-ws; fi")
+                m.execute("if rpm -q cockpit-ws; then rpm --verify cockpit-ws; fi")
                 m.execute("rpm --upgrade --force /var/tmp/build-results/cockpit-ws-*.rpm")
-                m.execute("rpm -V --nomode cockpit-ws")
+                m.execute("rpm --verify cockpit-ws")
 
         def remove():
             if m.image.startswith("debian") or m.image.startswith("ubuntu"):

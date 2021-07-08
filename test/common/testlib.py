@@ -37,7 +37,6 @@ import time
 import unittest
 import gzip
 import inspect
-from dataclasses import dataclass
 
 import testvm
 import cdp
@@ -49,8 +48,9 @@ try:
 except ImportError:
     Image = None
 
-TEST_DIR = os.path.normpath(os.path.dirname(os.path.realpath(os.path.join(__file__, ".."))))
-BOTS_DIR = os.path.normpath(os.path.join(TEST_DIR, "..", "bots"))
+BASE_DIR = os.path.realpath(f'{__file__}/../../..')
+TEST_DIR = f'{BASE_DIR}/test'
+BOTS_DIR = f'{BASE_DIR}/bots'
 
 os.environ["PATH"] = "{0}:{1}:{2}".format(os.environ.get("PATH"), BOTS_DIR, TEST_DIR)
 
@@ -663,26 +663,25 @@ class Browser:
         if not (Image and self.pixels_label and self.cdp and self.cdp.valid):
             return
 
-        rect = self.call_js_func('ph_element_clip', selector)
+        self.call_js_func('ph_scrollIntoViewIfNeeded', selector)
 
-        @dataclass
-        class Rect:
-            x0: int
-            y0: int
-            x1: int
-            y1: int
+        rect = self.call_js_func('ph_element_clip', selector)
 
         def relative_clip(sel):
             r = self.call_js_func('ph_element_clip', sel)
-            return Rect(r['x'] - rect['x'],
-                        r['y'] - rect['y'],
-                        r['x'] - rect['x'] + r['width'],
-                        r['y'] - rect['y'] + r['height'])
+            return (r['x'] - rect['x'],
+                    r['y'] - rect['y'],
+                    r['x'] - rect['x'] + r['width'],
+                    r['y'] - rect['y'] + r['height'])
 
-        ignore_rects = list(map(relative_clip, ignore))
+        reference_dir = os.path.join(TEST_DIR, 'reference')
+        if not os.path.exists(os.path.join(reference_dir, '.git')):
+            subprocess.check_call([f'{TEST_DIR}/common/pixel-tests', 'pull'])
+
+        ignore_rects = list(map(relative_clip, map(lambda item: selector + " " + item, ignore)))
         base = self.pixels_label + "-" + key
         filename = base + "-pixels.png"
-        ref_filename = os.path.join(TEST_DIR, "reference", filename)
+        ref_filename = os.path.join(reference_dir, filename)
         ret = self.cdp.invoke("Page.captureScreenshot", clip=rect, no_trace=True)
         png_now = base64.standard_b64decode(ret["data"])
         png_ref = os.path.exists(ref_filename) and open(ref_filename, "rb").read()
@@ -706,7 +705,9 @@ class Browser:
             #
             # - The call to assert_pixels specifies a list of
             #   rectangles (via CSS selectors).  Pixels within those
-            #   rectangles are ignored.
+            #   rectangles (and slightly outside) are ignored.  Pixels
+            #   just outside the rectangles are also ignored to avoid
+            #   issues with rounding coordinates.
             #
             # - The RGB values of pixels can differ by up to 2.
             #
@@ -717,8 +718,8 @@ class Browser:
                 return ref[3] != 255
 
             def ignorable_coord(x, y):
-                for r in ignore_rects:
-                    if r and x >= r.x0 and x < r.x1 and y >= r.y0 and y < r.y1:
+                for (x0, y0, x1, y1) in ignore_rects:
+                    if x >= x0 - 2 and x < x1 + 2 and y >= y0 - 2 and y < y1 + 2:
                         return True
                 return False
 
@@ -861,15 +862,17 @@ class MachineCase(unittest.TestCase):
 
     def new_machine(self, image=None, forward={}, restrict=True, cleanup=True, **kwargs):
         machine_class = self.machine_class
-        if image is None:
-            image = self.image
         if opts.address:
             if machine_class or forward:
                 raise unittest.SkipTest("Cannot run this test when specific machine address is specified")
-            machine = testvm.Machine(address=opts.address, image=image, verbose=opts.trace, browser=opts.browser)
+            machine = testvm.Machine(address=opts.address, image=image or self.image, verbose=opts.trace, browser=opts.browser)
             if cleanup:
                 self.addCleanup(machine.disconnect)
         else:
+            if image is None:
+                image = os.path.join(TEST_DIR, "images", self.image)
+                if not os.path.exists(image):
+                    raise FileNotFoundError("Can't run tests without a prepared image; use test/image-prepare")
             if not machine_class:
                 machine_class = testvm.VirtMachine
             if not self.network:
@@ -890,7 +893,7 @@ class MachineCase(unittest.TestCase):
             machine = self.machine
         label = self.label() + "-" + machine.label
         pixels_label = None
-        if machine.image == testvm.TEST_OS_DEFAULT and os.environ.get("TEST_BROWSER", "chromium") == "chromium":
+        if machine.image == testvm.TEST_OS_DEFAULT and os.environ.get("TEST_BROWSER", "chromium") == "chromium" and not self.is_devel_build():
             pixels_label = self.label()
         browser = Browser(machine.web_address, label=label, pixels_label=pixels_label, port=machine.web_port)
         self.addCleanup(browser.kill)
@@ -904,6 +907,9 @@ class MachineCase(unittest.TestCase):
     def is_nondestructive(self):
         test_method = getattr(self.__class__, self._testMethodName)
         return getattr(test_method, "_testlib__non_destructive", False)
+
+    def is_devel_build(self):
+        return os.environ.get('NODE_ENV') == 'development'
 
     def disable_preload(self, *packages):
         for pkg in packages:
@@ -921,7 +927,9 @@ class MachineCase(unittest.TestCase):
 
     def system_before(self, version):
         try:
-            v = self.machine.execute("rpm -q --qf '%{V}' cockpit-system").split(".")
+            v = self.machine.execute("""rpm -q --qf '%{V}' cockpit-system ||
+                                        dpkg-query -W -f '${source:Upstream-Version}' cockpit-system
+                                     """).split(".")
         except subprocess.CalledProcessError:
             return False
 
@@ -1011,8 +1019,7 @@ class MachineCase(unittest.TestCase):
 
             # Pages with debug enabled are huge and loading/executing them is heavy for browsers
             # To make it easier for browsers and thus make tests quicker, disable packagekit and systemd preloads
-            # Only "TEST_OS_DEFAULT" has debug build enabled, see `build_and_install()` in `test/image-prepare`
-            if self.machine.image == testvm.TEST_OS_DEFAULT:
+            if self.is_devel_build():
                 self.disable_preload("packagekit", "systemd")
 
     def nonDestructiveSetup(self):
@@ -1259,28 +1266,7 @@ class MachineCase(unittest.TestCase):
         if "TEST_AUDIT_NO_SELINUX" not in os.environ:
             messages += machine.audit_messages("14", cursor=cursor)  # 14xx is selinux
 
-        if self.image.startswith('debian'):
-            # Debian images don't have any non-C locales (mostly deliberate, to test this scenario somewhere)
-            self.allowed_messages.append("invalid or unusable locale: .*")
-
-        if self.image.startswith('fedora') or self.image.startswith('rhel-9'):
-            # Fedora and RHEL 9 have switched to dbus-broker
-            self.allowed_messages.append("dbus-daemon didn't send us a dbus address; not installed?.*")
-
-        if self.image in ['fedora-34', 'rhel-9-0']:
-            # HACK: https://bugzilla.redhat.com/show_bug.cgi?id=1929259
-            self.allow_journal_messages('audit:.*denied.*comm="pmdakvm" lockdown_reason="debugfs access".*')
-
-        if self.image in ['debian-testing', 'ubuntu-stable']:
-            # HACK: https://bugs.debian.org/951477
-            self.allowed_messages.append(r'Process .* \(ip6?tables\) of user 0 dumped core.*')
-            self.allowed_messages.append(r'Process .* \(iptables-restor\) of user 0 dumped core.*')
-            self.allowed_messages.append(r'Process .* \(ip6tables-resto\) of user 0 dumped core.*')
-            self.allowed_messages.append(r'Process .* \(ebtables\) of user 0 dumped core.*')
-            # don't ignore all stack traces
-            self.allowed_messages.append('^#[0-9]+ .*(nftnl|xtables-nft|__libc_start_main).*')
-            # but we have to ignore that general header line
-            self.allowed_messages.append('^Stack trace of.*')
+        self.allowed_messages += self.machine.allowed_messages()
 
         all_found = True
         first = None
@@ -1615,7 +1601,7 @@ def checkRunAxe():
         return False
 
     # when running from release tarballs, module is not available
-    if not os.path.exists(os.path.join(TEST_DIR, "common/axe.js")):
+    if not os.path.exists(f'{BASE_DIR}/node_modules/axe-core/axe.js'):
         sys.stderr.write('# enableAxe: axe is not installed, skipping\n')
         return False
 
@@ -1629,7 +1615,7 @@ def enableAxe(method):
         return method
 
     def wrapper(*args):
-        with open(os.path.join(TEST_DIR, "common/axe.js")) as f:
+        with open(f'{BASE_DIR}/node_modules/axe-core/axe.js') as f:
             script = f.read()
         # first method argument is "self", a MachineCase instance
         args[0].browser.cdp.invoke("Page.addScriptToEvaluateOnNewDocument", source=script, no_trace=True)

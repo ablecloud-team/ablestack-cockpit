@@ -16,7 +16,7 @@
 #
 
 # This file is maintained at the following location:
-# https://github.com/cockpit-project/cockpit/blob/master/tools/cockpit.spec
+# https://github.com/cockpit-project/cockpit/blob/main/tools/cockpit.spec
 #
 # If you are editing this file in another location, changes will likely
 # be clobbered the next time an automated release is done.
@@ -41,8 +41,8 @@
 
 %define __lib lib
 
-%if 0%{?suse_version}
-%define pamdir /%{_lib}/security
+%if %{defined _pamdir}
+%define pamdir %{_pamdir}
 %else
 %define pamdir %{_libdir}/security
 %endif
@@ -210,6 +210,8 @@ install -D -p -m 644 AUTHORS COPYING README.md %{buildroot}%{_docdir}/cockpit/
     install -D -m 644 %{name}.pp.bz2 %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
     install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_session_selinux.8cockpit
     install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_ws_selinux.8cockpit
+    # create this directory in the build root so that %ghost sees the desired mode
+    install -d -m 700 %{buildroot}%{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
 %endif
 
 # only ship deprecated PatternFly API for stable releases
@@ -315,8 +317,6 @@ sed -i "s|%{buildroot}||" *.list
 pushd %{buildroot}/%{_datadir}/cockpit/branding
 find -L * -type l -printf "%H\n" | sort -u | xargs rm -rv
 popd
-# need this in SUSE as post build checks dislike stale symlinks
-install -m 644 -D /dev/null %{buildroot}/run/cockpit/motd
 %else
 %global _debugsource_packages 1
 %global _debuginfo_subpackages 0
@@ -471,7 +471,6 @@ authentication via sssd/FreeIPA.
 %doc %{_mandir}/man8/cockpit-ws.8.gz
 %doc %{_mandir}/man8/cockpit-tls.8.gz
 %doc %{_mandir}/man8/remotectl.8.gz
-%doc %{_mandir}/man8/pam_cockpit_cert.8.gz
 %doc %{_mandir}/man8/pam_ssh_add.8.gz
 %dir %{_sysconfdir}/cockpit
 %config(noreplace) %{_sysconfdir}/cockpit/ws-certs.d
@@ -479,8 +478,6 @@ authentication via sssd/FreeIPA.
 # created in %post, so that users can rm the files
 %ghost %{_sysconfdir}/issue.d/cockpit.issue
 %ghost %{_sysconfdir}/motd.d/cockpit
-%ghost /run/cockpit/motd
-%ghost %dir /run/cockpit
 %dir %{_datadir}/cockpit/motd
 %{_datadir}/cockpit/motd/update-motd
 %{_datadir}/cockpit/motd/inactive.motd
@@ -547,6 +544,14 @@ fi
 %systemd_post cockpit.socket cockpit.service
 # firewalld only partially picks up changes to its services files without this
 test -f %{_bindir}/firewall-cmd && firewall-cmd --reload --quiet || true
+
+# check for deprecated PAM config
+if grep --color=auto pam_cockpit_cert {_sysconfdir}/pam.d/cockpit; then
+    echo '**** WARNING:'
+    echo '**** WARNING: pam_cockpit_cert is a no-op and will be removed in a'
+    echo '**** WARNING: future release; remove it from your /etc/pam.d/cockpit.'
+    echo '**** WARNING:'
+fi
 
 %preun ws
 %systemd_preun cockpit.socket cockpit.service
@@ -682,7 +687,7 @@ These files are not required for running Cockpit.
 %package -n cockpit-pcp
 Summary: Cockpit PCP integration
 Requires: cockpit-bridge >= %{required_base}
-Requires(post): pcp
+Requires: pcp
 
 %description -n cockpit-pcp
 Cockpit support for reading PCP metrics and loading PCP archives.
@@ -700,6 +705,8 @@ BuildArch: noarch
 Requires: cockpit-bridge >= %{required_base}
 Requires: PackageKit
 Recommends: python3-tracer
+# HACK: https://bugzilla.redhat.com/show_bug.cgi?id=1800468
+Requires: polkit
 
 %description -n cockpit-packagekit
 The Cockpit components for installing OS updates and Cockpit add-ons,

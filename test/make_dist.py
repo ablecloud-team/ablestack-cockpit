@@ -20,7 +20,6 @@ import multiprocessing
 import os
 import subprocess
 import sys
-import time
 import argparse
 
 
@@ -46,66 +45,21 @@ def build_dist():
             subprocess.check_call('./autogen.sh')
 
     # this is for a development build, not a release, so we care about speed, not best size
-    subprocess.check_call(["make", "--silent", "-j%i" % multiprocessing.cpu_count(),
-                           "NO_DIST_CACHE=1", "XZ_COMPRESS_FLAGS=-0", "dist"])
+    subprocess.check_call(["make", "--silent", "-j%i" % multiprocessing.cpu_count(), "XZ_OPT=-0", "dist"])
     return subprocess.check_output(["make", "dump-dist"], universal_newlines=True).strip()
 
 
 def download_cache(wait=False):
-    '''Download pre-built webpack for current git SHA from GitHub
+    cmd = ['tools/webpack-jumpstart']
+    if wait:
+        cmd.append('--wait')
 
-    These are produced by .github/workflows/build-dist.yml for every PR and push.
-    This is a lot faster than having to npm install and run webpack.
-
-    Returns True when successful, or False if the download isn't available.
-    This can happen because dist/ already exists, or the current directory is not a git checkout,
-    or it is a SHA which is not pushed/PRed.
-    '''
     try:
-        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL).decode().strip()
+        subprocess.check_call(cmd)
+        return True
     except subprocess.CalledProcessError:
-        message("make_dist: not a git repository")
+        message("make_dist: Downloading pre-built dist failed")
         return False
-
-    if subprocess.call(["git", "diff", "--quiet", "--", ":^test", ":^packit.yaml", ":^.github"]) > 0:
-        message("make_dist: uncommitted local changes, skipping download")
-        return False
-
-    dist_git_checkout = os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "cockpit-dev", CACHE_REPO + ".git")
-
-    if not os.path.exists(dist_git_checkout):
-        message(f"make_dist: Creating dist cache {dist_git_checkout}")
-        subprocess.check_call(["git", "init", "--bare", "--quiet", dist_git_checkout])
-        subprocess.check_call(["git", "--git-dir", dist_git_checkout, "remote", "add", "origin", "https://github.com/" + CACHE_REPO])
-
-    tag = "sha-" + sha
-
-    retries = 50 if wait else 1  # 25 minutes, once every 30s
-    while retries > 0:
-        try:
-            subprocess.check_call(["git", "--git-dir", dist_git_checkout, "fetch", "--no-tags", "--depth=1", "origin", "tag", tag])
-            break
-        except subprocess.CalledProcessError:
-            retries -= 1
-
-            if retries == 0:
-                message(f"make_dist: Downloading pre-built dist for SHA {sha} failed")
-                return False
-
-            message(f"make_dist: pre-built dist for {sha} not yet available, waiting...")
-            time.sleep(30)
-
-    for unpack_path in ["node_modules", "package-lock.json", "dist", "tools/debian/copyright"]:
-        if os.path.exists(unpack_path):
-            continue
-        message(f"make_dist: Extracting cached {unpack_path}...")
-        p_git = subprocess.Popen(["git", "--git-dir", dist_git_checkout, "archive", tag, unpack_path],
-                                 stdout=subprocess.PIPE)
-        subprocess.check_call(["tar", "-x", "--touch"], stdin=p_git.stdout)
-        result = p_git.wait()
-        assert result == 0
-
-    return True
 
 
 def make_dist(download_only=False, wait_download=False):

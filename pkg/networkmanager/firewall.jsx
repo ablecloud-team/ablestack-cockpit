@@ -44,7 +44,6 @@ import { FirewallSwitch } from "./firewall-switch.jsx";
 import { superuser } from "superuser";
 
 import "page.scss";
-import "table.css";
 import "form-layout.scss";
 import "./networking.scss";
 
@@ -185,6 +184,7 @@ function ZoneSection(props) {
         {props.zone.services.length > 0 &&
         <CardBody className="contains-list">
             <ListingTable columns={[{ title: _("Service"), props: { width: 40 } }, { title: _("TCP"), props: { width: 30 } }, { title: _("UDP"), props: { width: 30 } }]}
+                          id={props.zone.id}
                           aria-label={props.zone.id}
                           variant="compact"
                           emptyCaption={_("There are no active services in this zone")}
