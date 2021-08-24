@@ -106,7 +106,7 @@ const info = {
             "systemd/services/services.scss",
         ],
         "systemd/logs": [
-            "systemd/logs.js",
+            "systemd/logs.jsx",
             "systemd/logs.scss",
         ],
         "systemd/overview": [
@@ -247,7 +247,6 @@ const TerserJSPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CockpitPoPlugin = require("./pkg/lib/cockpit-po-plugin");
-const IncludedModulesPlugin = require("./pkg/lib/included-modules-plugin");
 
 /* These can be overridden, typically from the Makefile.am */
 const srcdir = process.env.SRCDIR || __dirname;
@@ -340,7 +339,6 @@ function get_translation_reference_patterns () {
 }
 
 const plugins = [
-    new IncludedModulesPlugin((section || "") + "included-modules"),
     new copy({ patterns: info.files }),
     new miniCssExtractPlugin({ filename: "[name].css" }),
     new CockpitPoPlugin({
@@ -378,7 +376,6 @@ info.tests.forEach(test => {
 });
 
 const aliases = {
-    "moment": "moment/moment.js",
     "font-awesome": path.resolve(nodedir, 'font-awesome-sass/assets/stylesheets'),
 };
 
@@ -413,7 +410,7 @@ module.exports = {
     optimization: {
         minimize: production,
         minimizer: [
-           new TerserJSPlugin({ extractComments: false }),
+           new TerserJSPlugin(),
            new CssMinimizerPlugin({
                minimizerOptions: {
                    preset: ['lite']

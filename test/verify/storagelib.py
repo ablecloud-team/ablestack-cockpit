@@ -102,7 +102,7 @@ class StorageHelpers:
             b.wait_visible(tbody + ".pf-m-expanded")
 
     def content_row_action(self, index, title):
-        btn = self.content_row_tbody(index) + " tr td:last-child button:contains(%s)" % title
+        btn = self.content_row_tbody(index) + " tr:first-child td button:contains(%s)" % title
         self.browser.click(btn)
 
     # The row might come and go a couple of times until it has the
@@ -113,14 +113,8 @@ class StorageHelpers:
         col = self.content_row_tbody(row_index) + " tr:first-child > :nth-child(%d)" % (col_index + 1)
         wait(lambda: self.browser.is_present(col) and val in self.browser.text(col))
 
-    def content_head_action(self, index, title):
-        self.content_row_expand(index)
-        btn = self.content_row_tbody(index) + " .ct-listing-panel-actions button:contains(%s)" % title
-        self.browser.click(btn)
-
     def content_dropdown_action(self, index, title):
-        self.content_row_expand(index)
-        dropdown = self.content_row_tbody(index) + " .ct-listing-panel-actions .pf-c-dropdown"
+        dropdown = self.content_row_tbody(index) + " tr td:last-child .pf-c-dropdown"
         self.browser.click(dropdown + " button.pf-c-dropdown__toggle")
         self.browser.click(dropdown + " a:contains('%s')" % title)
 
@@ -283,11 +277,11 @@ class StorageHelpers:
     def dialog_is_present(self, field, label):
         return self.browser.is_present('%s :contains("%s") input' % (self.dialog_field(field), label))
 
-    def dialog_wait_val(self, field, val):
+    def dialog_wait_val(self, field, val, unit="1048576"):
         sel = self.dialog_field(field)
         ftype = self.browser.attr(sel, "data-field-type")
         if ftype == "size-slider":
-            self.browser.wait_val(sel + " .size-unit", "1048576")
+            self.browser.wait_val(sel + " .size-unit", unit)
             self.browser.wait_val(sel + " .size-text", str(val))
         elif ftype == "select":
             self.browser.wait_attr(sel, "data-value", val)
@@ -471,3 +465,6 @@ class StorageCase(MachineCase, StorageHelpers):
             self.mount_root = "/media"
         else:
             self.mount_root = "/run/media"
+
+        # Something unknown sometimes goes wrong with PCP, see #15625
+        self.allow_journal_messages("pcp-archive: no such metric: disk.*")

@@ -91,12 +91,20 @@ opts.jobs = 1
 opts.fetch = True
 
 
-def attach(filename):
+def attach(filename, move=False):
+    '''Put a file into the attachments directory
+
+    By default the file gets copied. You can set move=True for dynamically generated
+    files which are not touched by parallel tests.
+    '''
     if not opts.attachments:
         return
     dest = os.path.join(opts.attachments, os.path.basename(filename))
     if os.path.exists(filename) and not os.path.exists(dest):
-        shutil.move(filename, dest)
+        if move:
+            shutil.move(filename, dest)
+        else:
+            shutil.copy(filename, dest)
 
 
 class Browser:
@@ -303,6 +311,7 @@ class Browser:
             9: "Tab",         # Tab key
             13: "Enter",      # Enter key
             27: "Escape",     # Escape key
+            37: "ArrowLeft",  # Arrow key left
             40: "ArrowDown",  # Arrow key down
             45: "Insert",     # Insert key
         }
@@ -325,10 +334,13 @@ class Browser:
         self.wait_val(selector, value)
 
     def select_PF4(self, selector, value):
-        self.click(selector + ':not([disabled]):not([aria-disabled=true])')
-        select_entry = "{0} + ul button:contains({1})".format(selector, value)
+        self.click(f"{selector}:not([disabled]):not([aria-disabled=true])")
+        select_entry = f"{selector} + ul button:contains('{value}')"
         self.click(select_entry)
-        self.wait_text(selector + " .pf-c-select__toggle-text", value)
+        if self.is_present(f"{selector}.pf-m-typeahead"):
+            self.wait_val(f"{selector} > div input[type=text]", value)
+        else:
+            self.wait_text(f"{selector} .pf-c-select__toggle-text", value)
 
     def set_input_text(self, selector, val, append=False, value_check=True):
         self.focus(selector)
@@ -457,6 +469,10 @@ class Browser:
     def wait_text_not(self, selector, text):
         self.wait_visible(selector)
         self.wait_js_func('!ph_text_is', selector, text)
+
+    def wait_text_matches(self, selector, pattern):
+        self.wait_visible(selector)
+        self.wait_js_func('ph_text_matches', selector, pattern)
 
     def wait_popup(self, id):
         """Wait for a popup to open.
@@ -644,7 +660,7 @@ class Browser:
             if "data" in ret:
                 with open(filename, 'wb') as f:
                     f.write(base64.standard_b64decode(ret["data"]))
-                attach(filename)
+                attach(filename, move=True)
                 print("Wrote screenshot to " + filename)
             else:
                 print("Screenshot not available")
@@ -654,7 +670,7 @@ class Browser:
                                    no_trace=True)["result"]["value"]
             with open(filename, 'wb') as f:
                 f.write(html.encode('UTF-8'))
-            attach(filename)
+            attach(filename, move=True)
             print("Wrote HTML dump to " + filename)
 
     def assert_pixels(self, selector, key, ignore=[]):
@@ -688,7 +704,7 @@ class Browser:
         if not png_ref:
             with open(filename, 'wb') as f:
                 f.write(png_now)
-            attach(filename)
+            attach(filename, move=True)
             print("New pixel test reference " + filename)
             self.failed_pixel_tests += 1
         else:
@@ -753,13 +769,13 @@ class Browser:
                     # without further changes
                     img_now.putalpha(img_ref.getchannel("A"))
                 img_now.save(filename)
-                attach(filename)
+                attach(filename, move=True)
                 ref_filename_for_attach = base + "-reference.png"
                 img_ref.save(ref_filename_for_attach)
-                attach(ref_filename_for_attach)
+                attach(ref_filename_for_attach, move=True)
                 delta_filename = base + "-delta.png"
                 img_delta.save(delta_filename)
-                attach(delta_filename)
+                attach(delta_filename, move=True)
                 print("Differences in pixel test " + base)
                 self.failed_pixel_tests += 1
 
@@ -778,7 +794,7 @@ class Browser:
             filename = "{0}-{1}.js.log".format(label or self.label, title)
             with open(filename, 'wb') as f:
                 f.write('\n'.join(logs).encode('UTF-8'))
-            attach(filename)
+            attach(filename, move=True)
             print("Wrote JS log to " + filename)
 
     def kill(self):
@@ -1176,12 +1192,6 @@ class MachineCase(unittest.TestCase):
         r"#1\) Respect the privacy of others.",
         r"#2\) Think before you type.",
         r"#3\) With great power comes great responsibility.",
-
-        # Something unknown sometimes goes wrong with PCP, see #15625
-        "pcp-archive: instance name lookup failed: .*",
-        "direct: instance name lookup failed: .*",
-        "pcp-archive: couldn't create pcp archive context for.*",
-        "pcp-archive: no such metric: .*"
     ]
 
     default_allowed_messages += os.environ.get("TEST_ALLOW_JOURNAL_MESSAGES", "").split(",")
@@ -1375,7 +1385,7 @@ class MachineCase(unittest.TestCase):
         with gzip.open(filename, "wb") as f:
             f.write(json.dumps(report).encode('UTF-8'))
         print("Wrote accessibility report to " + filename)
-        attach(filename)
+        attach(filename, move=True)
 
         # aXe triggers that *shrug*
         self.allow_journal_messages("received invalid message without channel prefix")
@@ -1410,7 +1420,7 @@ class MachineCase(unittest.TestCase):
                 with open(log, "w") as fp:
                     m.execute("journalctl|gzip", stdout=fp)
                     print("Journal extracted to %s" % (log))
-                    attach(log)
+                    attach(log, move=True)
 
     def copy_cores(self, title, label=None):
         if self.allow_core_dumps:
@@ -1429,7 +1439,7 @@ class MachineCase(unittest.TestCase):
                     if ex.errno == errno.ENOTEMPTY:
                         print("Core dumps downloaded to %s" % (dest))
                         # Enable this to temporarily(!) create artifacts for core dumps, if a crash is hard to reproduce
-                        # attach(dest)
+                        # attach(dest, move=True)
 
     def settle_cpu(self):
         '''Wait until CPU usage in the VM settles down

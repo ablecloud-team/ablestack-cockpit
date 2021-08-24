@@ -70,46 +70,28 @@ EXTRA_DIST += \
 	$(GUIDE_INCLUDES) \
 	$(GUIDE_XSLT) \
 	$(GUIDE_STATIC) \
-	dist/guide/html \
-	dist/guide/links.html \
-	dist/guide/index.html \
-	doc/guide/directory.html \
-	doc/guide/footer.html \
-	doc/guide/version.in \
 	$(NULL)
 
 if ENABLE_DOC
 
-# we require fonts from `npm install` to build the docs
-noinst_DATA += $(GUIDE_HTML($SKIP_NODE))
+noinst_DATA += dist/guide/html/index.html
 
-GUIDE_HTML = \
-	dist/guide/html/index.html \
-	dist/guide/index.html
-
-EXTRA_DIST += $(GUIDE_FONTS)
-dist/guide/html/%.woff2: package-lock.json
-	@mkdir -p dist/guide/html
-	cp -L $(top_srcdir)/node_modules/@redhat/redhat-font/webfonts/RedHatText/$(notdir $@) $@
+dist/guide/html/%.woff2: dist/static/manifest.json
+	@target='$(dir $@)'; \
+	source='dist/static/fonts/$(notdir $@)'; \
+	printf '  %-8s %s → %s\n' 'COPY' "$${source}" "$${target}"; \
+	mkdir -p "$${target}" && \
+	cp "$(top_srcdir)/$${source}" "$${target}"
 
 dist/guide/html/index.html: $(GUIDE_DOCBOOK) $(GUIDE_INCLUDES) $(GUIDE_STATIC) $(GUIDE_XSLT) $(GUIDE_FONTS)
 	$(AM_V_GEN) $(MKDIR_P) dist/guide/html/ && \
-	cp $(addprefix $(srcdir)/,$(GUIDE_STATIC)) dist/guide/html/
-	$(AM_V_GEN) LANG=C.UTF-8 $(XMLTO) html -m $(srcdir)/doc/guide/gtk-doc.xsl -o dist/guide/html/ \
+	cp $(addprefix $(srcdir)/,$(GUIDE_STATIC)) dist/guide/html/ && \
+	LANG=C.UTF-8 $(XMLTO) html -m $(srcdir)/doc/guide/gtk-doc.xsl -o dist/guide/html/ \
 		--searchpath $(abs_builddir):$(abs_srcdir):$(abs_builddir)/doc/guide \
-		$(srcdir)/$(GUIDE_DOCBOOK)
+		$(srcdir)/$(GUIDE_DOCBOOK) && \
 	rm -f dist/guide/html/cockpit-guide.proc
 
 dist/guide/html: dist/guide/html/index.html
-
-dist/guide/links.html:
-	$(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
-	(git -C $(srcdir) tag -l '[0-9]*' --sort=-version:refname --format \
-		'<a href="./%(refname:strip=2)/">%(refname:strip=2)</a>' | head -n15 || true) > $@.tmp && \
-	$(MV) $@.tmp $@
-
-dist/guide/index.html: doc/guide/directory.html dist/guide/links.html doc/guide/footer.html
-	$(CAT_RULE)
 
 check-local::
 	if grep -n -r 'name=\"id' dist/guide/html >&2; then \

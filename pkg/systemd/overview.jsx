@@ -20,7 +20,6 @@
 import '../lib/patternfly/patternfly-cockpit.scss';
 import 'polyfills';
 import cockpit from "cockpit";
-import moment from "moment";
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -183,7 +182,7 @@ class OverviewPage extends React.Component {
 
         const pretty_hostname = this.state.hostnameData.PrettyHostname;
         const static_hostname = this.state.hostnameData.StaticHostname;
-        let str = this.state.hostnameData.HostName;
+        let str = this.state.hostnameData.Hostname;
 
         if (pretty_hostname && static_hostname && static_hostname != pretty_hostname)
             str = pretty_hostname + " (" + static_hostname + ")";
@@ -251,7 +250,7 @@ class OverviewPage extends React.Component {
                     <PageSection className='ct-overview-header' variant={PageSectionVariants.light}>
                         <div className='ct-overview-header-hostname'>
                             <h1>
-                                {this.hostname_text() || ""}
+                                {this.hostname_text()}
                             </h1>
                             {this.state.hostnameData &&
                              this.state.hostnameData.OperatingSystemPrettyName &&
@@ -281,7 +280,6 @@ class OverviewPage extends React.Component {
 
 function init() {
     cockpit.translate();
-    moment.locale(cockpit.language);
     ReactDOM.render(<OverviewPage />, document.getElementById("overview"));
 }
 

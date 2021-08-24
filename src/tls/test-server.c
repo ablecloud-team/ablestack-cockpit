@@ -58,7 +58,7 @@ const unsigned server_port = 9123;
 typedef struct {
   gchar *ws_socket_dir;
   gchar *runtime_dir;
-  gchar *cert_file_path;
+  gchar *cgroup_line;
   GPid ws_spawner;
   struct sockaddr_in server_addr;
 } TestCase;
@@ -118,6 +118,42 @@ block_sigchld (void)
 {
   const struct sigaction child_action = { .sa_handler = SIG_DFL };
   g_assert_cmpint (sigaction (SIGCHLD, &child_action, NULL), ==, 0);
+}
+
+/* check if we have a client certificate for a given cgroup */
+static bool
+check_for_certfile (TestCase *tc,
+                    char **out_contents)
+{
+  g_autoptr(GDir) dir = g_dir_open (tc->runtime_dir, 0, NULL);
+  g_assert (dir != NULL);
+
+  const char *name;
+  while ((name = g_dir_read_name (dir)))
+    {
+      g_autofree char *filename = g_build_filename (tc->runtime_dir, name, NULL);
+
+      g_autofree char *contents = NULL;
+      g_autoptr(GError) error = NULL;
+      if (!g_file_get_contents (filename, &contents, NULL, &error))
+        {
+          /* files are flying around all the time: this might reasonably fail */
+          if (g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+            continue;
+          g_assert_no_error (error);
+          g_assert_not_reached ();
+        }
+
+      if (g_str_has_prefix (contents, tc->cgroup_line))
+        {
+          if (out_contents)
+            *out_contents = g_steal_pointer (&contents);
+
+          return true;
+        }
+    }
+
+  return false;
 }
 
 static int
@@ -273,22 +309,20 @@ assert_https_outcome (TestCase *tc,
         }
 
       /* check client certificate in state dir */
-      if (fixture && fixture->client_crt)
+      if (fixture && fixture->client_crt && tc->cgroup_line)
         {
-
           if (fixture->cert_request_mode != GNUTLS_CERT_IGNORE)
             {
               g_autofree char *cert_file = NULL;
               g_autofree char *expected_pem = NULL;
 
-              g_assert (g_file_get_contents (tc->cert_file_path, &cert_file, NULL, NULL));
+              g_assert (check_for_certfile (tc, &cert_file));
               g_assert (g_file_get_contents (fixture->client_crt, &expected_pem, NULL, NULL));
-              g_assert_cmpstr (g_strchomp (cert_file), ==, g_strchomp (expected_pem));
+              g_assert (g_str_has_suffix (cert_file, expected_pem));
             }
           else
             {
-              g_assert_cmpint (access (tc->cert_file_path, F_OK), ==, -1);
-              g_assert_cmpint (errno, ==, ENOENT);
+              g_assert (!check_for_certfile (tc, NULL));
             }
         }
 
@@ -305,8 +339,7 @@ assert_https_outcome (TestCase *tc,
   g_assert_cmpint (status, ==, 0);
 
   /* cleans up client certificate after closing connection */
-  g_assert_cmpint (access (tc->cert_file_path, F_OK), ==, -1);
-  g_assert_cmpint (errno, ==, ENOENT);
+  g_assert (!check_for_certfile (tc, NULL));
 }
 
 static void
@@ -326,16 +359,18 @@ setup (TestCase *tc, gconstpointer data)
   tc->ws_socket_dir = g_dir_make_tmp ("server.wssock.XXXXXX", NULL);
   g_assert (tc->ws_socket_dir);
 
-  tc->runtime_dir = g_dir_make_tmp ("server.runtime.XXXXXX", NULL);
+  /* This absolutely must be on a real filesystem: overlayfs (as often
+   * seen for /tmp in containers) doesn't work.  /dev/shm is always
+   * tmpfs, which works nicely (and matches what we expect to be at /run
+   * when we use this code in production).
+   */
+  char runtime_dir_template[] = "/dev/shm/server.runtime.XXXXXX";
+  tc->runtime_dir = g_mkdtemp (runtime_dir_template);
   g_assert (tc->runtime_dir);
+  tc->runtime_dir = g_strdup (tc->runtime_dir);
 
-  const char *fingerprint;
   if (fixture && fixture->client_fingerprint)
-    fingerprint = fixture->client_fingerprint;
-  else
-    fingerprint = SHA256_NIL;
-  tc->cert_file_path = g_build_filename (tc->runtime_dir, fingerprint, NULL);
-  g_assert (tc->cert_file_path);
+    tc->cgroup_line = g_strdup_printf ("0::/system.slice/system-cockpithttps.slice/cockpit-wsinstance-https@%s.service\n", fixture->client_fingerprint);
 
   gchar* sah_argv[] = { SOCKET_ACTIVATION_HELPER, COCKPIT_WS, tc->ws_socket_dir, NULL };
   if (!g_spawn_async (NULL, sah_argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &tc->ws_spawner, &error))
@@ -392,7 +427,7 @@ teardown (TestCase *tc, gconstpointer data)
   g_assert_cmpint (g_rmdir (tc->ws_socket_dir), ==, 0);
   g_free (tc->ws_socket_dir);
 
-  g_free (tc->cert_file_path);
+  g_free (tc->cgroup_line);
 
   g_assert_cmpint (g_rmdir (tc->runtime_dir), ==, 0);
   g_free (tc->runtime_dir);
@@ -615,8 +650,7 @@ test_tls_client_cert_parallel (TestCase *tc, gconstpointer data)
                                                              GNUTLS_X509_FMT_PEM),
                        ==, GNUTLS_E_SUCCESS);
 
-      g_assert_cmpint (access (tc->cert_file_path, F_OK), ==, -1);
-      g_assert_cmpint (errno, ==, ENOENT);
+      g_assert (!check_for_certfile (tc, NULL));
 
       /* start parallel connections; we don't actually need to send/receive anything (i. e. talk to cockpit-ws) --
        * certificate export and refcounting is entirely done on the client → cockpit-tls side */
@@ -655,14 +689,14 @@ test_tls_client_cert_parallel (TestCase *tc, gconstpointer data)
                 {
                   for (int retry = 0; retry < 100; ++retry)
                     {
-                      if (access (tc->cert_file_path, F_OK) == 0)
+                      if (check_for_certfile (tc, NULL))
                         break;
                       g_usleep (10000);
                     }
                 }
             }
 
-          g_assert_cmpint (access (tc->cert_file_path, F_OK), ==, 0);
+          g_assert (check_for_certfile (tc, NULL));
         }
 
       /* close the connections again, all but the last one */
@@ -683,7 +717,7 @@ test_tls_client_cert_parallel (TestCase *tc, gconstpointer data)
             {
               g_assert_cmpint (retry, <, 100);
 
-              if (access (tc->cert_file_path, F_OK) == 0)
+              if (check_for_certfile (tc, NULL))
                 break;
               g_usleep (10000);
             }
@@ -693,7 +727,7 @@ test_tls_client_cert_parallel (TestCase *tc, gconstpointer data)
           /* In the "alternate" case there should be no such strange
            * races.
            */
-          g_assert_cmpint (access (tc->cert_file_path, F_OK), ==, 0);
+          g_assert (check_for_certfile (tc, NULL));
         }
 
       /* closing last connection removes it */
@@ -701,11 +735,11 @@ test_tls_client_cert_parallel (TestCase *tc, gconstpointer data)
       close (fds[n_connections - 1]);
       for (int retry = 0; retry < 100; ++retry)
         {
-          if (access (tc->cert_file_path, F_OK) < 0)
+          if (!check_for_certfile (tc, NULL))
             break;
           g_usleep (10000);
         }
-      g_assert_cmpint (access (tc->cert_file_path, F_OK), ==, -1);
+      g_assert (!check_for_certfile (tc, NULL));
       exit (0);
     }
 

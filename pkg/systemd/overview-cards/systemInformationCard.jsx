@@ -18,10 +18,10 @@
  */
 import React from 'react';
 import { Card, CardBody, CardFooter, CardTitle } from '@patternfly/react-core';
-import moment from 'moment';
 
 import cockpit from "cockpit";
 import * as machine_info from "machine-info.js";
+import * as timeformat from "timeformat.js";
 
 import "./systemInformationCard.scss";
 
@@ -70,7 +70,7 @@ export class SystemInfomationCard extends React.Component {
         var self = this;
 
         machine_info.dmi_info()
-                .then(function(fields) {
+                .then(fields => {
                     let vendor = fields.sys_vendor;
                     let name = fields.product_name;
                     if (!vendor || !name) {
@@ -83,10 +83,16 @@ export class SystemInfomationCard extends React.Component {
                         self.setState({ hardwareText: vendor + " " + name });
 
                     self.setState({ assetTagText: fields.product_serial || fields.chassis_serial });
-                }, function(ex) {
-                    // FIXME show proper Alerts
-                    console.debug("couldn't read dmi info: " + ex);
-                    self.setState({ assetTagText: undefined, hardwareText: undefined });
+                })
+                .catch(ex => {
+                    // try DeviceTree
+                    machine_info.devicetree_info()
+                            .then(fields => self.setState({ assetTagText: fields.serial, hardwareText: fields.model }))
+                            .catch(dmiex => {
+                                console.debug("couldn't read dmi info: " + ex);
+                                console.debug("couldn't read DeviceTree info: " + dmiex.toString());
+                                self.setState({ assetTagText: undefined, hardwareText: undefined });
+                            });
                 });
     }
 
@@ -94,7 +100,8 @@ export class SystemInfomationCard extends React.Component {
         cockpit.file("/proc/uptime").read()
                 .then(content => {
                     const uptime = parseFloat(content.split(' ')[0]);
-                    this.setState({ systemUptime: moment.duration(uptime * 1000).humanize() });
+                    const bootTime = new Date().valueOf() - uptime * 1000;
+                    this.setState({ systemUptime: timeformat.distanceToNow(bootTime) });
                 })
                 .fail(ex => console.error("Error reading system uptime", ex));
     }

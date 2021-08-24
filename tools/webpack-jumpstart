@@ -17,9 +17,22 @@ set -eu
 cd "$(realpath -m "$0"/../..)"
 . tools/git-utils.sh
 
-[ -n "${quiet}" ] || set -x
+wait=''
+rebase=''
+while [ $# != 0 ] ; do
+    case "$1" in
+        --wait)
+            wait=1;;
+        --rebase)
+            rebase=1;;
+        *)
+            echo "usage: $0 [--rebase] [--wait]" >&2
+            exit 1
+    esac
+    shift
+done
 
-tools/node-modules make_package_lock_json
+[ -n "${quiet}" ] || set -x
 
 if [ -e dist ]; then
     echo "jumpstart: dist/ already exists, skipping" >&2
@@ -41,7 +54,7 @@ for try in $(seq 50 -1 0); do
     if fetch_to_cache tag "${tag}"; then
         break
     fi
-    if [ "${1-}" != '--wait' -o "$try" = '0' ]; then
+    if [ -z "${wait}" -o "$try" = '0' ]; then
         echo "There is no cache entry ${tag}" >&2
         exit 1
     fi
@@ -49,9 +62,31 @@ for try in $(seq 50 -1 0); do
     sleep 30s
 done
 
-if ! cmp_from_cache "${tag}" "package-lock.json" "package-lock.json"; then
-    echo "The cached package-lock.json doesn't match our own" >&2
-    exit 1
+if [ -n "${rebase}" ]; then
+    if [ -n "$(git status --porcelain)" ]; then
+        echo 'Refusing to rebase tree with local changes' >&2
+        git status >&2
+        exit 1
+    fi
+    merge_base="$(cat_from_cache "${tag}" merge-base)"
+    # If we don't already have that commit, we'll need to go fetch it
+    if ! git fsck --no-dangling --connectivity-only "${merge_base}"; then
+        message FETCH ".  [${merge_base}]"
+        git fetch --no-write-fetch-head origin "${merge_base}"
+    fi
+    git rebase -- "${merge_base}"
 fi
 
+target_tree="$(cat_from_cache "${tag}" tree)"
+if [ "$(git rev-parse HEAD^{tree})" != "${target_tree}" ]; then
+    if [ -n "${rebase-}" ]; then
+        echo "Internal error: even after rebase, don't have the correct tree" >&2
+        exit 1
+    else
+        echo "The current working tree needs to be rebased: try --rebase" >&2
+        exit 1
+    fi
+fi
+
+tools/node-modules make_package_lock_json
 unpack_from_cache "${tag}"

@@ -102,7 +102,7 @@ depcomp
 tmp/weblate-repo
 /src/selinux/tmp
 /src/selinux/cockpit.pp
-/bots/
+/bots
 /test/images/*
 /test/verify/naughty-*/*
 /test/container-probe*
@@ -145,6 +145,7 @@ po*.js.gz
 /.vagrant
 /test_rsa_key
 /tmp-dist
+/tree
 /valgrind-suppressions
 /webpack-jumpstart.tar
 
@@ -160,11 +161,8 @@ po*.js.gz
 .vscode/
 
 # Test output
-Test*.log
+/Test*
 cockpit-*.tar*
-Test*.png
-Test*.html
-Test*.json
 
 /pkg/networkmanager/override.json
 /pkg/storaged/override.json

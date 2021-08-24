@@ -21,7 +21,7 @@ import cockpit from "cockpit";
 import React from "react";
 
 import { Badge, Button, Card, CardHeader, CardActions, CardTitle, CardBody } from '@patternfly/react-core';
-import { AngleRightIcon, ExclamationTriangleIcon, TimesCircleIcon } from '@patternfly/react-icons';
+import { ExclamationTriangleIcon, TimesCircleIcon } from '@patternfly/react-icons';
 
 import { journal } from "journal";
 import "journal.css";
@@ -65,6 +65,7 @@ export class JournalOutput {
 
         return (
             <div className="cockpit-logline" role="row" tabIndex="0" key={entry.__CURSOR}
+                data-cursor={entry.__CURSOR}
                 onClick={ev => this.onEvent(ev, entry.__CURSOR)}
                 onKeyPress={ev => this.onEvent(ev, entry.__CURSOR)}>
                 <div className="cockpit-log-warning" role="cell">
@@ -82,8 +83,8 @@ export class JournalOutput {
                 {
                     count > 1
                         ? <div className="cockpit-log-service-container" role="cell">
-                            <div className="cockpit-log-service-reduced" role="cell">{ident}</div>
-                            <Badge isRead key={count} role="cell">{count}&#160;<AngleRightIcon /></Badge>
+                            <div className="cockpit-log-service-reduced">{ident}</div>
+                            <Badge isRead key={count}>{count}</Badge>
                         </div>
                         : <div className="cockpit-log-service" role="cell">{ident}</div>
                 }

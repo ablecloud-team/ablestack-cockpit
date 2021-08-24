@@ -178,6 +178,15 @@ as
 
 Then reload cockpit in your browser after building the page.
 
+Often you need to test your code in a VM. `webpack-make` has an `-r`/`--rsync`
+option for copying the built webpack into the given SSH target's
+/usr/share/cockpit/ directory. If you use cockpit's own test VMs and set up the
+SSH `c` alias as described in [test/README.md](./test/README.md), you can use
+one of these commands:
+
+    tools/webpack-make -d dist/kdump/Makefile.deps -r c
+    tools/webpack-watch kdump -r c
+
 To make Cockpit again use the installed code, rather than that from your git
 checkout directory, run the following, and log into Cockpit again:
 
@@ -289,7 +298,7 @@ Cockpit is a designed project. Anything that the user will see should have
 design done first. This is done on the wiki and mailing list.
 
 Bigger changes need to be discussed on #cockpit or our mailing list
-cockpit-devel@lists.fedoraproject.org before you invest too much time and
+[cockpit-devel@lists.fedoraproject.org](https://lists.fedorahosted.org/admin/lists/cockpit-devel.lists.fedorahosted.org/) before you invest too much time and
 energy.
 
 Feature changes should have a video and/or screenshots that show the change.

@@ -23,9 +23,8 @@ import cockpit from "cockpit";
 import React, { useState, useEffect } from "react";
 import ReactDOM from 'react-dom';
 
-import moment from "moment";
 import {
-    Alert, Button, Gallery, Modal, Progress, Popover, Tooltip,
+    Alert, Badge, Button, Gallery, Modal, Progress, Popover, Tooltip,
     Card, CardTitle, CardActions, CardHeader, CardBody,
     DescriptionList, DescriptionListTerm, DescriptionListGroup, DescriptionListDescription,
     Flex, FlexItem,
@@ -46,6 +45,7 @@ import { cellWidth, TableText } from "@patternfly/react-table";
 import { Remarkable } from "remarkable";
 
 import { AutoUpdates, getBackend } from "./autoupdates.jsx";
+import { KpatchSettings, KpatchStatus } from "./kpatch.jsx";
 import { History, PackageList } from "./history.jsx";
 import { page_status } from "notifications";
 import { EmptyStatePanel } from "cockpit-components-empty-state.jsx";
@@ -55,6 +55,7 @@ import { ShutdownModal } from 'cockpit-components-shutdown.jsx';
 
 import { superuser } from 'superuser';
 import * as PK from "packagekit.js";
+import * as timeformat from "timeformat.js";
 
 import * as python from "python.js";
 import callTracerScript from 'raw-loader!./callTracer.py';
@@ -271,9 +272,13 @@ function updateItem(info, pkgNames, key) {
         </Tooltip>)
     );
     const pkgs = pkgList;
-    let pkgsTruncated = pkgs;
+    const pkgsTruncated = pkgList.slice(0, 4);
+
     if (pkgList.length > 4)
-        pkgsTruncated = pkgList.slice(0, 4).concat(<span key="more">…</span>);
+        pkgsTruncated.push(<span key="more">…</span>);
+
+    if (pkgNames.some(p => p.name.startsWith("kpatch-patch")))
+        pkgsTruncated.push(<>{" "}<Badge>{_("patches")}</Badge></>);
 
     let descriptionFirstLine = (info.description || "").trim();
     if (descriptionFirstLine.indexOf("\n") >= 0)
@@ -542,6 +547,7 @@ class ApplyUpdates extends React.Component {
         }
 
         const lastAction = this.state.actions[this.state.actions.length - 1];
+        const timeRemaining = this.state.timeRemaining && timeformat.distanceToNow(new Date().valueOf() + this.state.timeRemaining * 1000);
         return (
             <>
                 <div className="progress-main-view">
@@ -550,7 +556,7 @@ class ApplyUpdates extends React.Component {
                         <strong>{ PK_STATUS_STRINGS[lastAction.status] || PK_STATUS_STRINGS[PK.Enum.STATUS_UPDATE] }</strong>
                         &nbsp;{lastAction.package}
                     </div>
-                    <Progress title={this.state.timeRemaining && moment.duration(this.state.timeRemaining * 1000).humanize()} value={this.state.percentage} />
+                    <Progress title={timeRemaining} value={this.state.percentage} />
                     {cancelButton}
                 </div>
 
@@ -718,7 +724,7 @@ const UpdatesStatus = ({ updates, highestSeverity, timeSinceRefresh, tracerPacka
     const numRebootPackages = tracerPackages.reboot.length;
     let lastChecked;
     if (timeSinceRefresh !== null)
-        lastChecked = cockpit.format(_("Last checked: $0"), moment(moment().valueOf() - timeSinceRefresh * 1000).fromNow());
+        lastChecked = cockpit.format(_("Last checked: $0"), timeformat.distanceToNow(new Date().valueOf() - timeSinceRefresh * 1000, true));
 
     const notifications = [];
     if (numUpdates > 0) {
@@ -821,15 +827,21 @@ class CardsPage extends React.Component {
     render() {
         const cardContents = [];
         let settingsContent = null;
-        const statusContent = <UpdatesStatus key="updates-status"
+        const statusContent = <Stack hasGutter>
+            <UpdatesStatus key="updates-status"
                                 updates={this.props.updates}
                                 onValueChanged={this.props.onValueChanged}
                                 tracerPackages={this.props.tracerPackages}
                                 highestSeverity={this.props.highestSeverity}
-                                timeSinceRefresh={this.props.timeSinceRefresh} />;
+                                timeSinceRefresh={this.props.timeSinceRefresh} />
+            <KpatchStatus />
+        </Stack>;
 
         if (this.state.backend) {
-            settingsContent = <AutoUpdates backend={this.state.backend} privileged={this.props.privileged} />;
+            settingsContent = <Stack hasGutter>
+                <AutoUpdates backend={this.state.backend} privileged={this.props.privileged} />
+                <KpatchSettings privileged={this.props.privileged} />
+            </Stack>;
         }
 
         cardContents.push({
@@ -915,6 +927,7 @@ class OsUpdates extends React.Component {
             timeSinceRefresh: null,
             loadPercent: null,
             cockpitUpdate: false,
+            haveOsRepo: null,
             allowCancel: null,
             history: [],
             unregistered: false,
@@ -1071,23 +1084,38 @@ class OsUpdates extends React.Component {
     }
 
     loadUpdates() {
-        var updates = {};
-        var cockpitUpdate = false;
+        const updates = {};
+        let cockpitUpdate = false;
 
-        PK.cancellableTransaction("GetUpdates", [0],
-                                  data => this.setState({ state: data.waiting ? "locked" : "loading" }),
-                                  {
-                                      Package: (info, packageId, _summary) => {
-                                          const id_fields = packageId.split(";");
-                                          packageSummaries[id_fields[0]] = _summary;
-                                          // HACK: dnf backend yields wrong severity (https://bugs.freedesktop.org/show_bug.cgi?id=101070)
-                                          if (info < PK.Enum.INFO_LOW || info > PK.Enum.INFO_SECURITY)
-                                              info = PK.Enum.INFO_NORMAL;
-                                          updates[packageId] = { name: id_fields[0], version: id_fields[1], severity: info, arch: id_fields[2] };
-                                          if (id_fields[0] == "cockpit-ws")
-                                              cockpitUpdate = true;
-                                      },
-                                  })
+        this.setState({ state: "loading" });
+
+        // check if there is an available version of coreutils; this is a heuristics for unregistered RHEL
+        // systems to see if they need a subscription to get "proper" OS updates
+        let have_coreutils = false;
+        PK.cancellableTransaction(
+            "Resolve",
+            [PK.Enum.FILTER_ARCH | PK.Enum.FILTER_NEWEST | PK.Enum.FILTER_NOT_INSTALLED, ["coreutils"]],
+            null,
+            {
+                Package: (info, package_id) => { have_coreutils = true }
+            })
+                .then(() => this.setState({ haveOsRepo: have_coreutils }),
+                      ex => console.warn("Resolving coreutils failed:", JSON.stringify(ex)))
+                .then(() => PK.cancellableTransaction(
+                    "GetUpdates", [0],
+                    data => this.setState({ state: data.waiting ? "locked" : "loading" }),
+                    {
+                        Package: (info, packageId, _summary) => {
+                            const id_fields = packageId.split(";");
+                            packageSummaries[id_fields[0]] = _summary;
+                            // HACK: dnf backend yields wrong severity with PK < 1.2.4 (https://github.com/PackageKit/PackageKit/issues/268)
+                            if (info < PK.Enum.INFO_LOW || info > PK.Enum.INFO_SECURITY)
+                                info = PK.Enum.INFO_NORMAL;
+                            updates[packageId] = { name: id_fields[0], version: id_fields[1], severity: info, arch: id_fields[2] };
+                            if (id_fields[0] == "cockpit-ws")
+                                cockpitUpdate = true;
+                        },
+                    }))
                 .then(() => {
                     // get the details for all packages
                     const pkg_ids = Object.keys(updates);
@@ -1245,10 +1273,11 @@ class OsUpdates extends React.Component {
     renderContent() {
         var applySecurity, applyAll;
 
-        if (this.state.unregistered) {
-            // always show empty state pattern, even if there are some
-            // repositories enabled that don't require subscriptions
-
+        /* On unregistered RHEL systems we need some heuristics: If the "main" OS repos (which provide coreutils) require
+         * a subscription, then point this out and don't show available updates, even if there are some auxiliary
+         * repositories enabled which don't require subscriptions. But there are a lot of cases (cloud repos, nightly internal
+         * repos) which don't need a subscription, there it would just be confusing */
+        if (this.state.unregistered && this.state.haveOsRepo === false) {
             page_status.set_own({
                 type: "warning",
                 title: _("Not registered"),
@@ -1510,7 +1539,6 @@ class OsUpdates extends React.Component {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.title = cockpit.gettext(document.title);
-    moment.locale(cockpit.language);
     init();
     ReactDOM.render(<OsUpdates />, document.getElementById("app"));
 });

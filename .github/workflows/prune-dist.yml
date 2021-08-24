@@ -9,30 +9,27 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: none
+    environment: cockpit-dist
+    env:
+      HEAD_SHA: ${{ github.sha }}
+      DIST_REPO: ssh://git@github.com/${{ github.repository }}-dist.git
     steps:
-      - name: Set up configuration and secrets
-        run: |
-          printf '[user]\n\tname = Cockpit Project\n\temail=cockpituous@gmail.com\n' > ~/.gitconfig
-          # we push to -dist repo via https://github.com, that needs our cockpituous token
-          git config --global credential.helper store
-          echo 'https://token:${{ secrets.COCKPITUOUS_TOKEN }}@github.com' >> ~/.git-credentials
-
-      - name: Clone -dist repo
-        run: |
-          git clone https://github.com/${{ github.repository }}-dist.git dist-repo
-
       - name: Delete old tags
         run: |
           set -ex
 
-          # head commit SHA of default branch
-          HEAD=$(git ls-remote 'https://github.com/${{ github.repository }}' main master | cut -f1 | head -n1)
+          eval $(ssh-agent)
+          ssh-add - <<< '${{ secrets.DEPLOY_KEY }}'
+
+          git clone "${DIST_REPO}" dist-repo
 
           cd dist-repo
           now="$(date +%s)"
           for tag in $(git tag -l); do
               tag_time="$(git show -s --format=%at $tag)"
-              if [ "$tag" = "sha-${HEAD}" ]; then
+              if [ "$tag" = "sha-${HEAD_SHA}" ]; then
                   echo "$tag refers to current project default branch HEAD, keeping"
               elif [ $((now - tag_time)) -ge 604800 ]; then
                   echo "$tag is older than 7 days, deleting..."
@@ -41,3 +38,6 @@ jobs:
                   echo "$tag is younger than 7 days, keeping"
               fi
           done
+
+          ssh-add -D
+          ssh-agent -k

@@ -48,7 +48,8 @@ init_cache() {
 # we use git fsck to to avoid problems with incomplete fetches: we want to make
 # sure the complete commit is there
 check_ref() {
-    git_cache fsck --no-dangling --connectivity-only "$1" 2>/dev/null
+    git_cache show "$1" >/dev/null 2>&1 && \
+      git_cache fsck --no-dangling --connectivity-only "$1" 2>/dev/null
 }
 
 # Fetch a specific commit ID into the cache
@@ -83,10 +84,15 @@ fetch_to_cache() {
     fi
 }
 
+# Get the content of "$2" from cache commit "$1"
+cat_from_cache() {
+    git_cache cat-file blob "$1:$2"
+}
+
 # Consistency checking: for a given cache commit "$1", check if it contains a
 # file "$2" which is equal to the file "$3" present in the working tree.
 cmp_from_cache() {
-    git_cache cat-file blob "$1:$2" | cmp "$3"
+    cat_from_cache "$1" "$2" | cmp "$3"
 }
 
 # Like `git clone` except that it uses the original origin url and supports

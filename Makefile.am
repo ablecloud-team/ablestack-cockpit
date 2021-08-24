@@ -45,10 +45,6 @@ SUFFIXES = \
 
 MV = mv -f
 
-CAT_RULE = \
-        $(AM_V_GEN) $(MKDIR_P) $(dir $@) && \
-	cat $^ > $@.tmp && $(MV) $@.tmp $@
-
 SUBST_RULE = \
 	$(AM_V_GEN) $(MKDIR_P) $(dir $@) && sed \
 	-e 's,[@]PACKAGE[@],$(PACKAGE),g' \
@@ -106,7 +102,6 @@ uninstall-local::
 dist-hook:: $(WEBPACK_INPUTS) $(WEBPACK_OUTPUTS) $(WEBPACK_TEST_DEPS) $(MANIFESTS)
 	$(V_TAR) tar --format=posix -cf - $^ | tar -C $(distdir) -xf -
 	cp $(srcdir)/tools/README.node_modules $(distdir)/node_modules/README
-	$(srcdir)/tools/build-copying $(distdir) > $(distdir)/COPYING.node
 
 #
 
@@ -174,8 +169,13 @@ recheck-memory: valgrind-suppressions
 	        HTML_LOG_FLAGS="valgrind $(VALGRIND_ARGS)" \
 		$(AM_MAKEFLAGS) recheck
 
+if ENABLE_DOC
+DOCS_INSTALL_DEPS = dist/guide/html/index.html
+else
+DOCS_INSTALL_DEPS =
+endif
 
-install-data-local:: dist/guide/html/index.html
+install-data-local:: $(DOCS_INSTALL_DEPS)
 if ENABLE_DOC
 	$(MKDIR_P) $(DESTDIR)$(htmldir)
 	$(INSTALL_DATA) $(dir $<)/* $(DESTDIR)$(htmldir)
@@ -209,8 +209,14 @@ COMMITTED_DIST = \
 	$(NULL)
 
 tools/debian/copyright: tools/debian/copyright.template $(MANIFESTS)
-	$(AM_V_GEN) $(srcdir)/tools/build-debian-copyright > $@.tmp
+	$(AM_V_GEN) (cd $(srcdir) && NODE_ENV=$(NODE_ENV) ./tools/build-debian-copyright) > $@.tmp && \
 	$(MV) $@.tmp $@
+
+# This is the stock rule with $(BUILT_SOURCES) dependency removed.
+# In the future, we can do this via "no-dist-built-sources" automake option:
+# https://git.savannah.gnu.org/cgit/automake.git/commit/?id=13659a7385
+distdir:
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
 
 # Build up the distribution using $COMMITTED_DIST and include node_modules licenses
 # also automatically update minimum base dependency in RPM spec file
@@ -230,7 +236,7 @@ bots:
 	tools/make-bots
 
 multi-word: po/cockpit.pot
-	$(MSGGREP) --no-wrap --msgid -e '\S\+\s' po/cockpit.pot | grep "^msgid " | cut -d " " -f2- | sort --reverse > titles
+	msggrep --no-wrap --msgid -e '\S\+\s' po/cockpit.pot | grep "^msgid " | cut -d " " -f2- | sort --reverse > titles
 
 title2sentence: multi-word
 	tools/title2sentence.py -i titles -o t2s.sh
@@ -253,6 +259,7 @@ include src/websocket/Makefile-websocket.am
 include tools/Makefile-tools.am
 include src/ssh/Makefile-ssh.am
 include src/ws/Makefile-ws.am
+include src/session/Makefile-session.am
 include src/tls/Makefile-tls.am
 include src/retest/Makefile.am
 include src/pam-ssh-add/Makefile.am

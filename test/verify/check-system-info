@@ -193,6 +193,10 @@ class TestSystemInfo(MachineCase):
         b.wait_in_text('#system_information_hostname_text', "Adventure Box (host1.cockpit.lan)")
         self.assertEqual(m.execute("hostname").strip(), "host1.cockpit.lan")
 
+        m.execute("hostnamectl set-hostname ''")
+        m.execute("hostnamectl set-hostname --transient 'mydhcpname'")
+        b.wait_in_text('#system_information_hostname_text', 'mydhcpname')
+
         b.logout()
         m.execute("chattr -i /etc/os-release && rm /etc/os-release")
         m.execute("rm /usr/lib/os-release || true")
@@ -208,7 +212,7 @@ class TestSystemInfo(MachineCase):
         self.addCleanup(m.execute, "umount /proc/uptime")
         with b.wait_timeout(70):
             b.wait_text("#system_uptime", "33 minutes")
-        # 4 months and a bit, moment humanize() rounds quite aggressively; also, test a slightly different format
+        # 4 months and a bit, timeformat rounds quite aggressively; also, test a slightly different format
         m.write("/tmp/fake_uptime", "10370000 12345.30\n")
         with b.wait_timeout(70):
             b.wait_text("#system_uptime", "4 months")
@@ -508,7 +512,7 @@ revision\t: 2.3 (pvr 004e 1203)
         # demidecode not available on certain images
         if not m.ostree_image:
             b.wait_in_text('#hwinfo #memory-listing' + heading_selector, "Memory")
-            b.wait_in_text('#hwinfo #memory-listing table', "DIMM 0")
+            b.wait_in_text('#hwinfo #memory-listing table', "DIMM")
             b.wait_in_text('#hwinfo #memory-listing table', "RAM")
 
             # Test more specific memory data with a fake dmidecode

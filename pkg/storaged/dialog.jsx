@@ -224,13 +224,15 @@ import {
     Checkbox,
     DataList, DataListItem, DataListCheck, DataListItemRow, DataListItemCells, DataListCell,
     Form, FormGroup,
+    Grid, GridItem,
     Radio,
     Select as TypeAheadSelect, SelectOption, SelectVariant,
+    Slider,
     Spinner, Split,
     TextInput as TextInputPF4,
-    Tooltip, TooltipPosition,
+    Popover,
 } from "@patternfly/react-core";
-import { InfoCircleIcon, ExclamationTriangleIcon } from "@patternfly/react-icons";
+import { ExclamationTriangleIcon, HelpIcon } from "@patternfly/react-icons";
 
 import { show_modal_dialog, apply_modal_dialog } from "cockpit-components-dialog.jsx";
 
@@ -741,23 +743,21 @@ export const SelectSpace = (tag, title, options) => {
 
 const CheckBoxComponent = ({ tag, val, title, tooltip, update_function }) => {
     return (
-        <div key={tag} className="ct-storage-checkbox">
-            <Checkbox data-field={tag} data-field-type="checkbox"
-                      id={tag}
-                      isChecked={val}
-                      label={
-                          <>
-                              {title}
-                              { tooltip && <Tooltip id="tip-service" content={tooltip} position={TooltipPosition.right}>
-                                  <Button className="dialog-item-tooltip" variant="link">
-                                      <InfoCircleIcon />
-                                  </Button>
-                              </Tooltip>
-                              }
-                          </>
-                      }
-                      onChange={update_function} />
-        </div>
+        <Checkbox data-field={tag} data-field-type="checkbox"
+                  id={tag}
+                  isChecked={val}
+                  label={
+                      <>
+                          {title}
+                          { tooltip && <Popover bodyContent={tooltip}>
+                              <Button className="dialog-item-tooltip" variant="link">
+                                  <HelpIcon />
+                              </Button>
+                          </Popover>
+                          }
+                      </>
+                  }
+                  onChange={update_function} />
     );
 };
 
@@ -797,18 +797,14 @@ export const CheckBoxes = (tag, title, options) => {
             if (options.fields.length == 1)
                 return fieldset;
 
-            return (
-                <div role="group">
-                    { fieldset }
-                </div>
-            );
+            return <>{ fieldset }</>;
         }
     };
 };
 
 const TextInputCheckedComponent = ({ tag, val, title, update_function }) => {
     return (
-        <div className="ct-storage-checkbox" data-field={tag} data-field-type="text-input-checked" key={tag}>
+        <div data-field={tag} data-field-type="text-input-checked" key={tag}>
             <Checkbox isChecked={val !== false}
                       id={tag}
                       label={title}
@@ -829,45 +825,6 @@ export const Skip = (className, options) => {
             return <div className={className} />;
         }
     };
-};
-
-const StatelessSlider = ({ fraction, onChange }) => {
-    function start_dragging(event) {
-        let el = event.currentTarget;
-        const width = el.offsetWidth;
-        let left = el.offsetLeft;
-        while (el.offsetParent) {
-            el = el.offsetParent;
-            left += el.offsetLeft;
-        }
-
-        function drag(event) {
-            let f = (event.pageX - left) / width;
-            if (f < 0) f = 0;
-            if (f > 1) f = 1;
-            onChange(f);
-        }
-
-        function stop_dragging() {
-            document.removeEventListener("mousemove", drag);
-            document.removeEventListener("mouseup", stop_dragging);
-        }
-
-        document.addEventListener("mousemove", drag);
-        document.addEventListener("mouseup", stop_dragging);
-        drag(event);
-    }
-
-    if (fraction < 0) fraction = 0;
-    if (fraction > 1) fraction = 1;
-
-    return (
-        <div className="slider" role="presentation" onMouseDown={start_dragging}>
-            <div className="slider-bar" style={{ width: fraction * 100 + "%" }}>
-                <div className="slider-thumb" />
-            </div>
-        </div>
-    );
 };
 
 function size_slider_round(value, round) {
@@ -896,7 +853,7 @@ class SizeSliderElement extends React.Component {
         const { unit } = this.state;
 
         const change_slider = (f) => {
-            onChange(Math.max(min, size_slider_round(f * max, round)));
+            onChange(Math.max(min, size_slider_round(f * max / 100, round)));
         };
 
         const change_text = (value) => {
@@ -909,8 +866,6 @@ class SizeSliderElement extends React.Component {
             onChange({ text: value, unit: unit });
         };
 
-        const change_unit = (u) => this.setState({ unit: Number(u) });
-
         let slider_val, text_val;
         if (val.text && val.unit) {
             slider_val = Number(val.text) * val.unit;
@@ -920,14 +875,25 @@ class SizeSliderElement extends React.Component {
             text_val = cockpit.format_number(val / unit);
         }
 
+        const change_unit = (u) => this.setState({
+            unit: Number(u),
+            text: (text_val / this.state.unit) * Number(u)
+        });
+
         return (
-            <div className="size-sliderx">
-                <StatelessSlider fraction={slider_val / max} onChange={change_slider} />
-                <TextInputPF4 className="size-text" value={text_val} onChange={change_text} />
-                <FormSelect className="size-unit" value={unit} aria-label={tag} onChange={change_unit}>
-                    { this.units.map(u => <FormSelectOption value={u.factor} key={u.name} label={u.name} />) }
-                </FormSelect>
-            </div>
+            <Grid hasGutter className="size-slider">
+                <GridItem span={12} sm={8}>
+                    <Slider showBoundaries={false} value={(slider_val / max) * 100} onChange={change_slider} />
+                </GridItem>
+                <GridItem span={6} sm={2}>
+                    <TextInputPF4 className="size-text" value={text_val} onChange={change_text} />
+                </GridItem>
+                <GridItem span={6} sm={2}>
+                    <FormSelect className="size-unit" value={unit} aria-label={tag} onChange={change_unit}>
+                        { this.units.map(u => <FormSelectOption value={u.factor} key={u.name} label={u.name} />) }
+                    </FormSelect>
+                </GridItem>
+            </Grid>
         );
     }
 }
