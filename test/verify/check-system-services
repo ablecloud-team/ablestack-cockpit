@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
 
+import time
+
 import parent
 import testvm
 from testlib import *
@@ -299,6 +301,7 @@ Unit=test.service
         self.check_service_details(["Disabled"], ["Start", "Disallow running (mask)"], False)
         self.toggle_onoff()
         self.check_service_details(["Failed to start", "Automatically starts"], ["Start", "Clear 'Failed to start'", "Disallow running (mask)"], True)
+        b.assert_pixels("#service-details", "details-test-fail", ignore=[".cockpit-log-panel .pf-c-card__body"])
         b.click(".action-button:contains('Start service')")
         b.go("#/")
         self.wait_service_present("test-fail.service")
@@ -356,6 +359,16 @@ Unit=test.service
         b.set_input_text("#services-text-filter input", "Test Service")
         self.wait_service_present("test.service")
         self.wait_service_present("test-fail.service")
+        if b.cdp.mobile:
+            # close the expanded toolbar again to see the whole list
+            b.click("#services-page .pf-c-toolbar__toggle button")
+            b.wait_not_visible("#services-page .pf-m-search-filter")
+            # scroll the menu navbar all the way to the left
+            nav_scroll_btn = ".services-header button[aria-label='Scroll left']"
+            while b.call_js_func("ph_attr", nav_scroll_btn, "disabled") is None:
+                b.click(nav_scroll_btn)
+                time.sleep(0.5)
+        b.assert_pixels("#services-page", "text-filter-test")
 
         # Filter by description capitalization not matching the unit description
         init_filter_state()
@@ -460,7 +473,6 @@ ExecStart=/bin/awk -f /tmp/mem-hog.awk
         b.wait_not_present("#listen")
 
     def testLogs(self):
-        m = self.machine
         b = self.browser
 
         self.make_test_service()
@@ -481,9 +493,9 @@ ExecStart=/bin/awk -f /tmp/mem-hog.awk
         b.wait_in_text("#journal-box .cockpit-log-panel > div:nth-child(2)", "WORKING")
         t = b.text("#journal-box .cockpit-log-panel > div:nth-child(3)") + b.text("#journal-box .cockpit-log-panel > div:nth-child(4)")
         self.assertIn("START", t)
-        # Debian supports grep only from 19.10, see https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1751006
-        if m.image != "debian-stable":
-            b.wait_val("#journal-grep input", "priority:debug service:test.service ")
+        if b.cdp.mobile:
+            b.click("button[aria-label='Show Filters']")
+        b.wait_val("#journal-grep input", "priority:debug service:test.service ")
         b.go("/system/services#test.service")
         b.enter_page("/system/services")
 
@@ -492,9 +504,9 @@ ExecStart=/bin/awk -f /tmp/mem-hog.awk
         b.enter_page("/system/logs")
         b.wait_text(".pf-c-card__title", "WORKING")
         b.click(".pf-c-breadcrumb a:contains('Logs')")
-        # Debian supports grep only from 19.10, see https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/1751006
-        if m.image != "debian-stable":
-            b.wait_val("#journal-grep input", "priority:debug service:test.service ")
+        if b.cdp.mobile:
+            b.click("button[aria-label='Show Filters']")
+        b.wait_val("#journal-grep input", "priority:debug service:test.service ")
         b.go("/system/services#test.service")
         b.enter_page("/system/services")
 
@@ -747,6 +759,19 @@ WantedBy=default.target
     def count_failures(self):
         return int(self.machine.execute("systemctl --failed --plain --no-legend | wc -l"))
 
+    def check_system_menu_services_error(self, expected):
+        b = self.browser
+        b.switch_to_top()
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
+        if expected:
+            b.wait_visible("#services-error")
+        else:
+            b.wait_not_present("#services-error")
+        if b.cdp.mobile:
+            # close menu again
+            b.click("#nav-system-item")
+
     def testNotifyFailed(self):
         m = self.machine
         b = self.browser
@@ -784,20 +809,18 @@ ExecStart=/usr/bin/false
 
         # Services tab should have icon
         # Aab-fail should be at the top, and have failed
-        b.wait_visible('a:contains("System services") .fa-exclamation-circle')
+        b.wait_visible('a:contains("System services") .ct-exclamation-circle')
         b.wait_visible('tr[data-goto-unit="aab-fail.service"]')
         b.wait_visible('tr[data-goto-unit="aab-fail.service"] .service-unit-status:contains("Failed")')
 
         # Nav link should have icon
-        b.switch_to_top()
-        b.wait_visible("#services-error")
+        self.check_system_menu_services_error(True)
 
         n_failures = self.count_failures()
         health_message = "1 service has failed" if n_failures == 1 else "%s services have failed" % n_failures
 
         # System page should have notification
-        b.click('#host-apps a[href="/system"]')
-        b.enter_page('/system')
+        b.click_system_menu("/system")
         b.wait_in_text(".system-health-events", health_message)
 
         # Clear aab-fail
@@ -805,21 +828,18 @@ ExecStart=/usr/bin/false
 
         # aab-fail should not be at the top
         b.switch_to_top()
-        b.click('#host-apps a[href="/system/services"]')
-        b.enter_page('/system/services')
+        b.click_system_menu("/system/services")
         b.wait_not_present('li:nth-child(1)[data-goto-unit="aab-fail.service"]')
 
         if self.count_failures() == 0:
             # Services tab should not have icon
-            b.wait_not_present('a:contains("System services") .fa-exclamation-circle')
+            b.wait_not_present('a:contains("System services") .ct-exclamation-circle')
 
             # Nav link should not have icon
-            b.switch_to_top()
-            b.wait_not_present("#services-error")
+            self.check_system_menu_services_error(False)
 
             # System page should not have notification
-            b.click('#host-apps a[href="/system"]')
-            b.enter_page('/system')
+            b.click_system_menu('/system')
             b.wait_not_in_text(".system-health-events", "service has failed")
             b.wait_not_in_text(".system-health-events", "services have failed")
 
@@ -847,12 +867,10 @@ Where=/fail
 
         if self.count_failures() == 1:
             # Nav link should not have icon
-            b.switch_to_top()
-            b.wait_not_present("#services-error")
+            self.check_system_menu_services_error(False)
 
             # System page should not have notification
-            b.click('#host-apps a[href="/system"]')
-            b.enter_page('/system')
+            b.click_system_menu("/system")
             b.wait_not_in_text(".system-health-events", "service has failed")
             b.wait_not_in_text(".system-health-events", "services have failed")
 

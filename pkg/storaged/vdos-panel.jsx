@@ -24,7 +24,6 @@ import { SidePanelRow } from "./side-panel.jsx";
 import {
     fmt_size, decode_filename,
     get_available_spaces, prepare_available_spaces,
-    get_config
 } from "./utils.js";
 import { dialog_open, TextInput, SelectSpace, SizeSlider, CheckBoxes } from "./dialog.jsx";
 
@@ -33,7 +32,7 @@ const _ = cockpit.gettext;
 export function vdo_feature(client) {
     return {
         is_enabled: () => client.features.vdo,
-        package: get_config("vdo_package", false),
+        package: client.get_config("vdo_package", false),
         enable: () => {
             client.features.vdo = true;
             client.vdo_overlay.start();
@@ -69,8 +68,8 @@ export function vdo_rows(client) {
 }
 
 export function create_vdo(client) {
-    var name;
-    for (var i = 0; i < 1000; i++) {
+    let name;
+    for (let i = 0; i < 1000; i++) {
         name = "vdo" + i.toFixed();
         if (!client.vdo_overlay.by_name[name])
             break;
@@ -107,7 +106,7 @@ export function create_vdo(client) {
                        {
                            max: 2 * 1024 * 1024 * 1024,
                            round: function (val) {
-                               var round = val < 1024 * 1024 * 1024 ? 256 * 1024 * 1024 : 1024 * 1024 * 1024;
+                               const round = val < 1024 * 1024 * 1024 ? 256 * 1024 * 1024 : 1024 * 1024 * 1024;
                                return Math.round(val / round) * round;
                            },
                            value: 256 * 1024 * 1024,
@@ -146,7 +145,7 @@ export function create_vdo(client) {
             Title: _("Create"),
             action: function (vals) {
                 return prepare_available_spaces(client, [vals.space]).then(function (paths) {
-                    var block = client.blocks[paths[0]];
+                    const block = client.blocks[paths[0]];
                     return cockpit.spawn(["wipefs", "-a", decode_filename(block.PreferredDevice)],
                                          {
                                              superuser: true,

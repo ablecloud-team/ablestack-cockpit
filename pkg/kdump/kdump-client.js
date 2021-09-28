@@ -97,47 +97,45 @@ export class KdumpClient {
     }
 
     validateSettings(settings) {
-        var target = this.targetFromSettings(settings);
-        var path;
+        const target = this.targetFromSettings(settings);
+        let path;
         if (target && target.path)
             path = target.path;
         // if path is invalid or we haven't set one, use default
         if (!path)
             path = "/var/crash";
 
-        var dfd = cockpit.defer();
-        if (target.target === "local") {
-            // local path, try to see if we can write
-            cockpit.script(testWritableScript, [path], { superuser: "try" })
-                    .done(dfd.resolve)
-                    .fail(() => dfd.reject(cockpit.format(_("Directory $0 isn't writable or doesn't exist."), path)));
-            return dfd.promise();
-        } else if (target.target === "nfs") {
-            if (!target.nfs.value.match("\\S+:/.+"))
-                dfd.reject(_("nfs dump target isn't formatted as server:path"));
-        } else if (target.target === "ssh") {
-            if (!target.ssh.value.trim())
-                dfd.reject(_("ssh server is empty"));
-            if (target.sshkey && !target.sshkey.value.match("/.+"))
-                dfd.reject(_("ssh key isn't a path"));
-        }
+        return new Promise((resolve, reject) => {
+            if (target.target === "local") {
+                // local path, try to see if we can write
+                cockpit.script(testWritableScript, [path], { superuser: "try" })
+                        .then(resolve)
+                        .catch(() => reject(cockpit.format(_("Directory $0 isn't writable or doesn't exist."), path)));
+                return;
+            } else if (target.target === "nfs") {
+                if (!target.nfs.value.match("\\S+:/.+"))
+                    reject(_("nfs dump target isn't formatted as server:path"));
+            } else if (target.target === "ssh") {
+                if (!target.ssh.value.trim())
+                    reject(_("ssh server is empty"));
+                if (target.sshkey && !target.sshkey.value.match("/.+"))
+                    reject(_("ssh key isn't a path"));
+            }
 
-        /* no-op if already rejected  */
-        dfd.resolve();
-        return dfd.promise();
+            /* no-op if already rejected  */
+            resolve();
+        });
     }
 
     writeSettings(settings) {
-        var dfd = cockpit.defer();
-        this.configClient.write(settings)
-                .done(() => {
-                // after we've written the new config, we may have to restart the service
-                    this.kdumpService.tryRestart()
-                            .done(dfd.resolve)
-                            .fail(dfd.reject);
-                })
-                .fail(dfd.reject);
-        return dfd.promise();
+        return this.configClient.write(settings)
+                .then(() => {
+                    // after we've written the new config, we have to restart the service to pick up changes or clean up after errors
+                    if (this.kdumpService.enabled)
+                        return this.kdumpService.restart();
+                    else
+                        return true;
+                });
     }
 
     targetFromSettings(settings) {
@@ -145,7 +143,7 @@ export class KdumpClient {
         // check for the presence of all known targets
         // we have the additional difficulty that partitions don't have a good config key, since their
         // lines begin with the fs_type
-        var target = {
+        const target = {
             target: "unknown",
             multipleTargets: false,
         };
@@ -179,7 +177,7 @@ export class KdumpClient {
                 if (!key || key in knownKeys || key in deprecatedKeys)
                     return;
                 // if we have a UUID, LABEL or /dev in the value, we can be pretty sure it's a mount option
-                var value = JSON.stringify(settings[key]).toLowerCase();
+                const value = JSON.stringify(settings[key]).toLowerCase();
                 if (value.indexOf("uuid") > -1 || value.indexOf("label") > -1 || value.indexOf("/dev") > -1) {
                     if (target.target != "unknown")
                         target.multipleTargets = true;

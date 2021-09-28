@@ -215,12 +215,14 @@ install -D -p -m 644 AUTHORS COPYING README.md %{buildroot}%{_docdir}/cockpit/
 %endif
 
 # only ship deprecated PatternFly API for stable releases
-%if 0%{?fedora} <= 33 || 0%{?rhel} <= 8
+%if 0%{?rhel} <= 8
     ln -s cockpit.css.gz %{buildroot}/%{_datadir}/cockpit/base1/patternfly.css.gz
 %endif
 
 # Build the package lists for resource packages
-echo '%dir %{_datadir}/cockpit/base1' > base.list
+# cockpit-bridge is the basic dependency for all cockpit-* packages, so centrally own the page directory
+echo '%dir %{_datadir}/cockpit' > base.list
+echo '%dir %{_datadir}/cockpit/base1' >> base.list
 echo '%dir %{_datadir}/cockpit/base1/fonts' >> base.list
 find %{buildroot}%{_datadir}/cockpit/base1 -type f -o -type l >> base.list
 echo '%{_sysconfdir}/cockpit/machines.d' >> base.list
@@ -291,7 +293,7 @@ for libexec in cockpit-askpass cockpit-session cockpit-ws cockpit-tls cockpit-ws
     rm %{buildroot}/%{_libexecdir}/$libexec
 done
 rm -r %{buildroot}/%{_libdir}/security %{buildroot}/%{_sysconfdir}/pam.d %{buildroot}/%{_sysconfdir}/motd.d %{buildroot}/%{_sysconfdir}/issue.d
-rm %{buildroot}/usr/bin/cockpit-bridge %{buildroot}/usr/sbin/remotectl
+rm %{buildroot}/usr/bin/cockpit-bridge
 rm -f %{buildroot}%{_libexecdir}/cockpit-ssh
 rm -f %{buildroot}%{_datadir}/metainfo/cockpit.appdata.xml
 %endif
@@ -356,7 +358,6 @@ troubleshooting, interactive command-line sessions, and more.
 %{_docdir}/cockpit/AUTHORS
 %{_docdir}/cockpit/COPYING
 %{_docdir}/cockpit/README.md
-%dir %{_datadir}/cockpit
 %{_datadir}/metainfo/cockpit.appdata.xml
 %{_datadir}/pixmaps/cockpit.png
 %doc %{_mandir}/man1/cockpit.1.gz
@@ -428,14 +429,11 @@ Provides: cockpit-selinux = %{version}-%{release}
 Provides: cockpit-sosreport = %{version}-%{release}
 Requires: sos
 %endif
-%if 0%{?fedora} >= 29
-# 0.7.0 (actually) supports task cancellation.
-# 0.7.1 fixes tasks never announcing completion.
-Recommends: (reportd >= 0.7.1 if abrt)
+%if 0%{?fedora}
+Recommends: (reportd if abrt)
 %endif
 # NPM modules which are also available as packages
 Provides: bundled(js-jquery) = %{npm-version:jquery}
-Provides: bundled(xstatic-bootstrap-datepicker-common) = %{npm-version:bootstrap-datepicker}
 Provides: bundled(xstatic-patternfly-common) = %{npm-version:patternfly}
 
 %description system
@@ -469,7 +467,6 @@ authentication via sssd/FreeIPA.
 %doc %{_mandir}/man5/cockpit.conf.5.gz
 %doc %{_mandir}/man8/cockpit-ws.8.gz
 %doc %{_mandir}/man8/cockpit-tls.8.gz
-%doc %{_mandir}/man8/remotectl.8.gz
 %doc %{_mandir}/man8/pam_ssh_add.8.gz
 %dir %{_sysconfdir}/cockpit
 %config(noreplace) %{_sysconfdir}/cockpit/ws-certs.d
@@ -493,7 +490,6 @@ authentication via sssd/FreeIPA.
 %{_unitdir}/cockpit-wsinstance-https@.service
 %{_unitdir}/system-cockpithttps.slice
 %{_prefix}/%{__lib}/tmpfiles.d/cockpit-tempfiles.conf
-%{_sbindir}/remotectl
 %{pamdir}/pam_ssh_add.so
 %{pamdir}/pam_cockpit_cert.so
 %{_libexecdir}/cockpit-ws

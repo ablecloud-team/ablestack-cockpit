@@ -51,7 +51,7 @@ const _ = cockpit.gettext;
 
 class StorageControl extends React.Component {
     render() {
-        var excuse = this.props.excuse;
+        const excuse = this.props.excuse;
         if (!client.superuser.allowed)
             return <div />;
 
@@ -83,9 +83,9 @@ function checked(callback) {
         if (event.type === 'keypress' && event.key !== "Enter")
             return;
 
-        var promise = client.run(callback);
+        const promise = client.run(callback);
         if (promise)
-            promise.fail(function (error) {
+            promise.catch(function (error) {
                 dialog_open({
                     Title: _("Error"),
                     Body: error.toString()
@@ -116,7 +116,6 @@ export const StorageLink = ({ id, excuse, onClick, children }) => (
                                 style={excuse ? { pointerEvents: 'none' } : null}
                                 variant="link"
                                 isInline
-                                className="ct-form-relax"
                                 isDisabled={!!excuse}>
                             {children}
                         </Button>
@@ -157,18 +156,18 @@ export class StorageOnOff extends React.Component {
     }
 
     render() {
-        var self = this;
+        const self = this;
 
         function onChange(val) {
-            var promise = self.props.onChange(val);
+            const promise = self.props.onChange(val);
             if (promise) {
-                promise.always(() => { self.setState({ promise: null }) });
-                promise.fail((error) => {
+                promise.catch(error => {
                     dialog_open({
                         Title: _("Error"),
                         Body: error.toString()
                     });
-                });
+                })
+                        .finally(() => { self.setState({ promise: null }) });
             }
 
             self.setState({ promise: promise, promise_goal_state: val });

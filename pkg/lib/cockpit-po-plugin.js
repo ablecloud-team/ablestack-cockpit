@@ -16,25 +16,34 @@ module.exports = class {
         this.wrapper = options.wrapper || 'cockpit.locale(PO_DATA);';
     }
 
-    apply(compiler) {
-        if (!webpack.Compilation) {
-            // webpack v4
-            compiler.hooks.emit.tapPromise(
-                'CockpitPoPlugin',
-                compilation => Promise.all(glob.sync(path.resolve(srcdir, 'po/*.po')).map(f => this.buildFile(f, compilation)))
-            );
-        } else {
-            // webpack v5
-            compiler.hooks.thisCompilation.tap('CockpitPoPlugin', compilation => {
-                compilation.hooks.processAssets.tapPromise(
-                    {
-                        name: 'CockpitPoPlugin',
-                        stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
-                    },
-                    () => Promise.all(glob.sync(path.resolve(srcdir, 'po/*.po')).map(f => this.buildFile(f, compilation)))
-                );
-            });
+    get_po_files(compilation) {
+        try {
+            const linguas_file = path.resolve(srcdir, "po/LINGUAS");
+            const linguas = fs.readFileSync(linguas_file, 'utf8').match(/\S+/g);
+            compilation.fileDependencies.add(linguas_file); // Only after reading the file
+            return linguas.map(lang => path.resolve(srcdir, 'po', lang + '.po'));
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                throw error;
+            }
+
+            /* No LINGUAS file?  Fall back to globbing.
+             * Note: we won't detect .po files being added in this case.
+             */
+            return glob.sync(path.resolve(srcdir, 'po/*.po'));
         }
+    }
+
+    apply(compiler) {
+        compiler.hooks.thisCompilation.tap('CockpitPoPlugin', compilation => {
+            compilation.hooks.processAssets.tapPromise(
+                {
+                    name: 'CockpitPoPlugin',
+                    stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+                },
+                () => Promise.all(this.get_po_files(compilation).map(f => this.buildFile(f, compilation)))
+            );
+        });
     }
 
     get_plural_expr(statement) {
@@ -85,6 +94,8 @@ module.exports = class {
     }
 
     buildFile(po_file, compilation) {
+        compilation.fileDependencies.add(po_file);
+
         return new Promise((resolve, reject) => {
             const patterns = this.build_patterns(compilation, this.reference_patterns);
 
@@ -124,13 +135,7 @@ module.exports = class {
             const output = this.wrapper.replace('PO_DATA', chunks.join('')) + '\n';
 
             const lang = path.basename(po_file).slice(0, -3);
-            if (webpack.sources) {
-                // webpack v5
-                compilation.emitAsset(this.subdir + 'po.' + lang + '.js', new webpack.sources.RawSource(output));
-            } else {
-                // webpack v4
-                compilation.assets[this.subdir + 'po.' + lang + '.js'] = { source: () => output, size: () => output.length };
-            }
+            compilation.emitAsset(this.subdir + 'po.' + lang + '.js', new webpack.sources.RawSource(output));
             resolve();
         });
     }

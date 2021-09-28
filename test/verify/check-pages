@@ -39,12 +39,29 @@ class TestPages(MachineCase):
         expected += "About Web Console"
         # DOCUMENTATION_URL is only in Fedora and RHEL
         if "fedora" in m.image:
-            expected = "Fedora documentation" + expected
+            if m.image == "fedora-35":
+                expected = "Fedora Linux documentation" + expected
+            else:
+                expected = "Fedora documentation" + expected
         elif m.image.startswith("rhel-"):
             expected = "Red Hat Enterprise Linux documentation" + expected
         b.wait_collected_text("#navbar-docs-items", expected)
         b.click("#navbar-docs > a")
         b.wait_not_visible("#navbar-docs-items")
+
+    def check_system_menu(self, label, present):
+        b = self.browser
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
+
+        if present:
+            b.wait_visible(f"#host-apps li a:contains('{label}')")
+        else:
+            b.wait_not_present(f"#host-apps li a:contains('{label}')")
+
+        if b.cdp.mobile:
+            # close menu again
+            b.click("#nav-system-item")
 
     def open_lang_modal(self):
         self.browser.switch_to_top()
@@ -114,14 +131,11 @@ OnCalendar=daily
         b.wait_text(".service-name", "Test Service")
 
         # check that navigating away and back preserves place
-        b.switch_to_top()
-        b.click("a[href='/system']")
-        b.enter_page("/system")
+        b.click_system_menu("/system")
         b.wait_visible("#system_information_systime_button")
         b.switch_to_top()
         self.checkDocs(["Configuring system settings"])
-        b.click("a[href='/system/services']")
-        b.enter_page("/system/services")
+        b.click_system_menu("/system/services")
         b.wait_visible("ol.pf-c-breadcrumb__list")
         b.wait_text(".service-name", "Test Service")
         b.switch_to_top()
@@ -130,9 +144,7 @@ OnCalendar=daily
 
         # check that when inside the component clicking the navbar
         # takes you home
-        b.switch_to_top()
-        b.click("a[href='/system/services']")
-        b.enter_page("/system/services")
+        b.click_system_menu("/system/services")
         b.wait_visible("#services-list")
         b.wait_not_present("#service-details")
         b.switch_to_top()
@@ -161,7 +173,7 @@ OnCalendar=daily
         # Test 'parent' manifest option
         b.switch_to_top()
         b.go("/metrics")
-        b.wait_text("#host-apps .pf-m-current", "Overview")
+        self.check_system_menu("Overview", True)
         self.checkDocs(["Performance Co-Pilot"])
 
         # Lets try changing the language
@@ -413,13 +425,13 @@ OnCalendar=daily
 
         self.login_and_go()
 
-        b.wait_in_text("#host-apps", "Overview")
+        self.check_system_menu("Overview", True)
         self.restore_dir("/home/admin")
         m.execute("mkdir -p /home/admin/.local/share/cockpit/foo")
         m.write("/home/admin/.local/share/cockpit/foo/manifest.json",
                 '{ "menu": { "index": { "label": "FOO!" } } }')
         b.reload()
-        b.wait_in_text("#host-apps", "FOO!")
+        self.check_system_menu("FOO!", True)
 
         self.allow_restart_journal_messages()
 
@@ -431,6 +443,8 @@ OnCalendar=daily
         self.allow_journal_messages("invalid or unusable locale: de_DE.UTF-8")
 
         self.login_and_go()
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
 
         filter_sel = ".filter-menus"
 
@@ -472,6 +486,9 @@ OnCalendar=daily
 
         # Visited page, search should be cleaned up
         b.switch_to_top()
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
+            b.focus(filter_sel)
         b.wait_val(filter_sel, "")
 
         # Check that escape cleans the search
@@ -506,6 +523,8 @@ OnCalendar=daily
 
         # Check we jump into subpage when defined in manifest
         b.switch_to_top()
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
         b.focus(filter_sel)
         b.key_press("firew")
         b.wait_visible("#host-apps li a:contains('Networking')")
@@ -534,6 +553,8 @@ OnCalendar=daily
         b.wait_in_text(".ct-overview-header", "Neustart")
 
         b.switch_to_top()
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
         b.wait_visible("#host-apps li a:contains('Dienste')")
         b.wait_visible("#host-apps li a:contains('Protokolle')")
         b.focus(filter_sel)
@@ -694,6 +715,8 @@ OnCalendar=daily
         b.click("#set-status")
 
         b.switch_to_top()
+        if b.cdp.mobile:
+            b.click("#nav-system-item")
         b.wait_visible("#development-info")
         b.mouse("#development-info", "mouseenter")
         b.wait_in_text(".pf-c-tooltip", "My Little Page Status")

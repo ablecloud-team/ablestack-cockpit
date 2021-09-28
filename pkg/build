@@ -43,7 +43,7 @@ V_WEBPACK = $(V_WEBPACK_$(V))
 V_WEBPACK_ = $(V_WEBPACK_$(AM_DEFAULT_VERBOSITY))
 V_WEBPACK_0 = @echo "  WEBPACK  $(@:dist/%/manifest.json=%)";
 
-WEBPACK_MAKE = NODE_ENV=$(NODE_ENV) SRCDIR=$(abspath $(srcdir)) $(srcdir)/tools/webpack-make
+WEBPACK_MAKE = NODE_ENV=$(NODE_ENV) SRCDIR=$(abspath $(srcdir)) $(srcdir)/tools/termschutz -- $(srcdir)/tools/webpack-make
 
 WEBPACK_CONFIG = $(srcdir)/webpack.config.js
 WEBPACK_INPUTS =
@@ -62,7 +62,7 @@ dist/%/Makefile.deps:
 	@true
 
 dist/%/manifest.json: $(srcdir)/tools/webpack-make $(srcdir)/package-lock.json $(WEBPACK_CONFIG)
-	$(V_WEBPACK) $(WEBPACK_MAKE) -d dist/$*/Makefile.deps -c $(WEBPACK_CONFIG)
+	$(V_WEBPACK) $(WEBPACK_MAKE) -c $(WEBPACK_CONFIG) $*
 
 -include $(WEBPACK_DEPS)
 

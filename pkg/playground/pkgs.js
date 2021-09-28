@@ -1,25 +1,23 @@
-import $ from "jquery";
 import cockpit from "cockpit";
 
 import '../lib/patternfly/patternfly-cockpit.scss';
 
-$(function() {
-    var proxy = cockpit.dbus(null, { bus: "internal" }).proxy("cockpit.Packages", "/packages");
+document.addEventListener("DOMContentLoaded", () => {
+    const proxy = cockpit.dbus(null, { bus: "internal" }).proxy("cockpit.Packages", "/packages");
 
-    var manifests;
+    let manifests;
 
     function update(str) {
-        var new_m = JSON.parse(str);
-        var p;
+        const new_m = JSON.parse(str);
 
         if (manifests) {
-            for (p in new_m) {
+            for (const p in new_m) {
                 if (!manifests[p])
                     console.log("ADD", p);
                 else if (manifests[p].checksum != new_m[p].checksum)
                     console.log("CHG", p);
             }
-            for (p in manifests) {
+            for (const p in manifests) {
                 if (!new_m[p])
                     console.log("REM", p);
             }
@@ -28,21 +26,17 @@ $(function() {
         manifests = new_m;
     }
 
-    var debug_manifest_changes = false;
+    const debug_manifest_changes = false;
 
     proxy.wait(function () {
-        $("body").prop("hidden", false);
+        document.body.removeAttribute("hidden");
         if (debug_manifest_changes) {
             update(proxy.Manifests);
-            $(proxy).on("changed", function () {
-                update(proxy.Manifests);
-            });
+            proxy.addEventListener("changed", () => update(proxy.Manifests));
         }
-        $("#reload").on("click", function() {
+        document.getElementById("reload").addEventListener("click", () => {
             proxy.Reload()
-                    .fail(function (error) {
-                        console.log("ERROR", error);
-                    });
+                    .catch(error => console.log("ERROR", error));
         });
     });
 });

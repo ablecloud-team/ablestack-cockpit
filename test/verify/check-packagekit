@@ -38,7 +38,7 @@ done
 
 OSesWithoutTracer = ["debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable", "fedora-coreos"]
 OSesWithoutKpatch = ["debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable",
-                     "fedora-coreos", "fedora-33", "fedora-34", "fedora-testing", "centos-8-stream"]
+                     "fedora-coreos", "fedora-34", "fedora-35", "fedora-testing", "centos-8-stream"]
 
 
 class NoSubManCase(PackageCase):
@@ -271,6 +271,22 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
         b = self.browser
         m = self.machine
 
+        def check_status():
+            if m.image in OSesWithoutTracer:
+                b.wait_in_text("#status p", "System is up to date")
+                # PK starts from a blank state, thus should force refresh and set the "time since" to 0
+                b.wait_in_text("#last-checked", "Last checked: less than a minute ago")
+            else:
+                code = m.execute("tracer > /dev/null 2>&1; echo $?").rstrip()
+                if code == "104":
+                    b.wait_in_text("#status p", "a system reboot")
+                elif code == "102" or code == "101":
+                    b.wait_in_text("#status p", "to be restarted")
+                else:
+                    b.wait_in_text("#status p", "System is up to date")
+                    # PK starts from a blank state, thus should force refresh and set the "time since" to 0
+                    b.wait_in_text("#last-checked", "Last checked: less than a minute ago")
+
         self.enable_preload("packagekit", "index")
 
         # Refresh cache so cockpit does not try to reload page
@@ -286,9 +302,10 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
         # no updates on the Software Updates page
         b.go("/updates")
         b.enter_page("/updates")
-        b.wait_in_text("#status", "System is up to date")
-        # PK starts from a blank state, thus should force refresh and set the "time since" to 0
-        b.wait_in_text("#last-checked", "Last checked: less than a minute ago")
+
+        # refresh
+        b.click("#status .pf-c-card__header button")
+        check_status()
 
         install_lockfile = "/tmp/finish-pk"
         # create two updates; force installing chocolate before vanilla
@@ -301,8 +318,6 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
 
         # check again
         b.click("#status .pf-c-card__header button")
-
-        b.wait_in_text("#last-checked", "Last checked: less than a minute ago")
 
         b.wait_visible("#available-updates")
         b.wait_in_text("#status", "2 updates available")
@@ -355,8 +370,7 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
         b.click("#ignore")
 
         # should go back to updates overview, nothing pending any more
-        b.wait_in_text("#status", "System is up to date")
-        b.wait_in_text("#last-checked", "Last checked")
+        check_status()
 
         # TODO make Packagekit GetUpdates work for tests properly
         b.wait_not_present("#available-updates")
@@ -701,12 +715,15 @@ ExecStart=/usr/local/bin/{0}
         # norefs: just changelog, show both binary packages
         sel = self.check_nth_update(5, ["norefs-bin", "norefs-doc"], "2-1", self.enhancement_severity,
                                     desc_matches=["Now 10% more unicorns"])
-        # verify Markdown formatting in table cell
-        self.assertEqual(b.text(sel + " td.changelog em"), "more")  # *more*
-        self.assertEqual(b.attr(sel + " td.changelog a", "href"), "http://unicorn.example.com")
-        # verify Markdown formatting in details
-        self.assertEqual(b.text(sel + " .pf-m-expanded em"), "more")  # *more*
-        self.assertEqual(b.attr(sel + " .pf-m-expanded a:first-of-type", "href"), "http://unicorn.example.com")
+        # verify Markdown formatting in table cell - only present in large window sizes
+        if not b.cdp.mobile:
+            self.assertEqual(b.text(sel + " td.changelog em"), "more")  # *more*
+            self.assertEqual(b.attr(sel + " td.changelog a", "href"), "http://unicorn.example.com")
+            # verify Markdown formatting in details
+            self.assertEqual(b.text(sel + " .pf-m-expanded em"), "more")  # *more*
+            self.assertEqual(b.attr(sel + " .pf-m-expanded a:first-of-type", "href"), "http://unicorn.example.com")
+        else:
+            b.wait_not_visible(sel + " td.changelog em")
 
         # updates are shown on system page
         b.go("/system")
@@ -879,9 +896,12 @@ ExecStart=/usr/local/bin/{0}
                               desc_matches=["fine07", "fine09"])
 
         # verbose changelog should be truncated
-        desc = b.text("#app .ct-table tbody:nth-of-type(3) [data-label=Details]")
-        self.assertIn("Things change #00", desc)
-        self.assertNotIn("#01", desc)
+        if not b.cdp.mobile:
+            desc = b.text("#app .ct-table tbody:nth-of-type(3) [data-label=Details]")
+            self.assertIn("Things change #00", desc)
+            self.assertNotIn("#01", desc)
+        else:
+            b.wait_not_visible("#app .ct-table tbody:nth-of-type(3) [data-label=Details]")
         # but complete in the details
         self.check_nth_update(3, "verbose", "1-2",
                               desc_matches=["Things change #00", "Things change #29"])
@@ -945,6 +965,7 @@ ExecStart=/usr/local/bin/{0}
 
         self.allow_journal_messages(".*org.freedesktop.PackageKit.*Error.NoReply.*")
         self.allow_journal_messages("Process .* dumped core.*")
+        self.allow_journal_messages("Found module .* with build-id: .*")
         self.allow_journal_messages("Stack trace of thread.*")
         self.allow_journal_messages("#[0-9].*")
 
@@ -994,18 +1015,8 @@ ExecStart=/usr/local/bin/{0}
         # error message visible
         b.wait_in_text("#app .pf-c-empty-state__body", "authentication")
 
-        # become superuser
-        b.switch_to_top()
-        b.click("#super-user-indicator button")
-        b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
-        b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
-        b.click(".pf-c-modal-box button:contains('Authenticate')")
-        b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
-
-        b.wait_text("#super-user-indicator", "Administrative access")
-
         # page adjusts automatically to privilege change
-        b.switch_to_frame("cockpit1:localhost/updates")
+        b.become_superuser()
         b.wait_in_text("#status", "1 update available")
         b.wait_visible("#available-updates")
 
@@ -1116,7 +1127,7 @@ class TestKpatchInstall(NoSubManCase):
 
 @skipImage("Image uses OSTree", "fedora-coreos")
 @skipImage("No subscriptions", "debian-stable", "debian-testing", "centos-8-stream",
-           "fedora-33", "fedora-34", "fedora-testing", "ubuntu-2004", "ubuntu-stable")
+           "fedora-34", "fedora-testing", "ubuntu-2004", "ubuntu-stable")
 class TestUpdatesSubscriptions(PackageCase):
     provision = {
         "0": {"address": "10.111.112.1/20", "dns": "10.111.112.1"},
@@ -1484,16 +1495,8 @@ class TestAutoUpdates(NoSubManCase):
         # detecting auto updates configuration works unprivileged, but changing does not
         b.wait_visible("#autoupdates-settings button:disabled")
 
-        # become superuser
-        b.switch_to_top()
-        b.click("#super-user-indicator button")
-        b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
-        b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
-        b.click(".pf-c-modal-box button:contains('Authenticate')")
-        b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
-        b.switch_to_frame("cockpit1:localhost/updates")
-
-        # enable auto-updates
+        # become superuser, enable auto-updates
+        b.become_superuser()
         b.wait_in_text("#autoupdates-settings", "Disabled")
         b.click("#autoupdates-settings button:contains('Edit')")
         b.wait_visible("#automatic-updates-dialog")
@@ -1501,16 +1504,8 @@ class TestAutoUpdates(NoSubManCase):
         b.click("#automatic-updates-dialog button:contains('Save changes')")
         b.wait_in_text("#autoupdates-settings", "Updates will be applied every day at 06:00")
 
-        # Drop privileges
-        b.switch_to_top()
-        b.click("#super-user-indicator button")
-        b.click(".pf-c-modal-box:contains('Switch to limited access') button:contains('Limit access')")
-        b.wait_not_present(".pf-c-modal-box:contains('Switch to limited access')")
-
-        b.wait_text("#super-user-indicator", "Limited access")
-        b.switch_to_frame("cockpit1:localhost/updates")
-
-        # auto-update status still visible, but disabled
+        # without superuser, auto-update status still visible, but disabled
+        b.drop_superuser()
         b.wait_in_text("#autoupdates-settings", "Updates will be applied every day at 06:00")
         b.wait_visible("#autoupdates-settings button:disabled")
 

@@ -30,6 +30,16 @@ from testlib import *
 @skipDistroPackage()
 class TestLogin(MachineCase):
 
+    def check_shell(self):
+        b = self.browser
+        b.wait_visible("#content")
+        if b.cdp.mobile:
+            b.click("#hosts-sel button")
+            b.wait_in_text(".view-hosts .pf-m-current", "admin @")
+            b.click("#hosts-sel button")
+        else:
+            b.wait_text('#current-username', 'admin')
+
     def testBasic(self):
         m = self.machine
         b = self.browser
@@ -102,15 +112,14 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         # Login as admin
         b.open("/system")
         b.login_and_go()
-        b.wait_text('#current-username', 'admin')
+        self.check_shell()
 
         if m.image not in ['fedora-coreos']:  # logs in via ssh, not cockpit-session
             self.assertRegex(m.execute("who"), r"(^|\n)admin *web.*(\d+\.\d+|::)")
 
         # reload, which should log us in with the cookie
         b.reload()
-        b.wait_visible("#content")
-        b.wait_text('#current-username', 'admin')
+        self.check_shell()
 
         if m.image not in ['fedora-coreos']:  # logs in via ssh, not cockpit-session
             self.assertRegex(m.execute("who"), r"(^|\n)admin *web.*(\d+\.\d+|::)")
@@ -141,8 +150,8 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         # And now we remove cockpit-ssh which affects the default
         if not m.ostree_image:
-            m.execute("for p in /usr/libexec/cockpit-ssh /usr/lib/cockpit/cockpit-ssh; do mv $p ${p}.disabled || true; done")
-            self.addCleanup(m.execute, "for p in /usr/libexec/cockpit-ssh /usr/lib/cockpit/cockpit-ssh; do mv ${p}.disabled $p || true; done")
+            self.restore_dir(self.libexecdir)
+            m.execute(f"rm {self.libexecdir}/cockpit-ssh")
             m.restart_cockpit()
             b.open("/system")
             b.wait_not_visible("#option-group")
@@ -180,22 +189,17 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         def assert_messages(has_last, n_fail):
             if has_last:
-                b.wait_visible('#login-messages')
-                b.wait_visible('#last-login')
-                b.wait_in_text('#last-login', "Last login")
-                b.wait_in_text('#last-login', "from")  # only present if IP was logged
+                b.wait_visible('#system_last_login')
+                b.wait_in_text('#system_last_login', "Last successful login")
+                b.wait_in_text('#system_last_login_from', "from")  # only present if IP was logged
 
-                if n_fail:
-                    b.wait_visible('#last-failed-login')
-                    b.wait_in_text('#last-failed-login', "from")
-                    b.wait_in_text('#login-messages', 'There were {} failed'.format(n_fail))
-                else:
-                    self.assertFalse(b.is_present('#last-failed-login'))
-                    b.wait_not_in_text('#login-messages', 'failed')
-
+            if n_fail:
+                b.wait_visible('#system_last_login')
+                b.wait_in_text('#system_last_login', '{} failed login'.format(n_fail))
+                b.wait_in_text('#system_last_login_from', "from")
+                b.wait_in_text('#system_last_login_success', "Last successful login")
             else:
-                self.assertEqual(n_fail, 0)
-                b.wait_not_present('#login-messages')
+                self.assertFalse(b.is_present('#system_last_login_success'))
 
         def verify_correct(has_last, n_fail):
             b.login_and_go('/system')
@@ -205,16 +209,6 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
             b.reload()
             b.enter_page('/system')
             assert_messages(has_last, n_fail)
-
-            if has_last:
-                # dismiss and make sure it's gone
-                b.click('#login-messages button')
-                assert_messages(False, 0)
-
-                # reload and make sure it's still gone
-                b.reload()
-                b.enter_page('/system')
-                assert_messages(False, 0)
 
             b.logout()
 
@@ -238,7 +232,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         b.wait_text_not("#login-error-message", "")
 
         # We should see those bogus attempts now
-        verify_correct(True, 3)
+        verify_correct(False, 3)
 
         # But after that login, they should be gone again
         verify_correct(True, 0)
@@ -335,8 +329,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         b.click('#login-button')
 
         b.expect_load()
-        b.wait_visible("#content")
-        b.wait_text('#current-username', 'admin')
+        self.check_shell()
 
         self.allow_journal_messages('.*You are required to change your password immediately.*',
                                     '.*user account or password has expired.*',
@@ -379,13 +372,12 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         b.click('#login-button')
 
         b.expect_load()
-        b.wait_visible("#content")
-        b.wait_text('#current-username', 'admin')
+        self.check_shell()
 
         self.allow_restart_journal_messages()
 
     @skipImage("No tlog", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2004",
-               "rhel-8-4", "rhel-8-5", "rhel-8-5-distropkg", "rhel-9-0", "rhel-9-0-distropkg", "centos-8-stream", "fedora-coreos")
+               "rhel-8-4", "rhel-8-5", "rhel-8-6", "rhel-8-5-distropkg", "rhel-9-0", "rhel-9-0-distropkg", "centos-8-stream", "fedora-coreos")
     def testSessionRecordingShell(self):
         m = self.machine
         b = self.browser
@@ -456,8 +448,8 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         # not an admin
         b.wait_visible(".pf-c-alert:contains('Web console is running in limited access mode.')")
 
-        b.wait_in_text('#last-login', "Last login:")
-        b.wait_in_text('#last-login', "web console")
+        b.wait_in_text('#system_last_login', "Last successful login")
+        b.wait_in_text('#system_last_login_from', "web console")
 
         b.logout()
         # not allowed to restricted users
@@ -472,8 +464,8 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         # passing login info memfd should work
         b.logout()
         b.login_and_go("/system")
-        b.wait_in_text('#last-login', "Last login:")
-        b.wait_in_text('#last-login', "web console")
+        b.wait_in_text('#system_last_login', "Last successful login")
+        b.wait_in_text('#system_last_login_from', "web console")
 
         b.go("/playground/test")
         b.enter_page("/playground/test")
@@ -553,7 +545,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         m = self.machine
         b = self.browser
 
-        is_pam_tally2 = m.image == 'debian-stable' or m.image.startswith('ubuntu')
+        is_pam_tally2 = m.image.startswith('ubuntu')
 
         if is_pam_tally2:
             module = 'pam_tally2'
@@ -602,7 +594,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         # add it to the pam config
         if is_pam_tally2:
             self.sed_file("/common-auth/ { iauth required pam_tally2.so deny=4\n }", "/etc/pam.d/cockpit")
-        elif m.image == 'debian-testing':
+        elif m.image.startswith('debian-'):
             # enable pam_faillock.  see example in pam_faillock(8), adopted for sss
             self.sed_file("""s/re.*pam_deny.so/[default=die] pam_faillock.so authfail deny=4/;
                              s/re.*pam_permit.so/sufficient pam_faillock.so authsucc deny=4/;
@@ -621,7 +613,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         # pam_faillock tries to chown the file to be owned by the user itself,
         # which is currently an selinux fail on the following distros:
-        if m.image in ['centos-8-stream', 'fedora-testing', 'fedora-33', 'fedora-34', 'rhel-8-4', 'rhel-8-5', 'rhel-8-5-distropkg', 'rhel-9-0']:
+        if m.image in ['centos-8-stream', 'fedora-testing', 'fedora-34', 'fedora-35', 'rhel-8-4', 'rhel-8-5', 'rhel-8-6', 'rhel-8-5-distropkg', 'rhel-9-0']:
             # https://bugzilla.redhat.com/show_bug.cgi?id=1836182
             self.allow_journal_messages('.*type=1400.*avc:  denied  { chown }.*comm="cockpit-session".*')
 
@@ -685,7 +677,6 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         self.allow_journal_messages(".*Account locked due to .* failed logins")
 
     @skipImage("sssd not available", "fedora-coreos")
-    @skipImage("sssd can't do cert mapping yet", "debian-stable")
     def testClientCertAuthentication(self):
         # This only tests the cockpit ←→ sssd API, but this is completely unsafe!
         # Nothing currently checks whether the client certificate is signed by

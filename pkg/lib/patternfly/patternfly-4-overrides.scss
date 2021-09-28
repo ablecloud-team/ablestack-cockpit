@@ -28,6 +28,21 @@ ul.pf-c-select__menu {
     overflow-y: auto;
 }
 
+/* Adjust padding on form selects to resemble PF non-form selects */
+/* (This can be seen when the longest text is selected on a non-stretched select) */
+/* Upstream: https://github.com/patternfly/patternfly/issues/4387 */
+/* Cockpit-Podman: https://github.com/cockpit-project/cockpit-podman/issues/755 */
+select.pf-c-form-control {
+    --pf-c-form-control--PaddingRight: 41px;
+    --pf-c-form-control--PaddingLeft: 8px;
+
+    // Firefox's select text has additional padding (4px)
+    @-moz-document url-prefix() {
+        --pf-c-form-control--PaddingRight: 37px;
+        --pf-c-form-control--PaddingLeft: 4px;
+    }
+}
+
 /* All SVGs used in PF4 have some inline style to align them
  * https://github.com/patternfly/patternfly-react/issues/4767
  */
@@ -76,6 +91,7 @@ svg {
 
         // PF4 CardActions act up when using buttons while the title is large of font
         // https://github.com/patternfly/patternfly/issues/3713
+        // https://github.com/patternfly/patternfly/issues/4362
         margin: unset;
         padding-left: unset;
     }
@@ -113,12 +129,6 @@ svg {
     }
 }
 
-// Make sure focus ring is not truncated when input group element is focused.
-// https://github.com/patternfly/patternfly/issues/3926
-.pf-c-input-group :focus {
-    z-index: 2;
-}
-
 // Alerts use elements that have fonts set in other frameworks (including PF3);
 // generally, this is an H4 that often has a font size and sometimes family set.
 // Therefore, it should inherit from the alert font set at the pf-c-alert level.
@@ -129,15 +139,6 @@ svg {
 }
 
 .pf-c-toolbar {
-    // There should be an opt-in to make toolbars sticky.
-    // For now, we'll use a ct-sticky class while we wait for an official solution.
-    // https://github.com/patternfly/patternfly/issues/4113
-    &.ct-sticky {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-
     // Make summary content use the same vertical space as the filter toggle,
     // when possible.
     // https://github.com/patternfly/patternfly-design/issues/1055
@@ -155,4 +156,9 @@ svg {
             }
         }
     }
+}
+
+// When there is an Alert above the Form add some spacing
+.pf-c-modal-box .pf-c-alert + .pf-c-form {
+    padding-top: var(--pf-global--FontSize--sm);
 }

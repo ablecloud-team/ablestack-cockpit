@@ -17,7 +17,7 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import '../../lib/patternfly/patternfly-cockpit.scss';
+import '../../lib/patternfly/patternfly-4-cockpit.scss';
 import 'polyfills'; // once per application
 
 import React from "react";
@@ -947,7 +947,7 @@ class ServicesPage extends React.Component {
                     <Card isCompact>
                         <Toolbar data-loading={this.state.loadingUnits}
                                  clearAllFilters={this.onClearAllFilters}
-                                 className="ct-sticky ct-compact services-toolbar"
+                                 className="pf-m-sticky-top ct-compact services-toolbar"
                                  id="services-toolbar">
                             <ToolbarContent>{toolbarItems}</ToolbarContent>
                         </Toolbar>

@@ -24,7 +24,6 @@ import { PlusIcon } from '@patternfly/react-icons';
 
 import { ListingTable } from "cockpit-components-table.jsx";
 import { StorageButton, StorageUsageBar } from "./storage-controls.jsx";
-import { get_config } from "./utils.js";
 import { nfs_fstab_dialog } from "./nfs-details.jsx";
 import { OptionalPanel } from "./optional-panel.jsx";
 
@@ -32,15 +31,15 @@ const _ = cockpit.gettext;
 
 export class NFSPanel extends React.Component {
     render() {
-        var client = this.props.client;
+        const client = this.props.client;
 
         function make_nfs_mount(entry) {
-            var fsys_size;
+            let fsys_size;
             if (entry.mounted)
                 fsys_size = client.nfs.get_fsys_size(entry);
 
-            var server = entry.fields[0].split(":")[0];
-            var remote_dir = entry.fields[0].split(":")[1];
+            const server = entry.fields[0].split(":")[0];
+            const remote_dir = entry.fields[0].split(":")[1];
 
             return {
                 props: { entry, key: entry.fields[1] },
@@ -56,21 +55,21 @@ export class NFSPanel extends React.Component {
             };
         }
 
-        var mounts = client.nfs.entries.map(make_nfs_mount);
+        const mounts = client.nfs.entries.map(make_nfs_mount);
 
         function add() {
             nfs_fstab_dialog(client, null);
         }
 
-        var actions = (
+        const actions = (
             <StorageButton ariaLabel={_("Add")} kind="primary" onClick={add}>
                 <PlusIcon />
             </StorageButton>
         );
 
-        var nfs_feature = {
+        const nfs_feature = {
             is_enabled: () => client.features.nfs,
-            package: get_config("nfs_client_package", false),
+            package: client.get_config("nfs_client_package", false),
             enable: () => {
                 client.features.nfs = true;
                 client.nfs.start();

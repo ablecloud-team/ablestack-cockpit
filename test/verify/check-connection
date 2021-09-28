@@ -31,9 +31,7 @@ class TestConnection(MachineCase):
 
     def setUp(self):
         super().setUp()
-        self.ws_executable = "/usr/libexec/cockpit-ws"
-        if "debian" in self.machine.image or "ubuntu" in self.machine.image:
-            self.ws_executable = "/usr/lib/cockpit/cockpit-ws"
+        self.ws_executable = f"{self.libexecdir}/cockpit-ws"
 
     def ostree_setup_ws(self):
         '''Overlay cockpit-ws package on OSTree image
@@ -153,11 +151,11 @@ class TestConnection(MachineCase):
         self.assertFalse(cookie["secure"])
 
         if not m.ostree_image:  # cannot write to /usr on OSTree, and cockpit-session is in a container
-            # damage cockpit-session permissions (Fedora-ish and Debian-ish path), expect generic error message
-            m.execute("chmod g-x /usr/libexec/cockpit-session 2>/dev/null || chmod g-x /usr/lib/cockpit/cockpit-session")
+            # damage cockpit-session permissions, expect generic error message
+            m.execute(f"chmod g-x {self.libexecdir}/cockpit-session")
             b.open("/system")
             b.wait_in_text('#login-fatal-message', "Internal error in login process")
-            m.execute("chmod g+x /usr/libexec/cockpit-session 2>/dev/null || chmod g+x /usr/lib/cockpit/cockpit-session")
+            m.execute(f"chmod g+x {self.libexecdir}/cockpit-session")
 
             self.allow_journal_messages(".*cockpit-session: bridge program failed.*")
 
@@ -413,8 +411,9 @@ class TestConnection(MachineCase):
         self.assertIn(
             "default-src 'self' https://127.0.0.1:9090; connect-src 'self' https://127.0.0.1:9090 wss://127.0.0.1:9090", headers)
         self.assertIn("Access-Control-Allow-Origin: https://127.0.0.1:9090", headers)
-        # CORP is also set for dynamic paths
+        # CORP and Frame-Options are also set for dynamic paths
         self.assertIn("Cross-Origin-Resource-Policy: same-origin", headers)
+        self.assertIn("X-Frame-Options: sameorigin", headers)
 
         self.allow_journal_messages(
             ".*Peer failed to perform TLS handshake",
@@ -480,10 +479,6 @@ class TestConnection(MachineCase):
         m.execute("passwd -d admin")
         m.execute("passwd -d user")
 
-        # debian-stable only allows passwordless logins from /etc/securetty, which excludes ssh
-        if m.image in ['debian-stable']:
-            self.sed_file('s/nullok_secure/nullok/', '/etc/pam.d/common-auth')
-
         self.sed_file('$ a\\\nPermitEmptyPasswords yes', '/etc/ssh/sshd_config',
                       'systemctl restart sshd.service')
 
@@ -499,7 +494,7 @@ class TestConnection(MachineCase):
 
         def checkMotdContent(string, expected=True):
             # Needs https://github.com/linux-pam/linux-pam/pull/292 (or PAM 1.5.0)
-            old_pam = (m.image in ['centos-8-stream', 'debian-stable', 'debian-testing', 'ubuntu-2004', 'ubuntu-stable', 'rhel-8-4', 'rhel-8-5'])
+            old_pam = (m.image in ['centos-8-stream', 'debian-stable', 'debian-testing', 'ubuntu-2004', 'ubuntu-stable', 'rhel-8-4', 'rhel-8-5', 'rhel-8-6'])
 
             # check issue (should be exactly the same as motd)
             assertInOrNot(string, m.execute("cat /etc/issue.d/cockpit.issue"), expected)
@@ -594,15 +589,23 @@ class TestConnection(MachineCase):
     @skipImage("OSTree doesn't have cockpit-ws", "fedora-coreos")
     def testCommandline(self):
         m = self.machine
-        m.execute(
-            'mkdir -p /test/cockpit/ws-certs.d && echo "[WebService]\nLoginTitle = A Custom Title" > /test/cockpit/cockpit.conf')
-        m.execute('mkdir -p /test/cockpit/static/ && echo "<!DOCTYPE html><html><head></head><body><p>Custom Default Root</p></body></html>" > /test/cockpit/static/login.html')
 
-        m.execute("XDG_CONFIG_DIRS=/test XDG_DATA_DIRS=/test remotectl certificate --ensure")
-        self.assertTrue(m.execute("ls /test/cockpit/ws-certs.d/*"))
-        self.assertFalse(m.execute("ls /etc/cockpit/ws-certs.d/* || true"))
+        # Large requests are processed correctly with plain HTTP through cockpit-tls
+        m.start_cockpit(tls=True)
+        self.assertIn('id="login"', m.execute('''curl -s -S -H "Authorization: Negotiate $(printf '%0.7000i' 1)" http://localhost:9090/'''))
 
-        m.execute("XDG_CONFIG_DIRS=/test XDG_DATA_DIRS=/test {} --port 9000 --address 127.0.0.1 0<&- &>/dev/null &".format(self.ws_executable))
+        # Large requests are processed correctly with TLS through cockpit-tls
+        self.assertIn('id="login"', m.execute('''curl -s -S -k -H "Authorization: Negotiate $(printf '%0.7000i' 1)" https://localhost:9090/'''))
+        m.stop_cockpit()
+
+        self.restore_dir("/etc/cockpit")
+        m.execute("rm -f /etc/cockpit/ws-certs.d/* /etc/cockpit/cockpit.conf")
+        m.write("/etc/cockpit/cockpit.conf", "[WebService]\nLoginTitle = A Custom Title\n")
+
+        m.execute(f"{self.libexecdir}/cockpit-certificate-ensure")
+        self.assertTrue(m.execute("ls /etc/cockpit/ws-certs.d/*"))
+
+        m.execute(f"{self.ws_executable} --port 9000 --address 127.0.0.1 0<&- &>/dev/null &")
 
         # The port may not be available immediately, so wait for it
         wait(lambda: 'A Custom Title' in m.execute('curl -s -k https://localhost:9000/'))
@@ -616,13 +619,6 @@ class TestConnection(MachineCase):
         # Large requests are processed correctly with TLS
         self.assertIn('A Custom Title', m.execute('''curl -s -S -k -H "Authorization: Negotiate $(printf '%0.7000i' 1)" https://localhost:9000/'''))
 
-        # Large requests are processed correctly with plain HTTP through cockpit-tls
-        m.start_cockpit(tls=True)
-        self.assertIn('id="login"', m.execute('''curl -s -S -H "Authorization: Negotiate $(printf '%0.7000i' 1)" http://localhost:9090/'''))
-
-        # Large requests are processed correctly with TLS through cockpit-tls
-        self.assertIn('id="login"', m.execute('''curl -s -S -k -H "Authorization: Negotiate $(printf '%0.7000i' 1)" https://localhost:9090/'''))
-
     def testHeadRequest(self):
         m = self.machine
         m.start_cockpit()
@@ -632,6 +628,7 @@ class TestConnection(MachineCase):
         self.assertIn("HTTP/1.1 200 OK\r\n", headers)
         self.assertIn("Content-Type: text/html\r\n", headers)
         self.assertIn("Cross-Origin-Resource-Policy: same-origin\r\n", headers)
+        self.assertIn("X-Frame-Options: sameorigin\r\n", headers)
         # login.html is not always accessible as a file (e.g. on CoreOS), so just assert a reasonable content length
         self.assertIn("Content-Length: ", headers)
         length = int(headers.split('Content-Length: ', 1)[1].split()[0])
@@ -752,15 +749,9 @@ G_MESSAGES_DEBUG=all XDG_CONFIG_DIRS=/usr/local %s -p 9999 -a 127.0.0.90 --local
                   su -c "ssh test1@localhost cockpit-bridge --packages" admin | grep -q test1.*dashboard  # validate setup
                   """)
 
-        if "debian" in m.image or "ubuntu" in m.image:
-            cockpit_desktop = "/usr/lib/cockpit/cockpit-desktop"
-        else:
-            cockpit_desktop = "/usr/libexec/cockpit-desktop"
-
         for (pages, asserts) in cases:
             for page in pages:
-                m.execute('''su - -c 'BROWSER="curl --silent --compressed -o /tmp/out.html" %s %s' admin''' %
-                          (cockpit_desktop, page))
+                m.execute(f'''su - -c 'BROWSER="curl --silent --compressed -o /tmp/out.html" {self.libexecdir}/cockpit-desktop {page}' admin''')
 
                 out = m.execute("cat /tmp/out.html")
                 for a in asserts:
@@ -784,7 +775,7 @@ curl --silent --compressed -o /tmp/out.html "$@"
 until pgrep -f cockpit-bridge.*--privileged; do sleep 1; done
 """)
         m.execute("chmod 755 /tmp/browser.sh")
-        m.execute("su - -c 'BROWSER=/tmp/browser.sh %s system' admin" % cockpit_desktop)
+        m.execute(f"su - -c 'BROWSER=/tmp/browser.sh {self.libexecdir}/cockpit-desktop system' admin")
         self.assertIn('id="overview"', m.execute("cat /tmp/out.html"))
 
         self.allow_journal_messages("couldn't register polkit authentication agent.*")
@@ -928,23 +919,23 @@ ProtocolHeader = X-Forwarded-Proto
         m.execute("setsebool -P httpd_can_network_connect on")
         self.allow_journal_messages("audit.*bool=httpd_can_network_connect.*val=1.*")
 
-    def checkCockpitOnProxy(self):
+    def checkCockpitOnProxy(self, urlroot=""):
         b = self.browser
 
         # should use nginx' certificate, not cockpit's; use --resolve so that SNI matches the certificate's CN
         (https_host, https_port) = self.machine.forward["443"].split(':')
         out = subprocess.check_output(
             ["curl", "--verbose", "--head",
-             "--resolve", "alice:%s:%s" % (https_port, https_host),
+             "--resolve", f"alice:{https_port}:{https_host}",
              "--cacert", os.path.join(TEST_DIR, "../src/tls/ca/ca.pem"),
-             "https://alice:%s/cockpit/static/login.html" % https_port],
+             f"https://alice:{https_port}{urlroot}/cockpit/static/login.html"],
             stderr=subprocess.STDOUT)
         self.assertIn(b"HTTP/1.1 200 OK", out)
         self.assertIn(b"subject: CN=alice; DC=COCKPIT", out)
 
         # works with browser (but we can't set our CA)
         b.ignore_ssl_certificate_errors(True)
-        b.open("https://%s:%s/system" % (https_host, https_port))
+        b.open(f"https://{https_host}:{https_port}{urlroot}/system")
         b.wait_visible("#login")
         b.set_val("#login-user-input", "admin")
         b.set_val("#login-password-input", "foobar")
@@ -956,7 +947,7 @@ ProtocolHeader = X-Forwarded-Proto
         self.allow_restart_journal_messages()
 
     @skipImage("nginx not installed", "centos-8-stream", "debian-stable", "debian-testing", "fedora-coreos",
-               "rhel-8-4", "rhel-8-5", "rhel-9-0", "ubuntu-stable", "ubuntu-2004")
+               "rhel-8-4", "rhel-8-5", "rhel-8-6", "rhel-9-0", "ubuntu-stable", "ubuntu-2004")
     @skipBrowser("Firefox needs proper cert and CA", "firefox")
     def testNginxTLS(self):
         '''test proxying to Cockpit with TLS
@@ -970,6 +961,7 @@ ProtocolHeader = X-Forwarded-Proto
 server {
     listen 443 ssl;
     server_name %(origin)s;
+    root /srv/www;
 
     ssl_certificate "/etc/pki/alice.pem";
     ssl_certificate_key "/etc/pki/alice.key";
@@ -997,8 +989,49 @@ server {
         m.start_cockpit(tls=True)
         self.checkCockpitOnProxy()
 
+        # now test with UrlRoot
+        m.write("/etc/cockpit/cockpit.conf", "UrlRoot = cockpit-root\n", append=True)
+        m.execute("systemctl stop cockpit.service")
+        self.sed_file("s_location /_location /cockpit-root_", "/etc/nginx/conf.d/cockpit.conf",
+                      "systemctl restart nginx")
+        self.checkCockpitOnProxy(urlroot="/cockpit-root")
+
+        # get a non-cockpit file from the server
+        m.execute("mkdir -p /srv/www/embed-cockpit")
+        m.upload(["verify/files/embed-cockpit/index.html",
+                  "verify/files/embed-cockpit/embed.js",
+                  "verify/files/embed-cockpit/embed.css"],
+                 "/srv/www/embed-cockpit/")
+        m.execute("if selinuxenabled 2>&1; then chcon -R -t httpd_sys_content_t /srv/www; fi")
+
+        (https_host, https_port) = self.machine.forward["443"].split(':')
+        out = subprocess.check_output(
+            ["curl", "--verbose",
+             "--resolve", f"alice:{https_port}:{https_host}",
+             "--cacert", os.path.join(TEST_DIR, "../src/tls/ca/ca.pem"),
+             f"https://alice:{https_port}/embed-cockpit/embed.css"],
+            stderr=subprocess.STDOUT)
+        self.assertIn(b"HTTP/1.1 200 OK", out)
+        self.assertIn(b"#embed-links", out)
+
+        # embedding
+        b = self.browser
+        b.ignore_ssl_certificate_errors(True)
+        b.open(f"https://{https_host}:{https_port}/embed-cockpit/index.html")
+        b.set_val("#embed-address", f"https://{https_host}:{https_port}/cockpit-root")
+        b.click("#embed-full")
+        b.wait_visible("iframe[name='embed-full'][loaded]")
+        b.switch_to_frame("embed-full")
+
+        b.wait_visible("#login")
+        b.set_val("#login-user-input", "admin")
+        b.set_val("#login-password-input", "foobar")
+        b.click('#login-button')
+        b.expect_load_frame("embed-full")
+        b.wait_visible('article.system-health')
+
     @skipImage("nginx not installed", "centos-8-stream", "debian-stable", "debian-testing", "fedora-coreos",
-               "rhel-8-4", "rhel-8-5", "rhel-9-0", "ubuntu-stable", "ubuntu-2004")
+               "rhel-8-4", "rhel-8-5", "rhel-8-6", "rhel-9-0", "ubuntu-stable", "ubuntu-2004")
     @skipBrowser("Firefox needs proper cert and CA", "firefox")
     def testNginxNoTLS(self):
         '''test proxying to Cockpit with plain HTTP
@@ -1037,7 +1070,7 @@ server {
         m.execute("systemctl start nginx")
 
         # start cockpit-ws in proxy mode, skip all the ws-certs.d/ steps
-        m.spawn("su -s /bin/sh -c '/usr/libexec/cockpit-ws --address=127.0.0.1 --for-tls-proxy' cockpit-wsinstance", "ws.log")
+        m.spawn(f"su -s /bin/sh -c '{self.libexecdir}/cockpit-ws --address=127.0.0.1 --for-tls-proxy' cockpit-wsinstance", "ws.log")
         m.wait_for_cockpit_running()
 
         self.checkCockpitOnProxy()

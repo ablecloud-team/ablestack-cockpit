@@ -490,20 +490,19 @@ else
 fi
 AC_MSG_RESULT($enable_strict)
 
-# Python version; prefer python3
-m4_define_default([_AM_PYTHON_INTERPRETER_LIST], [python3 python2 python])
-AM_PATH_PYTHON([2.7])
+AM_PATH_PYTHON([3.6])
 
 # Generate
 #
 
 AC_SUBST(PAM_LIBS)
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 doc/guide/version
 src/tls/cockpit-certificate-helper
 ])
+AC_OUTPUT
 
 
 dnl ==========================================================================
