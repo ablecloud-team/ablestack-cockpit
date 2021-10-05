@@ -5,7 +5,7 @@
         "cockpit": "239"
     },
 
-    "menu": {
+    "menu1": {
         "index": {
             "label": "Overview",
             "order": 10,
@@ -69,7 +69,7 @@
         }
     },
 
-    "tools": {
+    "tools1": {
         "terminal": {
             "label": "Terminal",
             "keywords": [

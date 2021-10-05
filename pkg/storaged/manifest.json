@@ -4,7 +4,7 @@
         "cockpit": "186"
     },
 
-    "menu": {
+    "menu1": {
         "index": {
             "label": "Storage",
             "order": 30,
