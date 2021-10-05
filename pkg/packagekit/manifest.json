@@ -5,7 +5,7 @@
         "cockpit": "186"
     },
 
-    "tools": {
+    "tools1": {
         "index": {
             "label": "Software Updates",
             "docs": [

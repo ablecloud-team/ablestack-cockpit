@@ -49,24 +49,27 @@
           <div class="ct-header-item ct-header-oops" id="navbar-oops" hidden>
             <a role="link" tabindex="0" class="ct-nav-toggle"><span class="oops-status" translate="yes">Ooops!</span></a>
           </div>
+<!-- QQQQQQ  -->
           <div id="navbar-docs" class="dropdown ct-header-item ct-header-docs">
+<!--
             <a role="link" tabindex="0" id="navbar-docs-dropdown" class="ct-nav-toggle dropdown-toggle" data-toggle="dropdown">
-              <span class="icon-custom pficon pficon-help"></span>
-              <span translate>Help</span>
+              <span class="pficon pficon-help"></span>
+	      <span translate>Help</span>
               <span class="fa fa-caret-down pf-c-dropdown__toggle-icon"></span>
             </a>
+-->
             <ul id="navbar-docs-items" class="dropdown-menu pull-right">
             </ul>
           </div>
           <div class="dropdown ct-header-item ct-header-menu">
             <a role="link" tabindex="0" id="navbar-dropdown" class="ct-nav-toggle dropdown-toggle" data-toggle="dropdown">
-              <span class="icon-custom pficon pficon-cog"></span>
-              <span translate>Session</span>
+              <span class="pficon pficon-user" aria-label="Toggle session settings" translate="aria-label"></span>
               <span class="fa fa-caret-down pf-c-dropdown__toggle-icon"></span>
             </a>
             <ul class="dropdown-menu pull-right">
               <li id="super-user-indicator-mobile" class="mobile_v"></li>
               <li class="divider mobile_v"></li>
+<!--
               <li class="display-language-menu">
                 <a role="link" tabindex="0" translate="yes" id="open-display-language">Display language</a>
               </li>
@@ -77,8 +80,12 @@
               <li>
                   <a role="link" tabindex="0" id="credentials-item" translate="yes">SSH keys</a>
               </li>
-              <li>
+-->
+             <li>
                 <a role="link" tabindex="0" id="go-logout" translate="yes">Log out</a>
+             </li>
+              <li>
+                <a>도움말</a>
               </li>
             </ul>
           </div>
@@ -304,8 +311,8 @@
             <h1 id="machine-error-heading"></h1>
             <p id="machine-error-desc"></p>
             <div class="blank-slate-pf-main-action">
-              <button id="machine-reconnect" class="pf-c-button pf-m-primary pf-m-display-large" translate="yes">Reconnect</button>
-              <button id="machine-troubleshoot" class="pf-c-button pf-m-primary pf-m-display-large" translate="yes">Log in</button>
+              <button id="machine-reconnect" class="pf-c-button pf-m-primary btn-lg" translate="yes">Reconnect</button>
+              <button id="machine-troubleshoot" class="pf-c-button pf-m-primary btn-lg" translate="yes">Log in</button>
             </div>
           </div>
         </div>

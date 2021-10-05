@@ -206,20 +206,9 @@ export class NetworkPageDialogs extends React.Component {
     render() {
         return (
             <>
-                <Button id="networking-add-bond"
-                        onClick={syn_click(this.model, this.addBond)}
-                        variant="secondary">{_("Add bond")}</Button>
-                {this.state.showAddTeam &&
-                <Button data-test-stable={this.state.showAddTeam !== undefined}
-                        id="networking-add-team"
-                        onClick={syn_click(this.model, this.addTeam)}
-                        variant="secondary">{_("Add team")}</Button>}
                 <Button id="networking-add-bridge"
                         onClick={syn_click(this.model, this.addBridge)}
                         variant="secondary">{_("Add bridge")}</Button>
-                <Button id="networking-add-vlan"
-                        onClick={syn_click(this.model, this.addVlan)}
-                        variant="secondary">{_("Add VLAN")}</Button>
             </>
         );
     }

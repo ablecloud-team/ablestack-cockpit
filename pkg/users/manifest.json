@@ -3,7 +3,7 @@
 	"cockpit": "122"
     },
 
-    "menu": {
+    "menu1": {
         "index": {
             "label": "Accounts",
             "order": 70,

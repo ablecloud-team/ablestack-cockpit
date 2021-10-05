@@ -3,7 +3,7 @@
 	"cockpit": "122"
     },
 
-    "tools": {
+    "tools1": {
         "setroubleshoot": {
             "label": "SELinux",
             "keywords": [
