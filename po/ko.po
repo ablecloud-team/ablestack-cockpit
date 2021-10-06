@@ -4697,7 +4697,7 @@ msgstr "접두 길이"
 
 #: pkg/networkmanager/interfaces.js:1881
 msgid "Prefix length or netmask"
-msgstr "접두 길이 또는 넷마스크"
+msgstr "Netmask"
 
 #: pkg/networkmanager/interfaces.js:747
 msgid "Preparing"
