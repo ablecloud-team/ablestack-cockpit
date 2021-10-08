@@ -31,7 +31,7 @@ import {
     Form, FormGroup, FormHelperText,
     Radio, Split, SplitItem, Stack,
     TextInput, Title, Toolbar, ToolbarContent, ToolbarItem,
-    Tooltip, Page, PageSection, PageSectionVariants, Modal,
+    Page, PageSection, PageSectionVariants, Modal,
 } from '@patternfly/react-core';
 import { ExclamationCircleIcon, TrashIcon } from '@patternfly/react-icons';
 
@@ -139,30 +139,30 @@ function portRow(props) {
 }
 
 function ZoneSection(props) {
-    function onRemoveZone(event) {
-        if (event.button !== 0)
-            return;
+    // function onRemoveZone(event) {
+    //     if (event.button !== 0)
+    //         return;
 
-        event.stopPropagation();
-        props.onRemoveZone(props.zone.id);
-    }
+    //     event.stopPropagation();
+    //     props.onRemoveZone(props.zone.id);
+    // }
 
-    let deleteButton;
-    if (props.readonly) {
-        deleteButton = (
-            <Tooltip id="tip-auth" content={ _("You are not authorized to modify the firewall.") }>
-                <span>
-                    <Button variant="danger"
-                            aria-label={cockpit.format(_("Not authorized to remove zone $0"), props.zone.id)}
-                            isDisabled icon={<TrashIcon />} />
-                </span>
-            </Tooltip>
-        );
-    } else {
-        deleteButton = <Button variant="danger" onClick={onRemoveZone}
-                               aria-label={cockpit.format(_("Remove zone $0"), props.zone.id)}
-                               icon={<TrashIcon />} />;
-    }
+    // let deleteButton;
+    // if (props.readonly) {
+    //     deleteButton = (
+    //         <Tooltip id="tip-auth" content={ _("You are not authorized to modify the firewall.") }>
+    //             <span>
+    //                 <Button variant="danger"
+    //                         aria-label={cockpit.format(_("Not authorized to remove zone $0"), props.zone.id)}
+    //                         isDisabled icon={<TrashIcon />} />
+    //             </span>
+    //         </Tooltip>
+    //     );
+    // } else {
+    //     deleteButton = <Button variant="danger" onClick={onRemoveZone}
+    //                            aria-label={cockpit.format(_("Remove zone $0"), props.zone.id)}
+    //                            icon={<TrashIcon />} />;
+    // }
 
     const addServiceAction = (
         <Button variant="primary" onClick={() => props.openServicesDialog(props.zone.id, props.zone.id)} className="add-services-button" aria-label={cockpit.format(_("Add services to zone $0"), props.zone.id)}>
@@ -179,7 +179,8 @@ function ZoneSection(props) {
                     { props.zone.source.length > 0 && <span className="zone-section-target"><strong>{_("Addresses")}</strong> {props.zone.source.join(", ")}</span> }
                 </div>
             </CardTitle>
-            { !firewall.readonly && <CardActions className="zone-section-buttons">{deleteButton}{addServiceAction}</CardActions> }
+            {/* { !firewall.readonly && <CardActions className="zone-section-buttons">{deleteButton}{addServiceAction}</CardActions> } */}
+            { !firewall.readonly && <CardActions className="zone-section-buttons">{addServiceAction}</CardActions> }
         </CardHeader>
         {props.zone.services.length > 0 &&
         <CardBody className="contains-list">
@@ -321,10 +322,17 @@ class AddServicesModal extends React.Component {
         }
         p.then(() => this.props.close())
                 .catch(error => {
-                    this.setState({
-                        dialogError: this.state.custom ? _("Failed to add port") : _("Failed to add service"),
-                        dialogErrorDetail: error.name + ": " + error.message,
-                    });
+                    if (error.message.includes("INVALID_NAME")) {
+                        this.setState({
+                            dialogError: this.state.custom ? _("Failed to add port") : _("Failed to add service"),
+                            dialogErrorDetail: "'" + this.state.custom_id + "' 문자열을 ID로 사용할 수 없습니다."
+                        });
+                    } else {
+                        this.setState({
+                            dialogError: this.state.custom ? _("Failed to add port") : _("Failed to add service"),
+                            dialogErrorDetail: error.name + ": " + error.message
+                        });
+                    }
                 });
 
         if (event)
@@ -856,22 +864,25 @@ export class Firewall extends React.Component {
     }
 
     onRemoveService(zone, service) {
-        if (service === 'cockpit') {
-            const body = _("Removing the cockpit service might result in the web console becoming unreachable. Make sure that this zone does not apply to your current web console connection.");
-            this.setState({
-                deleteConfirmationModal: <DeleteConfirmationModal title={ cockpit.format(_("Remove $0 service from $1 zone"), service, zone) }
-                body={body}
-                target={service}
-                onCancel={ () =>
-                    this.setState({ deleteConfirmationModal: undefined })
-                }
-                onDelete={ () => {
-                    firewall.removeService(zone, service);
-                    this.setState({ deleteConfirmationModal: undefined });
-                }} />
-            });
-        } else {
-            firewall.removeService(zone, service);
+        const result = confirm("서비스를 삭제하시겠습니까?");
+        if (result) {
+            if (service === 'cockpit') {
+                const body = _("Removing the cockpit service might result in the web console becoming unreachable. Make sure that this zone does not apply to your current web console connection.");
+                this.setState({
+                    deleteConfirmationModal: <DeleteConfirmationModal title={ cockpit.format(_("Remove $0 service from $1 zone"), service, zone) }
+                    body={body}
+                    target={service}
+                    onCancel={ () =>
+                        this.setState({ deleteConfirmationModal: undefined })
+                    }
+                    onDelete={ () => {
+                        firewall.removeService(zone, service);
+                        this.setState({ deleteConfirmationModal: undefined });
+                    }} />
+                });
+            } else {
+                firewall.removeService(zone, service);
+            }
         }
     }
 
@@ -913,11 +924,11 @@ export class Firewall extends React.Component {
                                     icon={ ExclamationCircleIcon } />;
         }
 
-        const addZoneAction = (
-            <Button variant="primary" onClick={this.openAddZoneDialog} id="add-zone-button" aria-label={_("Add a new zone")}>
-                {_("Add zone")}
-            </Button>
-        );
+        // const addZoneAction = (
+        //     <Button variant="primary" onClick={this.openAddZoneDialog} id="add-zone-button" aria-label={_("Add a new zone")}>
+        //         {_("Add zone")}
+        //     </Button>
+        // );
 
         const zones = [...this.state.firewall.activeZones].sort((z1, z2) =>
             z1 === firewall.defaultZone ? -1 : z2 === firewall.defaultZone ? 1 : 0
@@ -942,7 +953,7 @@ export class Firewall extends React.Component {
                                   </Title>
                                   <FirewallSwitch firewall={firewall} />
                               </Flex>
-                              { enabled && !firewall.readonly && <span className="btn-group">{addZoneAction}</span> }
+                              {/* { enabled && !firewall.readonly && <span className="btn-group">{addZoneAction}</span> } */}
                           </Flex>
                       </PageSection>}>
                 <PageSection id="zones-listing">
