@@ -2800,24 +2800,36 @@ PageNetworkBridgeSettings.prototype = {
         const self = this;
 
         function modify () {
-            return apply_group_member($('#network-bridge-settings-body'),
-                                      PageNetworkBridgeSettings.model,
-                                      PageNetworkBridgeSettings.apply_settings,
-                                      PageNetworkBridgeSettings.connection,
-                                      self.settings,
-                                      "bridge")
-                    .then(function() {
-                        $('#network-bridge-settings-dialog').trigger('hide');
-                        if (PageNetworkBridgeSettings.connection)
-                            cockpit.location.go([self.settings.connection.interface_name]);
-                        if (PageNetworkBridgeSettings.done)
-                            return PageNetworkBridgeSettings.done();
-                    })
-                    .catch(function (error) {
-                        $('#network-bridge-settings-error').prop('hidden', false)
-                                .find('h4')
-                                .text(error.message || error.toString());
-                    });
+            const result = confirm("브릿지 설정이 올바르지 않을 경우 네트워크 문제가 발생할 수 있습니다. 그래도 설정하시겠습니까?");
+
+            if (result) {
+                return apply_group_member($('#network-bridge-settings-body'),
+                                          PageNetworkBridgeSettings.model,
+                                          PageNetworkBridgeSettings.apply_settings,
+                                          PageNetworkBridgeSettings.connection,
+                                          self.settings,
+                                          "bridge")
+                        .then(function() {
+                            $('#network-bridge-settings-dialog').trigger('hide');
+                            if (PageNetworkBridgeSettings.connection)
+                                cockpit.location.go([self.settings.connection.interface_name]);
+                            if (PageNetworkBridgeSettings.done)
+                                return PageNetworkBridgeSettings.done();
+                        })
+                        .catch(function (error) {
+                            let err_txt = "입력하신 설정 정보가 올바르지 않습니다. 다시 확인 후 입력해 주세요.";
+
+                            if (error.message.includes("ipv4.method: property is missing") || error.toString().includes("ipv4.method: property is missing")) {
+                                err_txt = "브릿지 이름 중복 또는 포트 선택이 올바르지 않습니다. 설정을 확인해 주세요.";
+                            } else if (error.message.includes("connection.id: property is empty") || error.toString().includes("connection.id: property is empty")) {
+                                err_txt = "브릿지 이름을 입력해 주세요.";
+                            }
+
+                            $('#network-bridge-settings-error').prop('hidden', false)
+                                    .find('h4')
+                                    .text(err_txt);
+                        });
+            }
         }
 
         if (PageNetworkBridgeSettings.connection) {

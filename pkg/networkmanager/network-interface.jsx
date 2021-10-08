@@ -103,7 +103,7 @@ export const NetworkInterfacePage = ({
         const location = cockpit.location;
 
         function modify() {
-            const result = confirm("선택하신 장치를 삭제하시겠습니까?");
+            const result = confirm("선택하신 장치를 삭제할 경우 네트워크 문제가 발생할 수 있습니다. 그래도 삭제하시겠습니까?");
 
             if (result) {
                 return deleteIfaceConnections(iface)
