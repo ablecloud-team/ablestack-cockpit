@@ -3113,9 +3113,12 @@ PageNetworkMtuSettings.prototype = {
             self.settings.ethernet.mtu = 0;
         else {
             const mtu = $("#network-mtu-settings-input").val();
-            if (/^[0-9]+$/.test(mtu))
+            if (/^[0-9]+$/.test(mtu) && mtu <= 65535)
                 self.settings.ethernet.mtu = parseInt(mtu, 10);
-            else {
+            else if (mtu > 65535) {
+                show_error(_("입력된 값" + "('" + mtu + "')" + "은 해당 데이터 타입의 입력 범위(0 ~ 65535)를 초과할 수 없습니다"));
+                return;
+            } else {
                 show_error(_("MTU must be a positive number"));
                 return;
             }
