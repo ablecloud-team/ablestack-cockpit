@@ -2818,10 +2818,9 @@ PageNetworkBridgeSettings.prototype = {
                         })
                         .catch(function (error) {
                             let err_txt = "입력하신 설정 정보가 올바르지 않습니다. 다시 확인 후 입력해 주세요.";
-
-                            if (error.message.includes("ipv4.method: property is missing") || error.toString().includes("ipv4.method: property is missing")) {
+                            if (error.message.includes("ipv4.method:") || error.toString().includes("ipv4.method:")) {
                                 err_txt = "브릿지 이름 중복 또는 포트 선택이 올바르지 않습니다. 설정을 확인해 주세요.";
-                            } else if (error.message.includes("connection.id: property is empty") || error.toString().includes("connection.id: property is empty")) {
+                            } else if (error.message.includes("connection.id:") || error.toString().includes("connection.id:")) {
                                 err_txt = "브릿지 이름을 입력해 주세요.";
                             }
 

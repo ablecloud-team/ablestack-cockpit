@@ -183,7 +183,7 @@ export const NetworkPage = ({ privileged, usage_monitor, plot_state, interfaces 
                                       ]}
                                       rows={managed} />
                     </Card>
-                    {unmanaged.length > 0 &&
+                    {/* {unmanaged.length > 0 &&
                     <Card id="networking-unmanaged-interfaces">
                         <CardHeader>
                             <CardTitle><Text component={TextVariants.h2}>{_("Unmanaged interfaces")}</Text></CardTitle>
@@ -197,7 +197,7 @@ export const NetworkPage = ({ privileged, usage_monitor, plot_state, interfaces 
                                           { title: _("Receiving"), props: { width: 25 } },
                                       ]}
                                       rows={unmanaged} />
-                    </Card>}
+                    </Card>} */}
                     {/* <LogsPanel title={_("Network logs")} match={match}
                                max={10} search_options={search_options}
                                goto_url={url}
