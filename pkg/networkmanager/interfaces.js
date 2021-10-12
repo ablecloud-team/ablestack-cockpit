@@ -3152,7 +3152,7 @@ PageNetworkMacSettings.prototype = {
     },
 
     setup: function () {
-        $('#networl-mac-settings-close-button').click($.proxy(this, "cancel"));
+        $('#network-mac-settings-close-button').click($.proxy(this, "cancel"));
         $('#network-mac-settings-cancel').click($.proxy(this, "cancel"));
         $('#network-mac-settings-apply').click($.proxy(this, "apply"));
     },
