@@ -25,18 +25,20 @@ import {
     Flex, FlexItem,
 } from "@patternfly/react-core";
 import cockpit from "cockpit";
-import { dialog_open, PassInput } from "./dialog.jsx";
-import { array_find, encode_filename, decode_filename } from "./utils.js";
+import { dialog_open, TextInput, PassInput } from "./dialog.jsx";
+import { array_find, encode_filename, decode_filename, block_name } from "./utils.js";
+import { parse_options, unparse_options, extract_option } from "./format-dialog.jsx";
+import { is_mounted } from "./fsys-tab.jsx";
 
 import React from "react";
 import { StorageLink } from "./storage-controls.jsx";
-import { crypto_options_dialog_fields, crypto_options_dialog_options } from "./format-dialog.jsx";
 
 import * as python from "python.js";
 import luksmeta_monitor_hack_py from "raw-loader!./luksmeta-monitor-hack.py";
 import * as timeformat from "timeformat.js";
 
 import { CryptoKeyslots } from "./crypto-keyslots.jsx";
+import Mutex from "await-mutex";
 
 const _ = cockpit.gettext;
 
@@ -52,6 +54,36 @@ function parse_tag_mtime(tag) {
         }
     } else
         return null;
+}
+
+const edit_config_mutex = new Mutex();
+
+export function edit_config(block, modify) {
+    let old_config, new_config;
+
+    return edit_config_mutex.lock().then(unlock => {
+        function commit() {
+            new_config[1]["track-parents"] = { t: 'b', v: true };
+            return (old_config
+                ? block.UpdateConfigurationItem(old_config, new_config, { })
+                : block.AddConfigurationItem(new_config, { }))
+                    .finally(unlock);
+        }
+        return block.GetSecretConfiguration({}).then(
+            function (items) {
+                old_config = array_find(items, function (c) { return c[0] == "crypttab" });
+                new_config = ["crypttab", old_config ? Object.assign({ }, old_config[1]) : { }];
+
+                // UDisks insists on always having a "passphrase-contents" field when
+                // adding a crypttab entry, but doesn't include one itself when returning
+                // an entry without a stored passphrase.
+                //
+                if (!new_config[1]['passphrase-contents'])
+                    new_config[1]['passphrase-contents'] = { t: 'ay', v: encode_filename("") };
+
+                return modify(new_config[1], commit);
+            });
+    });
 }
 
 export class CryptoTab extends React.Component {
@@ -71,20 +103,19 @@ export class CryptoTab extends React.Component {
                 this.monitor_channel.close();
             this.monitored_block = block;
             if (block) {
-                var dev = decode_filename(block.Device);
+                const dev = decode_filename(block.Device);
                 this.monitor_channel = python.spawn(luksmeta_monitor_hack_py, [dev], { superuser: true });
-                var buf = "";
+                let buf = "";
                 this.monitor_channel.stream(output => {
-                    var lines;
                     buf += output;
-                    lines = buf.split("\n");
+                    const lines = buf.split("\n");
                     buf = lines[lines.length - 1];
                     if (lines.length >= 2) {
                         const data = JSON.parse(lines[lines.length - 2]);
                         this.setState({ slots: data.slots, luks_version: data.version, max_slots: data.max_slots });
                     }
                 });
-                this.monitor_channel.fail(err => {
+                this.monitor_channel.catch(err => {
                     this.setState({ slots: [], slot_error: err });
                 });
             }
@@ -110,41 +141,14 @@ export class CryptoTab extends React.Component {
     }
 
     render() {
-        var self = this;
-        var client = self.props.client;
-        var block = self.props.block;
+        const self = this;
+        const client = self.props.client;
+        const block = self.props.block;
 
         this.monitor_slots(block);
 
-        function edit_config(modify) {
-            var old_config, new_config;
-
-            function commit() {
-                new_config[1]["track-parents"] = { t: 'b', v: true };
-                if (old_config)
-                    return block.UpdateConfigurationItem(old_config, new_config, { });
-                else
-                    return block.AddConfigurationItem(new_config, { });
-            }
-
-            block.GetSecretConfiguration({}).done(
-                function (items) {
-                    old_config = array_find(items, function (c) { return c[0] == "crypttab" });
-                    new_config = ["crypttab", old_config ? Object.assign({ }, old_config[1]) : { }];
-
-                    // UDisks insists on always having a "passphrase-contents" field when
-                    // adding a crypttab entry, but doesn't include one itself when returning
-                    // an entry without a stored passphrase.
-                    //
-                    if (!new_config[1]['passphrase-contents'])
-                        new_config[1]['passphrase-contents'] = { t: 'ay', v: encode_filename("") };
-
-                    modify(new_config[1], commit);
-                });
-        }
-
         function edit_stored_passphrase() {
-            edit_config(function (config, commit) {
+            edit_config(block, function (config, commit) {
                 dialog_open({
                     Title: _("Stored passphrase"),
                     Fields: [
@@ -170,9 +174,8 @@ export class CryptoTab extends React.Component {
             });
         }
 
-        var old_config, old_options, passphrase_path;
-
-        old_config = array_find(block.Configuration, function (c) { return c[0] == "crypttab" });
+        let old_options, passphrase_path;
+        const old_config = array_find(block.Configuration, function (c) { return c[0] == "crypttab" });
         if (old_config) {
             old_options = (decode_filename(old_config[1].options.v)
                     .split(",")
@@ -183,18 +186,35 @@ export class CryptoTab extends React.Component {
 
         this.monitor_path_mtime(passphrase_path);
 
+        const split_options = parse_options(old_options);
+        let opt_noauto = extract_option(split_options, "noauto");
+        const extra_options = unparse_options(split_options);
+
         function edit_options() {
-            edit_config(function (config, commit) {
+            const fsys_config = array_find(client.blocks_crypto[block.path].ChildConfiguration,
+                                           c => c[0] == "fstab");
+            const content_block = client.blocks_cleartext[block.path];
+            const is_fsys = fsys_config || (content_block && content_block.IdUsage == "filesystem");
+
+            edit_config(block, function (config, commit) {
                 dialog_open({
                     Title: _("Encryption options"),
-                    Fields: crypto_options_dialog_fields(old_options, undefined, undefined, false),
+                    Fields: [
+                        TextInput("options", "", { value: extra_options }),
+                    ],
                     isFormHorizontal: false,
                     Action: {
                         Title: _("Apply"),
                         action: function (vals) {
+                            let opts = [];
+                            if (is_fsys && content_block)
+                                opt_noauto = !is_mounted(client, content_block);
+                            if (opt_noauto)
+                                opts.push("noauto");
+                            opts = opts.concat(parse_options(vals.options));
                             config.options = {
                                 t: 'ay',
-                                v: encode_filename(crypto_options_dialog_options(vals))
+                                v: encode_filename(unparse_options(opts))
                             };
                             return commit();
                         }
@@ -202,6 +222,13 @@ export class CryptoTab extends React.Component {
                 });
             });
         }
+
+        const cleartext = client.blocks_cleartext[block.path];
+
+        const option_parts = [];
+        if (extra_options)
+            option_parts.push(extra_options);
+        const options = option_parts.join(", ");
 
         return (
             <div>
@@ -215,6 +242,12 @@ export class CryptoTab extends React.Component {
                     </DescriptionListGroup>
                     }
                     <DescriptionListGroup>
+                        <DescriptionListTerm>{_("Cleartext device")}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                            {cleartext ? block_name(cleartext) : "-"}
+                        </DescriptionListDescription>
+                    </DescriptionListGroup>
+                    <DescriptionListGroup>
                         <DescriptionListTerm>{_("Stored passphrase")}</DescriptionListTerm>
                         <DescriptionListDescription>
                             <Flex>
@@ -227,7 +260,7 @@ export class CryptoTab extends React.Component {
                         <DescriptionListTerm>{_("Options")}</DescriptionListTerm>
                         <DescriptionListDescription>
                             <Flex>
-                                <FlexItem>{ old_options || _("none") }</FlexItem>
+                                <FlexItem>{ options || _("none") }</FlexItem>
                                 <FlexItem><StorageLink onClick={edit_options}>{_("edit")}</StorageLink></FlexItem>
                             </Flex>
                         </DescriptionListDescription>

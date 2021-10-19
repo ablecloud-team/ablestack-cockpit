@@ -209,6 +209,8 @@ const info = {
         "shell/images/server-error.png",
         "shell/images/server-large.png",
         "shell/images/server-small.png",
+        "shell/images/cockpit-icon.svg",
+        "shell/images/bg-plain.jpg",
         "shell/index.html",
         "shell/shell.html",
 
@@ -349,8 +351,9 @@ const plugins = [
     }),
 ];
 
-if (eslint)
+if (eslint) {
     plugins.push(new ESLintPlugin({ extensions: ["js", "jsx"] }));
+}
 
 if (section.startsWith('base1'))
     plugins.push(new copy({ patterns: base1_fonts }));

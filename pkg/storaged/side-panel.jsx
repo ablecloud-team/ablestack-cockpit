@@ -35,8 +35,8 @@ export class SidePanel extends React.Component {
     }
 
     render() {
-        var show_all_button = null;
-        var children = this.props.children;
+        let show_all_button = null;
+        let children = this.props.children;
 
         if (this.state.collapsed && children.length > 20) {
             show_all_button = (
@@ -138,10 +138,11 @@ export class SidePanelBlockRow extends React.Component {
 
         const parts = get_block_link_parts(client, block.path);
         const name = cockpit.format(parts.format, parts.link);
+        const backing = client.blocks[block.CryptoBackingDevice];
 
         return <SidePanelRow client={client}
                              name={name}
-                             devname={block_name(block)}
+                             devname={block_name(backing || block)}
                              detail={detail}
                              go={() => { cockpit.location.go(parts.location) }}
                              actions={actions} />;

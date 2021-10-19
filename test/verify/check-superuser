@@ -29,44 +29,45 @@ def allow_old_cockpit_ws_messsages(test):
 
 @skipDistroPackage()
 class TestSuperuser(MachineCase):
-
     def testBasic(self):
         b = self.browser
         m = self.machine
 
         # Log in with all defaults
         self.login_and_go()
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
 
         # Drop privileges
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.click(".pf-c-modal-box:contains('Switch to limited access') button:contains('Limit access')")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to limited access')")
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
         # Check they are still gone after logout
         b.relogin()
         b.leave_page()
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
         # We want to be lectured again
         m.execute("rm -rf /var/{db,lib}/sudo/lectured/admin")
 
         # Get the privileges back
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         if "ubuntu" not in m.image:
             b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')",
                            "We trust you have received the usual lecture")
         b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
+        b.focus(".pf-c-modal-box button:contains('Cancel')")
+        b.assert_pixels(".pf-c-modal-box:contains('Switch to administrative access')", "superuser-modal")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
 
         # Check we still have them after logout
         b.relogin()
         b.leave_page()
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
 
         self.allow_restart_journal_messages()
 
@@ -76,15 +77,15 @@ class TestSuperuser(MachineCase):
 
         # Log in with limited access
         self.login_and_go(superuser=False)
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
         # Give us password-less sudo and use it
         m.write("/etc/sudoers.d/admin", "admin ALL=(ALL) NOPASSWD:ALL")
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Administrative access')", "You now have administrative access")
         b.click(".pf-c-modal-box:contains('Administrative access') button:contains('Close')")
         b.wait_not_present(".pf-c-modal-box:contains('Administrative access')")
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
 
     def testTwoPasswds(self):
         b = self.browser
@@ -92,7 +93,7 @@ class TestSuperuser(MachineCase):
 
         # Log in with limited access
         self.login_and_go(superuser=False)
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
         # Configure the sudo PAM stack to make two prompts
         if "debian" in m.image or "ubuntu" in m.image:
@@ -111,7 +112,7 @@ password include system-auth
 session include system-auth
 """)
 
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
@@ -119,16 +120,16 @@ session include system-auth
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "42")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
 
     def testWrongPasswd(self):
         b = self.browser
 
         # Log in with limited access
         self.login_and_go(superuser=False)
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "wrong")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
@@ -143,7 +144,7 @@ session include system-auth
         b.wait_in_text(".pf-c-modal-box:contains('Problem becoming administrator')", "Sudo: 3 incorrect password attempts")
         b.click(".pf-c-modal-box:contains('Problem becoming administrator') button:contains('Close')")
         b.wait_not_present(".pf-c-modal-box:contains('Problem becoming administrator')")
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
     def testNotAdmin(self):
         b = self.browser
@@ -159,9 +160,9 @@ session include system-auth
         m.execute("gpasswd -d admin %s" % m.get_admin_group())
 
         self.login_and_go()
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
         b.wait_in_text(".pf-c-modal-box:contains('Problem becoming administrator')", "Admin is not in the sudoers file.  This incident will be reported.")
@@ -194,13 +195,13 @@ session include system-auth
         m.execute("touch /var/{db,lib}/sudo/lectured/admin 2>/dev/null || true")
 
         self.login_and_go(superuser=False)
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Problem becoming administrator')", "Sudo: no askpass program specified, try setting SUDO_ASKPASS")
         b.click(".pf-c-modal-box:contains('Problem becoming administrator') button:contains('Close')")
         b.wait_not_present(".pf-c-modal-box:contains('Problem becoming administrator')")
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
     def testRemoveBridgeConfig(self):
         b = self.browser
@@ -210,7 +211,7 @@ session include system-auth
 
         self.login_and_go("/playground/pkgs", superuser=True)
         b.leave_page()
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
 
         m.write("/usr/share/cockpit/shell/override.json", """
 {
@@ -221,7 +222,7 @@ session include system-auth
         b.enter_page("/playground/pkgs")
         b.click("#reload")
         b.leave_page()
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
 
     def testOverview(self):
         b = self.browser
@@ -308,7 +309,7 @@ class TestSuperuserOldWebserver(MachineCase):
         b.wait_visible('#content')
 
         # We should have gotten the password from the old cockpit-ws and it should work
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
         b.go("/playground/test")
         b.enter_page("/playground/test")
         b.click(".super-channel button")
@@ -346,19 +347,19 @@ class TestSuperuserOldWebserver(MachineCase):
         # We should not have gotten the password from the old
         # cockpit-ws, but we can get it back.
 
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
         b.go("/playground/test")
         b.enter_page("/playground/test")
         b.click(".super-channel button")
         b.wait_in_text(".super-channel span", 'access-denied')
 
         b.switch_to_top()
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
         b.go("/playground/test")
         b.enter_page("/playground/test")
         b.click(".super-channel button")
@@ -402,7 +403,7 @@ class TestSuperuserDashboard(MachineCase):
 
         # The superuser indicator in the Shell should apply to machine2
 
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
         b.go("/@10.111.113.2/playground/test")
         b.enter_page("/playground/test", host="10.111.113.2")
         b.click(".super-channel button")
@@ -410,21 +411,21 @@ class TestSuperuserDashboard(MachineCase):
         self.assertIn('result: uid=0', b.text(".super-channel span"))
 
         b.leave_page()
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.click(".pf-c-modal-box:contains('Switch to limited access') button:contains('Limit access')")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to limited access')")
-        b.wait_text("#super-user-indicator", "Limited access")
+        b.check_superuser_indicator("Limited access")
         b.enter_page("/playground/test", host="10.111.113.2")
         b.click(".super-channel button")
         b.wait_in_text(".super-channel span", 'access-denied')
 
         b.leave_page()
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for admin:")
         b.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", "foobar")
         b.click(".pf-c-modal-box button:contains('Authenticate')")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
-        b.wait_text("#super-user-indicator", "Administrative access")
+        b.check_superuser_indicator("Administrative access")
         b.enter_page("/playground/test", host="10.111.113.2")
         b.click(".super-channel button")
         b.wait_in_text(".super-channel span", 'result: ')

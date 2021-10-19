@@ -5,34 +5,32 @@
 
 /* Globally resize headings */
 h1 {
-  font-size: var(--pf-global--FontSize--4xl);
+  --ct-heading-font-size: var(--pf-global--FontSize--4xl);
 }
 
 h2 {
-  font-size: var(--pf-global--FontSize--3xl);
+  --ct-heading-font-size: var(--pf-global--FontSize--3xl);
 }
 
 h3 {
-  font-size: var(--pf-global--FontSize--2xl);
+  --ct-heading-font-size: var(--pf-global--FontSize--2xl);
 }
 
 h4 {
-  font-size: var(--pf-global--FontSize--xl);
+  --ct-heading-font-size: var(--pf-global--FontSize--lg);
 }
 
-h4 {
-  font-size: var(--pf-global--FontSize--lg);
+// Only apply a custom font size when a heading does NOT have a PF4 class
+h1, h2, h3, h4 {
+    &:not([class*=pf-]) {
+        font-size: var(--ct-heading-font-size);
+    }
 }
+
 /* End of headings resize */
 
 a {
     cursor: pointer;
-}
-
-p + p {
-    // The mix of PF3 and PF4 removes margin from paragraphs.
-    // We want successive paragraphs to have spaces between each other.
-    margin-top: var(--pf-global--spacer--md);
 }
 
 .disabled {
@@ -52,14 +50,9 @@ p + p {
   z-index: auto;
 }
 
-.btn-group, .btn-group-vertical {
+.btn-group {
     /* Fix button groups from wrapping in narrow widths */
     display: inline-flex;
-}
-
-.btn-group-vertical {
-    /* Vertical btn-groups should be vertical */
-    flex-direction: column;
 }
 
 a.disabled {
@@ -95,18 +88,6 @@ a.disabled:hover {
     max-height: 90vh;
 }
 
-/* Allow kebab menus to have a ^ with overflowing */
-/* Note: This means kebab menus cannot be _too_ long */
-.dropdown-kebab-pf > .dropdown-menu {
-    overflow: visible;
-}
-
-/* Align these buttons more nicely */
-.btn.fa-minus,
-.btn.fa-plus {
-    padding-top: 4px;
-}
-
 .highlight-ct {
     background-color: var(--ct-color-link-hover-bg);
 }
@@ -118,30 +99,6 @@ a.disabled:hover {
     position: fixed;
 }
 
-.panel .well {
-    margin-bottom: 0px;
-    border: none;
-    border-radius: 0px;
-    background-color: var(--pf-global--palette--black-200);
-}
-
-.well.blank-slate-pf {
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.05) inset;
-    padding-top: 40px;
-}
-
-.blank-slate-pf .spinner-lg {
-    height: 58px;
-    width: 58px;
-}
-
-/* Small list inside a dialog */
-/* Alert fixups */
-
-.modal-content .pf-c-alert {
-    text-align: left;
-    margin-bottom: 24px;
-}
 /* Dialog patterns */
 
 .dialog-wait-ct {
@@ -166,16 +123,6 @@ a.disabled:hover {
     overflow-x: auto;
     border: 1px solid var(--pf-global--palette--black-300);
     margin-bottom: 0px;
-}
-
-/* HACK: https://github.com/patternfly/patternfly/issues/255 */
-input[type=number]:not(.pf-c-form-control) {
-  padding: 0 0 0 5px;
-}
-
-/* Make a dialog visible */
-.dialog-ct-visible {
-    display: block;
 }
 
 :root {
@@ -233,19 +180,6 @@ html:not(.index-page) body {
   .ct-page-fill {
     height: 100% !important;
   }
-}
-
-/* Add some spacing to nested form groups - PF4 does not support them */
-/* https://github.com/patternfly/patternfly-react/issues/5023 */
-.pf-c-form__group-control {
-    > .pf-c-form__group, .pf-c-form__section {
-        padding-top: var(--pf-global--spacer--md);
-    }
-}
-
-// When there is an Alert above the Form add some spacing
-.pf-c-modal-box .pf-c-alert + .pf-c-form {
-    padding-top: var(--pf-global--FontSize--sm);
 }
 
 .ct-icon-exclamation-triangle {

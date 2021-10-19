@@ -117,9 +117,6 @@ class TestHistoryMetrics(MachineCase):
         super().setUp()
         # start with a clean slate and avoid running into restart limits
         self.machine.execute("systemctl stop pmlogger pmproxy; systemctl reset-failed pmlogger pmproxy 2>/dev/null || true")
-        # failing to load the metrics (stopped pmlogger and cleaned /var/log/pcp) generates this message
-        # from the metrics channel at first try
-        self.allow_journal_messages("pcp-archive: no such metric: kernel.all.cpu.nice: Unknown metric name")
 
     def waitStream(self, current_max):
         # should only have at most <current_max> valid minutes, the rest should be empty
@@ -208,8 +205,8 @@ class TestHistoryMetrics(MachineCase):
         #
 
         # disable swap, so that we can test current metrics without swap
-        m.execute('''systemctl stop "*.swap" "swap-create@*" || true
-                     systemctl mask "swap-create@"
+        m.execute('''systemctl stop "*.swap" "swap-create@*" "systemd-zram-setup@*" || true
+                     systemctl mask "swap-create@" "systemd-zram-setup@"
                      swapoff --all
                      while [ -n "$(swapon --show)" ]; do sleep 1; done''')
 
@@ -390,7 +387,7 @@ class TestHistoryMetrics(MachineCase):
 
         # Journal was recorded on Fedora 33 and when trying to use it with older systemd it fails with:
         # `Journal file /var/log/journal/*/journal.journal uses an unsupported feature, ignoring file.`
-        if self.machine.image in ["centos-8-stream", "rhel-8-4", "rhel-8-5", "ubuntu-2004", "ubuntu-stable", "debian-stable", "debian-testing"]:
+        if self.machine.image in ["centos-8-stream", "rhel-8-4", "rhel-8-5", "rhel-8-6", "ubuntu-2004", "ubuntu-stable", "debian-stable", "debian-testing"]:
             return
 
         prepareArchive(m, "with_journal.tar.gz", 1615200500, "m1.cockpit.lan")
@@ -417,7 +414,6 @@ class TestHistoryMetrics(MachineCase):
 
     @nondestructive
     @skipImage("no PCP support", "fedora-coreos")
-    @skipImage("init.d script is too impredictable", "debian-stable")
     def testNoDataEnable(self):
         b = self.browser
         m = self.machine
@@ -480,7 +476,6 @@ class TestHistoryMetrics(MachineCase):
 
     @nondestructive
     @skipImage("no PCP support", "fedora-coreos")
-    @skipImage("init.d script is too impredictable", "debian-stable")
     def testLoggerSettings(self):
         b = self.browser
         m = self.machine
@@ -517,7 +512,6 @@ class TestHistoryMetrics(MachineCase):
 
     @nondestructive
     @skipImage("no PCP support", "fedora-coreos")
-    @skipImage("pmproxy broken", "debian-stable")
     def testPmProxySettings(self):
         b = self.browser
         m = self.machine
@@ -689,9 +683,6 @@ class TestCurrentMetrics(MachineCase):
         super().setUp()
         # packagekit/dnf often eats a lot of CPU; silence it to have better control over CPU usage
         self.machine.execute("systemctl mask packagekit && killall -9 /usr/libexec/packagekitd && killall -9 dnf || true")
-        # failing to load the metrics (stopped pmlogger and cleaned /var/log/pcp) generates this message
-        # from the metrics channel at first try
-        self.allow_journal_messages("pcp-archive: no such metric: kernel.all.cpu.nice: Unknown metric name")
 
         self.addCleanup(self.machine.execute, "systemctl unmask packagekit")
         # make sure to clean up our test resource consumers on failures
@@ -735,16 +726,10 @@ class TestCurrentMetrics(MachineCase):
         # Load looks like "1 min: 1.41, 5 min: 1.47, 15 min: 2.30"
         b.wait(lambda: float(b.text("#load-avg").split()[2].rstrip(',')) < 5)
 
-        # HACK: debian-stable does not update load when done though systemd-run
-        if m.image != "debian-stable":
-            m.execute("systemd-run --collect --slice cockpittest --unit load-hog sh -ec "
-                      "  'for i in `seq 500`; do dd if=/dev/urandom of=/dev/zero bs=10K count=500 status=none & done'")
-            b.wait(lambda: float(b.text("#load-avg").split()[2].rstrip(',')) > 15)
-            m.execute("systemctl stop load-hog 2>/dev/null || true")  # ok to fail, as the command exits by itself
-        else:
-            load_hog = m.spawn("for i in `seq 500`; do dd if=/dev/urandom of=/dev/zero bs=10K count=500 status=none & done", "load-hog.log")
-            b.wait(lambda: float(b.text("#load-avg").split()[2].rstrip(',')) > 15)
-            m.execute("kill %d 2>/dev/null || true" % load_hog)  # ok to fail, as the command exits by itself
+        m.execute("systemd-run --collect --slice cockpittest --unit load-hog sh -ec "
+                  "  'for i in `seq 500`; do dd if=/dev/urandom of=/dev/zero bs=10K count=500 status=none & done'")
+        b.wait(lambda: float(b.text("#load-avg").split()[2].rstrip(',')) > 15)
+        m.execute("systemctl stop load-hog 2>/dev/null || true")  # ok to fail, as the command exits by itself
 
         # this settles down slowly, don't wait for becoming really quiet
         with b.wait_timeout(180):
@@ -1063,8 +1048,8 @@ class TestMultiCPU(MachineCase):
 
 
 @skipImage("no PCP support", "fedora-coreos")
-@skipImage("pmproxy broken", "debian-stable")
 @skipDistroPackage()
+@skipMobile()
 class TestGrafanaClient(MachineCase):
 
     provision = {
@@ -1083,9 +1068,6 @@ class TestGrafanaClient(MachineCase):
                      systemctl reset-failed pmlogger
                      rm -rf /var/log/pcp/pmlogger
                      hostnamectl set-hostname grafana-client""")
-
-        # starting out with empty PCP logs and pmlogger not running causes this metrics channel message
-        self.allow_journal_messages("pcp-archive: no such metric: kernel.all.cpu.nice: Unknown metric name")
 
         # start Grafana
         mg.execute("/root/run-grafana")

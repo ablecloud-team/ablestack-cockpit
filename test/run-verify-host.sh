@@ -18,30 +18,25 @@ nproc
 free -h
 rpm -q cockpit-system
 
-# install browser; on RHEL, use chromium from epel
-# HACK: chromium-headless ought to be enough, but version 88 has a crash: https://bugs.chromium.org/p/chromium/issues/detail?id=1170634
-if ! rpm -q chromium; then
-    if grep -q 'ID=.*rhel' /etc/os-release; then
-        # There is no EPEL for RHEL 9 yet, force 8
-        # RHEL 9 has a broken stub epel.repo
-        rm -f /etc/yum.repos.d/epel.repo
-        dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-        sed -i 's/$releasever/8/' /etc/yum.repos.d/epel*.repo
-        dnf config-manager --enable epel
-    fi
-    dnf install -y chromium
-fi
+# install browser; on RHEL, use firefox-nightly as chromium broke CDP on rhel-9
+# Install firefox to pull in all the deps
+dnf -y install firefox
+curl --location 'https://download.mozilla.org/?product=firefox-nightly-latest-ssl&os=linux64&lang=en-US' | tar -C /usr/local/lib/ -xj
+ln -s /usr/local/lib/firefox/firefox /usr/local/bin/
 
 # HACK: setroubleshoot-server crashes/times out randomly (breaking TestServices),
 # and is hard to disable as it does not use systemd
 if rpm -q setroubleshoot-server; then
-    dnf remove -y setroubleshoot-server
+    dnf remove -y --noautoremove setroubleshoot-server
 fi
 
 if grep -q 'ID=.*fedora' /etc/os-release; then
     # required by TestLogin.testBasic, but tcsh is not available in CentOS/RHEL
     dnf install -y tcsh
 fi
+
+#HACK: unbreak rhel-9-0's default choice of 999999999 rounds, see https://bugzilla.redhat.com/show_bug.cgi?id=1993919
+sed -ie 's/#SHA_CRYPT_MAX_ROUNDS 5000/SHA_CRYPT_MAX_ROUNDS 5000/' /etc/login.defs
 
 # make libpwquality less aggressive, so that our "foobar" password works
 printf 'dictcheck = 0\nminlen = 6\n' >> /etc/security/pwquality.conf
@@ -74,7 +69,7 @@ firewall-cmd --add-service=cockpit --permanent
 firewall-cmd --add-service=cockpit
 
 # Run tests as unprivileged user
-su - -c "env SOURCE=$SOURCE LOGS=$LOGS $TESTS/run-verify-host-user.sh" runtest
+su - -c "env TEST_BROWSER=firefox SOURCE=$SOURCE LOGS=$LOGS $TESTS/run-verify-host-user.sh" runtest
 
 RC=$(cat $LOGS/exitcode)
 exit ${RC:-1}

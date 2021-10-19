@@ -98,12 +98,6 @@ class TestSystemInfo(MachineCase):
     def setUp(self):
         super().setUp()
 
-        # Debian will not allow timesyncd to start if any other NTP package is installed We only
-        # support timesyncd for NTP configuration, so make sure chrony is not installed in the older
-        # debian images which don't yet have systemd-timesyncd
-        if self.machine.image in ["debian-stable"]:
-            self.machine.execute("dpkg --remove chrony")
-
         # Most OSes don't set nosmt by default, but there are some exceptions
         self.expect_smt_default = self.machine.image in ["fedora-coreos"]
 
@@ -135,6 +129,19 @@ class TestSystemInfo(MachineCase):
         b.wait_text('#system_machine_id', mid)
 
         self.check_axe()
+
+        # ensure general page/card layout without the changing specifics
+        b.assert_pixels("#overview", "overview", ignore=[
+            ".system-health-events",
+            "#system_machine_id",
+            "#system_uptime",
+            # #system_information_systime_button is not enough, need to grab the icon as well
+            "tr:contains('System time') td",
+            # CPU/memory metrics
+            "#system-usage-cpu-progress + td",
+            "#system-usage-memory-progress + td",
+            "#system-info-performance",
+        ])
 
         # Generate a new rsa key and change the config
         m.execute("ssh-keygen -f /etc/ssh/weirdname -t rsa -N ''")
@@ -259,9 +266,24 @@ class TestSystemInfo(MachineCase):
         b.click("#system_information_systime_button")
         b.wait_visible("#system_information_change_systime")
         self.set_change_time_dialog_mode("Manually")
-        b.set_input_text("#systime-date-input", "2037-01-24")
-        b.set_input_text("#systime-time-hours", "08")
-        b.set_input_text("#systime-time-minutes", "03")
+        b.set_input_text("#systime-date-input input", "2037-01-24")
+        # invalid time
+        b.set_input_text("#systime-time-input-input", "25:61")
+        b.click("#system_information_change_systime .apply")
+        b.wait_text("#systime-manual-row .dialog-error", "Invalid time format")
+        # valid time
+        b.set_input_text("#systime-time-input-input", "08:03")
+        # wait until icon settles down
+        b.wait_visible("#systime-time-input-input[aria-invalid='false']")
+        b.wait_not_present("#systime-manual-row .dialog-error")
+        # avoid blinking cursor
+        b.blur("#systime-time-input-input")
+        if b.cdp.mobile:
+            # HACK: the clock icon in the <input> has too much jitter on mobile
+            ignore = ["#systime-time-input-input"]
+        else:
+            ignore = []
+        b.assert_pixels("#system_information_change_systime", "systime-manual-time", ignore=ignore)
         b.click("#system_information_change_systime .apply")
         b.wait_not_present("#system_information_change_systime")
 
@@ -284,9 +306,8 @@ class TestSystemInfo(MachineCase):
         b.click("#system_information_systime_button")
         b.wait_visible("#system_information_change_systime")
         self.set_change_time_dialog_mode("Manually")
-        b.set_input_text("#systime-date-input", "2018-06-04")
-        b.set_input_text("#systime-time-hours", "06")
-        b.set_input_text("#systime-time-minutes", "34")
+        b.set_input_text("#systime-date-input input", "2018-06-04")
+        b.set_input_text("#systime-time-input-input", "06:34")
         b.click("#system_information_change_systime .apply")
         b.wait_not_present("#system_information_change_systime")
 
@@ -369,6 +390,8 @@ class TestSystemInfo(MachineCase):
         # strips empty lines, but not leading spaces
         b.wait_text('#motd', "  Hello\n  World")
 
+        b.assert_pixels("#motd-box", "motd")
+
         b.click('#motd-box button:not(#motd-box-edit)')
         b.wait_not_present('#motd-box')
 
@@ -426,11 +449,12 @@ class TestSystemInfo(MachineCase):
         b.wait_in_text(pci_selector + ' tbody tr:first-of-type td[data-label=Class]', "Bridge")
         b.wait_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Class]', "Unclassified")
 
-        # sort by model
-        b.click(pci_selector + ' thead th[data-label=Model] button')
-        b.wait_in_text(pci_selector + ' tbody tr:first-of-type td[data-label=Model]', "440")
-        b.wait_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Model]', "Virtio SCSI")
-        b.wait_not_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Model]', "Unclassified")
+        # sort by model (no sort buttons in mobile mode)
+        if not b.cdp.mobile:
+            b.click(pci_selector + ' thead th[data-label=Model] button')
+            b.wait_in_text(pci_selector + ' tbody tr:first-of-type td[data-label=Model]', "440")
+            b.wait_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Model]', "Virtio SCSI")
+            b.wait_not_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Model]', "Unclassified")
 
         # go back to system page
         b.click('.pf-c-breadcrumb li:first a')
@@ -473,6 +497,20 @@ class TestSystemInfo(MachineCase):
         b.enter_page("/system/hwinfo")
         b.wait_in_text('#hwinfo-system-info-list .hwinfo-system-info-list-item:nth-of-type(1) .pf-c-description-list__group:nth-of-type(2) dd', "NAME")
         b.wait_in_text('#hwinfo-system-info-list .hwinfo-system-info-list-item:nth-of-type(1) .pf-c-description-list__group:nth-of-type(3) dd', "VENDOR")
+
+        # Clean up after lazy OEMs, falls back to board vendor/name
+        m.write("/sys/class/dmi/id/sys_vendor", "To Be Filled By O.E.M.")
+        m.write("/sys/class/dmi/id/product_name", "To Be Filled By O.E.M.")
+        m.write("/sys/class/dmi/id/board_vendor", "brdven")
+        m.write("/sys/class/dmi/id/board_name", "brdnam")
+        b.reload()
+        b.go("/system")
+        b.enter_page('/system')
+        b.wait_in_text('#system_information_hardware_text', "brdven brdnam")
+        b.click(hardware_page_link)
+        b.enter_page("/system/hwinfo")
+        b.wait_in_text('#hwinfo-system-info-list .hwinfo-system-info-list-item:nth-of-type(1) .pf-c-description-list__group:nth-of-type(2) dd', "brdnam")
+        b.wait_in_text('#hwinfo-system-info-list .hwinfo-system-info-list-item:nth-of-type(1) .pf-c-description-list__group:nth-of-type(3) dd', "brdven")
 
         # /proc/cpuinfo on x86; very incomplete, just what pkg/lib/machine-info.js looks at
         m.write("/tmp/cpuinfo", """processor\t: 0
@@ -518,7 +556,7 @@ revision\t: 2.3 (pvr 004e 1203)
             # Test more specific memory data with a fake dmidecode
             m.write('/tmp/dmidecode', dmidecode)
             m.execute('chmod +x /tmp/dmidecode; mount -o bind /tmp/dmidecode $(which dmidecode)')
-            self.addCleanup(m.execute, 'umount $(which dmidecode)')
+            self.addCleanup(m.execute, 'until umount $(which dmidecode); do sleep 1; done')
             b.reload()
             b.enter_page('/system/hwinfo')
             # first DIMM has unknown technology and rank
@@ -779,8 +817,9 @@ password=foobar
         self.assertGreater(hog_usage, initial_usage + 10)
 
         m.execute("kill %d" % mem_hog)
-        # should go back to initial_usage; often below, due to paged out stuff
-        wait(lambda: progressValue(2) <= initial_usage)
+        # Should go back to initial_usage, but it doesn't always, for example on fedora-35.
+        # So let's be happy if the usage drops significantly
+        wait(lambda: progressValue(2) <= hog_usage - 15)
         self.assertGreater(progressValue(2), 10)
 
 

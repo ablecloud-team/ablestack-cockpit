@@ -45,13 +45,15 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    gap: var(--pf-global--spacer--sm) var(--pf-global--spacer--md);
 
     > div:first-child {
         width: 70%;
+        flex: auto;
     }
 
     + hr {
-        margin-bottom: var(--pf-global--spacer--sm);
+        margin-top: var(--pf-global--spacer--sm);
     }
 
     .pf-c-expandable-section__content {
@@ -62,14 +64,4 @@
 .selinux-details textarea {
     margin-top: var(--pf-global--spacer--xs);
     resize: none;
-}
-
-.selinux-policy-ct > .note {
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-.selinux-policy-ct .pficon-info {
-    padding-right: 0.5rem;
 }

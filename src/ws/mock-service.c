@@ -31,6 +31,7 @@ typedef struct {
   GDBusConnection *connection;
   GDBusObjectManagerServer *object_manager;
   GHashTable *other_names;
+  GList *never_return_invocations;
 } MockData;
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -51,9 +52,12 @@ on_handle_hello_world (TestFrobber *object,
 static gboolean
 on_handle_never_return (TestFrobber *object,
                         GDBusMethodInvocation *invocation,
-                        const gchar *greeting,
                         gpointer user_data)
 {
+  MockData *data = user_data;
+  /* just ignoring the call causes long TestDBus shutdown errors, as the unanswered call spooks around in the server's brain until
+   * the global D-Bus timeout; so remember them and answer on shutdown */
+  data->never_return_invocations = g_list_append (data->never_return_invocations, g_object_ref (invocation));
   return TRUE;
 }
 
@@ -712,6 +716,12 @@ static void
 mock_data_free (gpointer data)
 {
   MockData *mock_data = data;
+
+  /* answer all NeverReturn() calls now, to avoid service shutdown hang */
+  for (GList *elem = mock_data->never_return_invocations; elem; elem = elem->next)
+    g_dbus_method_invocation_return_value (elem->data, NULL);
+  g_list_free_full (mock_data->never_return_invocations, g_object_unref);
+
   g_object_unref (mock_data->connection);
   g_hash_table_destroy (mock_data->other_names);
   g_free (mock_data);
@@ -769,7 +779,7 @@ mock_service_create_and_export (GDBusConnection *connection,
   g_signal_connect (exported_frobber, "handle-hello-world",
                     G_CALLBACK (on_handle_hello_world), NULL);
   g_signal_connect (exported_frobber, "handle-never-return",
-                    G_CALLBACK (on_handle_never_return), NULL);
+                    G_CALLBACK (on_handle_never_return), mock_data);
   g_signal_connect (exported_frobber,
                     "handle-test-primitive-types",
                     G_CALLBACK (on_handle_test_primitive_types), NULL);
@@ -826,133 +836,4 @@ mock_service_create_and_export (GDBusConnection *connection,
   g_object_unref (exported_frobber);
   mock_service_create_introspect_fail (connection);
   return G_OBJECT (object_manager);
-}
-
-static GThread *mock_thread = NULL;
-static GDBusConnection *mock_conn = NULL;
-static GCond mock_cond;
-static GMutex mock_mutex;
-
-static void
-on_name_acquired (GDBusConnection *connection,
-                  const gchar *name,
-                  gpointer user_data)
-{
-  gboolean *owned = user_data;
-  *owned = TRUE;
-}
-
-static void
-on_name_lost (GDBusConnection *connection,
-              const gchar *name,
-              gpointer user_data)
-{
-  gboolean *owned = user_data;
-  *owned = FALSE;
-}
-
-typedef struct {
-    GMainContext *context;
-    gpointer *clear;
-} GoneContext;
-
-static void
-on_object_gone (gpointer data,
-                GObject *where_the_object_was)
-{
-  GoneContext *ctx = data;
-  g_atomic_pointer_set (ctx->clear, NULL);
-  g_main_context_wakeup (ctx->context);
-}
-
-static void
-wait_until_object_gone (GMainContext *context,
-                        gpointer object)
-{
-  GoneContext ctx = { context, &object };
-  g_object_weak_ref (object, on_object_gone, &ctx);
-  g_object_unref (object);
-  while (g_atomic_pointer_get (&object))
-    g_main_context_iteration (context, TRUE);
-}
-
-static gpointer
-mock_service_thread (gpointer unused)
-{
-  GDBusConnection *conn;
-  GObject *exported;
-  GMainContext *main_ctx;
-  gboolean owned = FALSE;
-  GError *error = NULL;
-  gchar *address;
-
-  main_ctx = g_main_context_new ();
-  g_main_context_push_thread_default (main_ctx);
-
-  address = g_dbus_address_get_for_bus_sync (G_BUS_TYPE_SESSION, NULL, &error);
-  g_assert_no_error (error);
-
-  conn = g_dbus_connection_new_for_address_sync (address,
-                                                 G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT |
-                                                 G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION,
-                                                 NULL, NULL, &error);
-  g_assert_no_error (error);
-  g_free (address);
-
-  exported = mock_service_create_and_export (conn, "/otree");
-  g_assert (exported != NULL);
-
-  g_bus_own_name_on_connection (conn, "com.redhat.Cockpit.DBusTests.Test",
-                                G_BUS_NAME_OWNER_FLAGS_NONE,
-                                on_name_acquired, on_name_lost, &owned, NULL);
-
-  g_mutex_lock (&mock_mutex);
-
-  while (!owned)
-    g_main_context_iteration (main_ctx, TRUE);
-
-  mock_conn = conn;
-  g_cond_signal (&mock_cond);
-  g_mutex_unlock (&mock_mutex);
-
-  while (!g_dbus_connection_is_closed (conn))
-    g_main_context_iteration (main_ctx, TRUE);
-
-  g_mutex_lock (&mock_mutex);
-  mock_conn = NULL;
-  g_mutex_unlock (&mock_mutex);
-
-  g_object_unref (exported);
-
-  wait_until_object_gone (main_ctx, conn);
-
-  while (g_main_context_iteration (main_ctx, FALSE));
-  g_main_context_pop_thread_default (main_ctx);
-  g_main_context_unref (main_ctx);
-
-  return NULL;
-}
-
-void
-mock_service_start (void)
-{
-  g_assert (mock_thread == NULL);
-  mock_thread = g_thread_new ("mock-service", mock_service_thread, NULL);
-
-  g_mutex_lock (&mock_mutex);
-  while (!mock_conn)
-    g_cond_wait (&mock_cond, &mock_mutex);
-  g_mutex_unlock (&mock_mutex);
-}
-
-void
-mock_service_stop (void)
-{
-  GError *error = NULL;
-
-  g_assert (mock_thread != NULL);
-  g_dbus_connection_close_sync (mock_conn, NULL, &error);
-  g_assert_no_error (error);
-  g_thread_join (mock_thread);
-  mock_thread = NULL;
 }

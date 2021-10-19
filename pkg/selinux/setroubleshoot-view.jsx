@@ -23,13 +23,13 @@ import React from "react";
 import {
     Alert, AlertGroup, AlertActionCloseButton, Badge, Button,
     Divider,
-    Card, CardHeader, CardTitle, CardBody,
+    Card, CardActions, CardHeader, CardTitle, CardBody,
     ExpandableSection,
-    Flex,
+    Flex, FlexItem,
     Page, PageSection, PageSectionVariants,
     Switch, Stack, StackItem, Text, TextArea, TextVariants,
 } from "@patternfly/react-core";
-import { ExclamationCircleIcon, ExclamationTriangleIcon, InfoCircleIcon, TrashIcon } from "@patternfly/react-icons";
+import { ExclamationCircleIcon, ExclamationTriangleIcon, InfoCircleIcon } from "@patternfly/react-icons";
 
 import { Modifications } from "cockpit-components-modifications.jsx";
 import { EmptyStatePanel } from "cockpit-components-empty-state.jsx";
@@ -44,8 +44,8 @@ const _ = cockpit.gettext;
  */
 class SELinuxEventDetails extends React.Component {
     runFix(itmIdx, runCommand) {
-        var localId = this.props.details.localId;
-        var analysisId = this.props.details.pluginAnalysis[itmIdx].analysisId;
+        const localId = this.props.details.localId;
+        const analysisId = this.props.details.pluginAnalysis[itmIdx].analysisId;
         this.props.runFix(localId, analysisId, itmIdx, runCommand);
     }
 
@@ -58,15 +58,15 @@ class SELinuxEventDetails extends React.Component {
                 return <EmptyStatePanel icon={ExclamationCircleIcon} title={ _("Unable to get alert details.") } />;
         }
 
-        var self = this;
-        var fixEntries = this.props.details.pluginAnalysis.map(function(itm, itmIdx) {
-            var fixit = null;
-            var fixit_command = null;
-            var msg = null;
+        const self = this;
+        const fixEntries = this.props.details.pluginAnalysis.map(function(itm, itmIdx) {
+            let fixit = null;
+            let fixit_command = null;
+            let msg = null;
 
             /* some plugins like catchall_sebool don't report fixable as they offer multiple solutions;
              * we can offer to run a single setsebool command for convenience */
-            var fixable = itm.fixable;
+            let fixable = itm.fixable;
             if (!fixable && itm.doText && itm.doText.startsWith("setsebool") && itm.doText.indexOf("\n") < 0) {
                 fixable = true;
                 fixit_command = itm.doText;
@@ -147,7 +147,7 @@ class SELinuxEventDetails extends React.Component {
             }
 
             return (
-                <React.Fragment key={itm.analysisId + (itm.ifText || "") + (itm.doText || "")}>
+                <StackItem key={itm.analysisId + (itm.ifText || "") + (itm.doText || "")}>
                     <div className="selinux-details">
                         <div>
                             <div>
@@ -164,10 +164,10 @@ class SELinuxEventDetails extends React.Component {
                         {fixit}
                     </div>
                     {itmIdx != self.props.details.pluginAnalysis.length - 1 && <Divider />}
-                </React.Fragment>
+                </StackItem>
             );
         });
-        return fixEntries;
+        return <Stack hasGutter>{fixEntries}</Stack>;
     }
 }
 
@@ -224,12 +224,9 @@ class DismissableError extends React.Component {
  */
 class SELinuxStatus extends React.Component {
     render() {
-        var errorMessage;
-        if (this.props.selinuxStatusError) {
-            errorMessage = (
-                <DismissableError dismissError={this.props.dismissError}>{this.props.selinuxStatusError}</DismissableError>
-            );
-        }
+        const errorMessage = this.props.selinuxStatusError
+            ? <DismissableError dismissError={this.props.dismissError}>{this.props.selinuxStatusError}</DismissableError>
+            : null;
 
         if (this.props.selinuxStatus.enabled === undefined) {
             // we don't know the current state
@@ -248,15 +245,15 @@ class SELinuxStatus extends React.Component {
                 </div>
             );
         }
-        var note = null;
-        var configUnknown = (this.props.selinuxStatus.configEnforcing === undefined);
+        const configUnknown = (this.props.selinuxStatus.configEnforcing === undefined);
+        let note = null;
         if (configUnknown)
             note = _("The configured state is unknown, it might change on the next boot.");
         else if (!configUnknown && this.props.selinuxStatus.enforcing !== this.props.selinuxStatus.configEnforcing)
             note = _("Setting deviates from the configured state and will revert on the next boot.");
 
         return (
-            <div className="selinux-policy-ct">
+            <Stack hasGutter className="selinux-policy-ct">
                 <Flex alignItems={{ default: 'alignItemsCenter' }}>
                     <h2>{_("SELinux policy")}</h2>
                     <Switch isChecked={this.props.selinuxStatus.enforcing}
@@ -265,13 +262,13 @@ class SELinuxStatus extends React.Component {
                             onChange={this.props.changeSelinuxMode} />
                 </Flex>
                 { note !== null &&
-                    <label className="note">
-                        <i className="pficon pficon-info" />
-                        { note }
-                    </label>
+                    <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                        <InfoCircleIcon />
+                        <FlexItem>{ note }</FlexItem>
+                    </Flex>
                 }
                 {errorMessage}
-            </div>
+            </Stack>
         );
     }
 }
@@ -296,17 +293,9 @@ class SELinuxStatus extends React.Component {
 export class SETroubleshootPage extends React.Component {
     constructor(props) {
         super(props);
-        this.handleDeleteAlert = this.handleDeleteAlert.bind(this);
+        this.state = { selected: {} };
         this.handleDismissError = this.handleDismissError.bind(this);
-    }
-
-    handleDeleteAlert(alertId, e) {
-        // only consider primary mouse button
-        if (!e || e.button !== 0)
-            return;
-        if (this.props.deleteAlert)
-            this.props.deleteAlert(alertId);
-        e.stopPropagation();
+        this.onSelect = this.onSelect.bind(this);
     }
 
     handleDismissError(e) {
@@ -318,18 +307,22 @@ export class SETroubleshootPage extends React.Component {
         e.stopPropagation();
     }
 
+    onSelect(_, isSelected, rowId) {
+        const selected = Object.assign(this.state.selected);
+        selected[this.props.entries[rowId / 2].key] = isSelected;
+        this.setState({ selected });
+    }
+
     render() {
         // if selinux is disabled, we only show EmptyState
         if (this.props.selinuxStatus.enabled === false) {
             return <EmptyStatePanel icon={ ExclamationCircleIcon } title={ _("SELinux is disabled on the system") } />;
         }
-        var self = this;
-        var entries;
-        var troubleshooting;
-        var modifications;
-        var title = _("SELinux access control errors");
-        var emptyCaption = _("No SELinux alerts.");
+        const self = this;
+        const title = _("SELinux access control errors");
+        const emptyCaption = _("No SELinux alerts.");
         let emptyState;
+        let entries;
         if (!this.props.connected) {
             if (this.props.connecting) {
                 emptyState = <EmptyStatePanel paragraph={ _("Connecting to SETroubleshoot daemon...") } loading />;
@@ -341,7 +334,7 @@ export class SETroubleshootPage extends React.Component {
         } else {
             entries = this.props.entries.map(function(itm, index) {
                 itm.runFix = self.props.runFix;
-                var listingDetail;
+                let listingDetail;
                 if (itm.details && 'firstSeen' in itm.details) {
                     if (itm.details.reportCount >= 2) {
                         listingDetail = cockpit.format(_("Occurred between $0 and $1"),
@@ -352,20 +345,7 @@ export class SETroubleshootPage extends React.Component {
                         listingDetail = cockpit.format(_("Occurred $0"), timeformat.dateTime(itm.details.firstSeen));
                     }
                 }
-                var onDeleteClick;
-                if (itm.details)
-                    onDeleteClick = self.handleDeleteAlert.bind(self, itm.details.localId);
-                var dismissAction = (
-                    <Button className="selinux-alert-dismiss"
-                            isSmall
-                            variant="danger"
-                            aria-label={ _("Dismiss") }
-                            onClick={onDeleteClick}
-                            isDisabled={ !onDeleteClick || !self.props.deleteAlert }>
-                        <TrashIcon />
-                    </Button>
-                );
-                var tabRenderers = [
+                const tabRenderers = [
                     {
                         name: _("Solutions"),
                         renderer: SELinuxEventDetails,
@@ -378,38 +358,53 @@ export class SETroubleshootPage extends React.Component {
                     },
                 ];
                 // if the alert has level "red", it's critical
-                var criticalAlert = null;
-                if (itm.details && 'level' in itm.details && itm.details.level == "red")
-                    criticalAlert = <ExclamationTriangleIcon className="ct-icon-exclamation-triangle" size="md" />;
-                var columns = [
+                const criticalAlert = (itm.details && 'level' in itm.details && itm.details.level == "red")
+                    ? <ExclamationTriangleIcon className="ct-icon-exclamation-triangle" size="md" />
+                    : null;
+                const columns = [
                     { title: criticalAlert },
                     { title: itm.description }
                 ];
                 if (itm.count > 1) {
-                    title = cockpit.format(cockpit.ngettext("$0 occurrence", "$0 occurrences", itm.count),
-                                           itm.count);
-                    columns.push({ title: <Badge isRead>{itm.count}</Badge> });
+                    columns.push({ title: <Badge isRead>{itm.count}</Badge>, props: { className: "pf-c-table__action" } });
                 } else {
-                    columns.push({ title: <span /> });
+                    columns.push({ title: <span />, props: { className: "pf-c-table__action" } });
                 }
                 return ({
                     props: { key: itm.details ? itm.details.localId : index },
+                    selected: self.state.selected[itm.details ? itm.details.localId : index],
+                    disableSelection: !itm.details,
                     columns,
                     expandedContent: <ListingPanel tabRenderers={tabRenderers}
-                                                   listingDetail={listingDetail}
-                                                   listingActions={dismissAction} />
+                                                   listingDetail={listingDetail} />
                 });
             });
         }
-
-        troubleshooting = (
+        let selectedCnt = 0;
+        for (const k in this.state.selected) if (this.state.selected[k]) selectedCnt++;
+        const onDeleteClick = () => {
+            for (const k in this.state.selected)
+                if (this.state.selected[k])
+                    this.props.deleteAlert(k).then(() => this.setState({ selected: { ...this.state.selected, [k]: false } }));
+        };
+        const troubleshooting = (
             <Card>
                 <CardHeader>
                     <CardTitle><Text component={TextVariants.h2}>{title}</Text></CardTitle>
+                    {!emptyState ? <CardActions>
+                        <Button className="selinux-alert-dismiss"
+                                variant="danger"
+                                onClick={onDeleteClick}
+                                isDisabled={ !this.props.deleteAlert || !selectedCnt}>
+                            {selectedCnt ? cockpit.format(cockpit.ngettext("Dismiss $0 alert", "Dismiss $0 alerts", selectedCnt), selectedCnt) : _("Dismiss selected alerts")}
+                        </Button>
+                    </CardActions> : null}
                 </CardHeader>
                 <CardBody className="contains-list">
                     {!emptyState
                         ? <ListingTable aria-label={ title }
+                                  id="selinux-alerts"
+                                  onSelect={this.onSelect}
                                   gridBreakPoint=''
                                   emptyCaption={ emptyCaption }
                                   columns={[{ title: _("Alert") }, { title: _("Error message"), header: true }, { title: _("Occurances") }]}
@@ -420,7 +415,7 @@ export class SETroubleshootPage extends React.Component {
             </Card>
         );
 
-        modifications = (
+        const modifications = (
             <Modifications
                 title={ _("System modifications") }
                 permitted={ this.props.selinuxStatus.permitted }

@@ -84,17 +84,13 @@
   &-subheading {
     font-size: var(--pf-global--FontSize--md);
   }
-
-  .fa.fa-lock, .fa.fa-unlock-alt {
-    margin-right: 0.5rem;
-  }
 }
 
 .ct-system-overview {
   --card-width: 22rem;
   --pf-l-gallery--GridTemplateColumns: repeat(auto-fill, minmax(var(--card-width), 1fr));
 
-  .motd-box, .login-messages {
+  .motd-box {
     grid-column: 1 / -1;
   }
 
@@ -105,22 +101,6 @@
     }
 
     &__body {
-      .fa,
-      .pficon {
-        + a, + span {
-          /* Space out icons + links */
-          margin-left: 0.5rem;
-        }
-      }
-
-      a {
-        > .fa,
-        > .pficon {
-          /* Space out icons inside of links */
-          margin-right: 0.5rem;
-        }
-      }
-
       &:last-child .pf-c-table:last-child tr:last-child {
         /* Remove the border of tables when it's the last item in a card and there isn't a card footer */
         border-bottom: none;
@@ -302,55 +282,6 @@
   margin-top: 3px;
 }
 
-#sich-hostname-helper {
-    white-space: break-spaces;
-}
-
-.small-messages {
-  font-size: smaller;
-}
-
-.systime-inline {
-  .form-control {
-    margin: 0 4px;
-  }
-
-  .form-group {
-    &:first-of-type .form-control {
-      margin: 0 4px 0 0;
-    }
-
-    .form-control {
-      width: 214px;
-    }
-  }
-
-  .form-inline {
-    background: #f4f4f4;
-    border: 1px solid #bababa;
-    padding: 4px;
-
-    &:not(:first-of-type) {
-      border-top-width: 0;
-    }
-  }
-
-  form {
-    .pficon-close,
-    .fa-plus {
-      float: right;
-      margin-left: 5px;
-      padding: 4px;
-      height: 26px;
-      width: 26px;
-    }
-  }
-}
-
-.pf-c-button.no-left-padding {
-    padding-left: 0;
-}
-
 /* Add a subtle dropshadow to the alerts, to separate them from the background, similar to the cards on the page */
 .pf-c-page__main-section:not(.ct-overview-header),
 .pf-l-gallery {
@@ -369,16 +300,6 @@
 #motd-box > .pf-c-alert {
   /* Spacing between the MOTD is handled by the .pf-l-gallery grid */
   margin-bottom: 0;
-}
-
-.pf-c-alert.login-messages h4 {
-    font-weight: normal;
-    color: black;
-    font-family: inherit;
-}
-
-.pf-c-alert.login-messages .pf-c-alert__description {
-    padding-bottom: 0px;
 }
 
 .pf-c-alert .pf-c-alert__description a {

@@ -67,6 +67,7 @@ __all__ = (
     'no_retry_when_changed',
     'skipImage',
     'skipDistroPackage',
+    'skipMobile',
     'skipBrowser',
     'skipPackage',
     'enableAxe',
@@ -189,6 +190,8 @@ class Browser:
         # unwrap a typical error string
         if details.get("exception", {}).get("type") == "string":
             msg = details["exception"]["value"]
+        elif details.get("text", None):
+            msg = details.get("text", None)
         else:
             msg = str(details)
         if trailer:
@@ -397,9 +400,9 @@ class Browser:
             time.sleep(0.2)
         raise Error('timed out waiting for predicate to become true')
 
-    def wait_js_cond(self, cond):
+    def wait_js_cond(self, cond, error_description="null"):
         result = self.cdp.invoke("Runtime.evaluate",
-                                 expression="ph_wait_cond(() => %s, %i)" % (cond, self.cdp.timeout * self.timeout_factor * 1000),
+                                 expression="ph_wait_cond(() => %s, %i, %s)" % (cond, self.cdp.timeout * self.timeout_factor * 1000, error_description),
                                  silent=False, awaitPromise=True, trace="wait: " + cond)
         if "exceptionDetails" in result:
             trailer = "\n".join(self.cdp.get_js_log())
@@ -453,7 +456,8 @@ class Browser:
 
     def wait_in_text(self, selector, text):
         self.wait_visible(selector)
-        self.wait_js_func('ph_in_text', selector, text)
+        self.wait_js_cond("ph_in_text(%s,%s)" % (jsquote(selector), jsquote(text)),
+                          error_description="() => 'actual text: ' + ph_text(%s)" % jsquote(selector))
 
     def wait_not_in_text(self, selector, text):
         self.wait_visible(selector)
@@ -464,7 +468,8 @@ class Browser:
 
     def wait_text(self, selector, text):
         self.wait_visible(selector)
-        self.wait_js_func('ph_text_is', selector, text)
+        self.wait_js_cond("ph_text_is(%s,%s)" % (jsquote(selector), jsquote(text)),
+                          error_description="() => 'actual text: ' + ph_text(%s)" % jsquote(selector))
 
     def wait_text_not(self, selector, text):
         self.wait_visible(selector)
@@ -633,6 +638,59 @@ class Browser:
                 host = None
             self.enter_page(path.split("#")[0], host=host)
 
+    def open_superuser_dialog(self):
+        if self.cdp.mobile:
+            self.click("#navbar-dropdown")
+            self.click("#super-user-indicator-mobile button")
+        else:
+            self.click("#super-user-indicator button")
+
+    def check_superuser_indicator(self, expected):
+        if self.cdp.mobile:
+            self.click("#navbar-dropdown")
+            self.wait_text("#super-user-indicator-mobile", expected)
+            self.click("#navbar-dropdown")
+        else:
+            self.wait_text("#super-user-indicator", expected)
+
+    def become_superuser(self, user=None, password=None):
+        cur_frame = self.cdp.cur_frame
+        self.switch_to_top()
+
+        self.open_superuser_dialog()
+        self.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", f"Password for {user or 'admin'}:")
+        self.set_input_text(".pf-c-modal-box:contains('Switch to administrative access') input", password or "foobar")
+        self.click(".pf-c-modal-box button:contains('Authenticate')")
+        self.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
+        self.check_superuser_indicator("Administrative access")
+
+        self.switch_to_frame(cur_frame)
+
+    def drop_superuser(self):
+        cur_frame = self.cdp.cur_frame
+        self.switch_to_top()
+
+        self.open_superuser_dialog()
+        self.click(".pf-c-modal-box:contains('Switch to limited access') button:contains('Limit access')")
+        self.wait_not_present(".pf-c-modal-box:contains('Switch to limited access')")
+        self.check_superuser_indicator("Limited access")
+
+        self.switch_to_frame(cur_frame)
+
+    def click_system_menu(self, path, enter=True):
+        '''Click on a "System" menu entry with given URL path
+
+        Enters the given target frame afterwards, unless enter=False is given
+        (useful for remote hosts).
+        '''
+        self.switch_to_top()
+        if self.cdp.mobile:
+            self.click("#nav-system-item")
+        self.click(f"#host-apps a[href='{path}']")
+        if enter:
+            # strip off parameters after hash
+            self.enter_page(path.split('#')[0].rstrip('/'))
+
     def ignore_ssl_certificate_errors(self, ignore):
         action = ignore and "continue" or "cancel"
         if opts.trace:
@@ -696,6 +754,8 @@ class Browser:
 
         ignore_rects = list(map(relative_clip, map(lambda item: selector + " " + item, ignore)))
         base = self.pixels_label + "-" + key
+        if self.cdp.mobile:
+            base += "-mobile"
         filename = base + "-pixels.png"
         ref_filename = os.path.join(reference_dir, filename)
         ret = self.cdp.invoke("Page.captureScreenshot", clip=rect, no_trace=True)
@@ -842,6 +902,7 @@ unittest.case._Outcome = _DebugOutcome
 
 class MachineCase(unittest.TestCase):
     image = testvm.DEFAULT_IMAGE
+    libexecdir = None
     runner = None
     machine = None
     machines = {}
@@ -1038,6 +1099,11 @@ class MachineCase(unittest.TestCase):
             if self.is_devel_build():
                 self.disable_preload("packagekit", "systemd")
 
+            if self.machine.image.startswith('debian') or self.machine.image.startswith('ubuntu'):
+                self.libexecdir = '/usr/lib/cockpit'
+            else:
+                self.libexecdir = '/usr/libexec'
+
     def nonDestructiveSetup(self):
         '''generic setUp/tearDown for @nondestructive tests'''
 
@@ -1192,6 +1258,11 @@ class MachineCase(unittest.TestCase):
         r"#1\) Respect the privacy of others.",
         r"#2\) Think before you type.",
         r"#3\) With great power comes great responsibility.",
+
+        # starting out with empty PCP logs and pmlogger not running causes these metrics channel messages
+        "pcp-archive: no such metric: kernel.all.cpu.nice: Unknown metric name",
+        "pcp-archive: instance name lookup failed:.*",
+        "pcp-archive: couldn't create pcp archive context for.*",
     ]
 
     default_allowed_messages += os.environ.get("TEST_ALLOW_JOURNAL_MESSAGES", "").split(",")
@@ -1558,6 +1629,12 @@ def skipImage(reason, *args):
     if testvm.DEFAULT_IMAGE in args:
         return unittest.skip("{0}: {1}".format(testvm.DEFAULT_IMAGE, reason))
     return generic_metadata_setter("_testlib__skipImage", args)
+
+
+def skipMobile():
+    if bool(os.environ.get("TEST_MOBILE", "")):
+        return unittest.skip("mobile: This test breaks on small screen sizes")
+    return generic_metadata_setter("_testlib__skipMobile", None)
 
 
 def skipDistroPackage():

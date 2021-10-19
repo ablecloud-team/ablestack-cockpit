@@ -171,10 +171,8 @@ which reduces the build time to less than a third. E. g.
 
     $ tools/webpack-watch systemd
 
-Note that this disables eslint by default -- if you want to enable it, run it
-as
-
-    $ ESLINT=1 tools/webpack-watch systemd
+Note that this enables eslint by default -- if you want to disable it, run it
+with `-e`/`--no-eslint`.
 
 Then reload cockpit in your browser after building the page.
 
@@ -184,7 +182,7 @@ option for copying the built webpack into the given SSH target's
 SSH `c` alias as described in [test/README.md](./test/README.md), you can use
 one of these commands:
 
-    tools/webpack-make -d dist/kdump/Makefile.deps -r c
+    tools/webpack-make kdump -r c
     tools/webpack-watch kdump -r c
 
 To make Cockpit again use the installed code, rather than that from your git

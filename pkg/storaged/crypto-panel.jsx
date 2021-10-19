@@ -24,22 +24,27 @@ import { cellWidth, SortByDirection } from '@patternfly/react-table';
 import { ListingTable } from "cockpit-components-table.jsx";
 import { block_name, get_block_link_parts, go_to_block } from "./utils.js";
 import { OptionalPanel } from "./optional-panel.jsx";
+import { get_fstab_config } from "./fsys-tab.jsx";
 
 const _ = cockpit.gettext;
 
 export class LockedCryptoPanel extends React.Component {
     render() {
-        var client = this.props.client;
+        const client = this.props.client;
 
         function is_locked_crypto(path) {
-            var block = client.blocks[path];
-            var crypto = client.blocks_crypto[path];
-            var cleartext = client.blocks_cleartext[path];
-            return crypto && !cleartext && !block.HintIgnore;
+            const block = client.blocks[path];
+            const crypto = client.blocks_crypto[path];
+            const cleartext = client.blocks_cleartext[path];
+            if (crypto && !cleartext && !block.HintIgnore) {
+                const [, mount_point] = get_fstab_config(block, true);
+                return !mount_point;
+            }
+            return false;
         }
 
         function make_locked_crypto(path) {
-            var block = client.blocks[path];
+            const block = client.blocks[path];
 
             const parts = get_block_link_parts(client, block.path);
             const name = cockpit.format(parts.format, parts.link);
@@ -53,7 +58,7 @@ export class LockedCryptoPanel extends React.Component {
             };
         }
 
-        var locked_cryptos = Object.keys(client.blocks).filter(is_locked_crypto)
+        const locked_cryptos = Object.keys(client.blocks).filter(is_locked_crypto)
                 .map(make_locked_crypto);
 
         if (locked_cryptos.length == 0)

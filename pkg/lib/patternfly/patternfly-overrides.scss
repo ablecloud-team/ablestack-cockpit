@@ -5,8 +5,14 @@ $font-family-mono: SFMono-Regular, menlo, monaco, consolas, "Liberation Mono", C
 
 // Resize headings
 h1, h2, h3, h4, h5, h6 {
-  line-height: var(--pf-global--LineHeight--sm);
-  font-family: var(--pf-global--FontFamily--redhatfont--heading--sans-serif);
+  // Reset to default after PF3+Bootstrap; prepare for PF4
+  font: unset;
+
+  // Only adjust font properties for non-PF4 elements
+  &:not([class*=pf-]) {
+    line-height: var(--pf-global--LineHeight--sm);
+    font-family: var(--pf-global--FontFamily--redhatfont--heading--sans-serif);
+  }
 
   .breadcrumb + & {
     // Vertically align contents of headings directly following breadcrumbs
@@ -348,12 +354,6 @@ select.form-control {
   }
 }
 
-// Kebab menu buttons should get special treatment
-.dropdown-kebab-pf > button {
-  border: none;
-  padding: 0.5rem 1rem !important;
-}
-
 // Restyle modals
 .modal {
   &-header {
@@ -626,4 +626,22 @@ th > label {
 input.pf-c-checkbox__input,
 input.pf-c-radio__input {
   margin: unset;
+}
+
+// Adjust non-classed number inputs, to fix stepper alignment.
+// (PF4 always uses the pf-c-form-control class on number inputs.)
+// Issue: https://github.com/patternfly/patternfly-3/issues/255
+input[type=number]:not(.pf-c-form-control) {
+  padding: 0 0 0 5px;
+}
+
+p + p {
+    // The mix of PF3 and PF4 removes margin from paragraphs.
+    // We want successive paragraphs to have spaces between each other.
+    margin-top: var(--pf-global--spacer--md);
+}
+
+.blank-slate-pf .spinner-lg {
+    height: 58px;
+    width: 58px;
 }

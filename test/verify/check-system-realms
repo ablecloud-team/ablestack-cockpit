@@ -83,7 +83,12 @@ class CommonTests:
         # Tell realmd to enable domain-qualified logins; unqualified ones are covered in testUnqualifiedUsers
         m.write("/etc/realmd.conf", "[cockpit.lan]\nfully-qualified-names = yes\n", append=True)
 
-        self.login_and_go("/system")
+        # Test that we reconnect on privileges change
+        self.login_and_go("/system", superuser=False)
+        b.click("button:contains('Turn on administrative access')")
+        b.set_input_text("#switch-to-admin-access-password", "foobar")
+        b.click("button:contains('Authenticate')")
+        b.wait_not_present("#switch-to-admin-access-password")
 
         def wait_number_domains(n):
             if n == 0:
@@ -200,9 +205,6 @@ class CommonTests:
                 # "More" link is part of the message component, so this looks a little funny here
                 if self.expected_server_software == 'active-directory':
                     self.assertEqual(error, "Failed to join the domain More")
-                elif m.image in ["debian-stable"]:
-                    # older ipa-client releases have a less useful error message
-                    self.assertEqual(error, "Running ipa-client-install failed More")
                 else:
                     self.assertEqual(error, "Password is incorrect More")
                 # "More" should be visible, and diagnostics not shown by default
@@ -426,7 +428,7 @@ class TestRealms(MachineCase):
         self.machine.execute("hostnamectl set-hostname x0.cockpit.lan")
 
 
-@skipImage("freeipa not currently available", "debian-testing")
+@skipImage("freeipa not currently available", "debian-stable", "debian-testing")
 @skipDistroPackage()
 @no_retry_when_changed
 class TestIPA(TestRealms, CommonTests):
@@ -498,8 +500,9 @@ ExecStart=/bin/true
         self.assertIn("Content-Type: text/html", m.execute("curl --head https://x0.cockpit.lan:9090"))
         # don't leave the secret key copy behind
         m.execute("! test -e /run/cockpit/ipa.key")
-        # remotectl agrees
-        self.assertIn("/etc/cockpit/ws-certs.d/10-ipa.cert", m.execute("remotectl certificate"))
+        # cockpit-certificate-ensure agrees
+        self.assertIn("/etc/cockpit/ws-certs.d/10-ipa.cert",
+                      m.execute(f"{self.libexecdir}/cockpit-certificate-ensure --check"))
         # correct permissions
         self.assertEqual("root:cockpit-ws/640", m.execute("stat --printf '%U:%G/%a' /etc/cockpit/ws-certs.d/10-ipa.key"))
         # cert is being tracked
@@ -565,8 +568,8 @@ ExecStart=/bin/true
         m.start_cockpit()
 
         # now try 2FA with OTP
-        # This does not yet work with sssd < 2.2.2-1 on Debian/Ubuntu
-        if m.image in ["ubuntu-2004", "ubuntu-stable", "debian-stable"]:
+        # This does not yet work with sssd < 2.2.2-1 on Ubuntu
+        if m.image in ["ubuntu-2004", "ubuntu-stable"]:
             return
 
         # normal b.login_and_go() doesn't support 2FA
@@ -634,18 +637,10 @@ ipa group-add-member admins --users=alice
 ipa-advise enable-admins-sudo | sh -ex
 ' """ % {"cert": alice_cert, "password": self.alice_password})
 
-        # On Debian 9, D-Bus activation of ifp is disabled, enable it manually; see https://bugs.debian.org/925026
-        if m.image in ["debian-stable"]:
-            m.write("/etc/sssd/conf.d/ifp.conf", "[sssd]\nservices = nss, sudo, pam, ssh, ifp\n", perm="0600")
-
         self.checkClientCertAuthentication()
 
         # the above password login implicitly creates a persistent user ticket
-        if m.image == 'debian-stable':
-            # on Debian 9, the default kerberos config is a per-session FILE: keyring, so klist fails
-            alice_klist_cmd = 'su -c klist alice || true'
-        else:
-            alice_klist_cmd = 'su -c klist alice'
+        alice_klist_cmd = 'su -c klist alice'
         persistent_ticket = m.execute(alice_klist_cmd)
 
         # enable sudo GSSAPI authentication
@@ -702,7 +697,7 @@ ipa-advise enable-admins-sudo | sh -ex
         self.assertIn("no askpass program", m.execute(f"su -c '! {ccache_env} sudo -A whoami' alice 2>&1"))
         self.assertIn("Permission denied", m.execute(f"su -c '! {ccache_env} ssh x0.cockpit.lan 2>&1' alice"))
         b.switch_to_top()
-        b.click("#super-user-indicator button")
+        b.open_superuser_dialog()
         b.wait_in_text(".pf-c-modal-box:contains('Switch to administrative access')", "Password for alice:")
         b.click(".pf-c-modal-box:contains('Switch to administrative access') .btn-cancel")
         b.wait_not_present(".pf-c-modal-box:contains('Switch to administrative access')")
@@ -720,8 +715,8 @@ ipa-advise enable-admins-sudo | sh -ex
         # now sudo works with the delegated ticket
         # this requires https://github.com/sudo-project/sudo/commit/3b7977a42c0 (see https://bugzilla.redhat.com/show_bug.cgi?id=1917379)
         # to actually work, so on older distros it fails
-        supports_sudo_krb = m.image not in ["rhel-8-5", "centos-8-stream", "debian-stable", "ubuntu-2004", "ubuntu-stable"]
-        b.click("#super-user-indicator button")
+        supports_sudo_krb = m.image not in ["rhel-8-5", "rhel-8-6", "centos-8-stream", "ubuntu-2004", "ubuntu-stable"]
+        b.open_superuser_dialog()
 
         if supports_sudo_krb:
             b.wait_in_text(".pf-c-modal-box:contains('Administrative access')", "You now have administrative access")
@@ -905,7 +900,7 @@ sed -i '/^sudoers:/ s/files sss/sss files/' /etc/nsswitch.conf
 
 
 @skipImage("No realmd available", "fedora-coreos")
-@skipImage("freeipa not currently available", "debian-testing")
+@skipImage("freeipa not currently available", "debian-stable", "debian-testing")
 @skipDistroPackage()
 @no_retry_when_changed
 class TestKerberos(MachineCase):
@@ -985,20 +980,17 @@ ExecStart=/bin/true
         b.open("/system/terminal", cookie={"name": "cockpit", "value": cookie, "domain": m.web_address, "path": "/"})
         b.wait_visible('#content')
 
-        def line_sel(i):
-            return '.terminal .xterm-accessibility-tree div:nth-child(%d)' % i
-
         # Remove failed units which will show up in the first terminal line
         m.execute("systemctl reset-failed")
 
         # kerberos ticket got forwarded into the session
         b.enter_page("/system/terminal")
-        b.wait_visible(".terminal .xterm-accessibility-tree")
-        b.wait_in_text(line_sel(1), "admin")
+        # wait for prompt
+        b.wait_in_text(".terminal .xterm-accessibility-tree", "admin")
         b.key_press("klist\r")
-        b.wait_in_text(line_sel(2), "Ticket cache")
-        b.wait_in_text(line_sel(3), "Default principal: admin@COCKPIT.LAN")
-        b.wait_in_text(line_sel(6), "krbtgt/COCKPIT.LAN")
+        b.wait_in_text(".terminal .xterm-accessibility-tree", "Ticket cache")
+        b.wait_in_text(".terminal .xterm-accessibility-tree", "Default principal: admin@COCKPIT.LAN")
+        b.wait_in_text(".terminal .xterm-accessibility-tree", "krbtgt/COCKPIT.LAN")
         self.assertIn("cockpit-session-", m.execute("ls /run/user/$(id -u admin)/*.ccache"))
 
         # Now connect to another machine

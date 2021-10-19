@@ -20,6 +20,6 @@ jobs:
     trigger: pull_request
     metadata:
       targets:
-      - fedora-33
       - fedora-34
+      - fedora-35
       - centos-stream-8-x86_64
