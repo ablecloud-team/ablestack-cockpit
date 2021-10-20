@@ -254,7 +254,7 @@ const CockpitPoPlugin = require("./pkg/lib/cockpit-po-plugin");
 const srcdir = process.env.SRCDIR || __dirname;
 const builddir = process.env.BUILDDIR || __dirname;
 const libdir = path.resolve(srcdir, "pkg" + path.sep + "lib");
-const nodedir = path.resolve(srcdir, "node_modules");
+const nodedir = path.relative(process.cwd(), path.resolve(srcdir, "node_modules"));
 const section = process.env.ONLYDIR || null;
 
 /* A standard nodejs and webpack pattern */
@@ -428,7 +428,7 @@ module.exports = {
             // bootstrap UI requires jQuery to be in the global namespace
             // only expose that to pages which need it, as we want to port to React and get rid of jQuery
             {
-                issuer: /shell|networkmanager|storaged|systemd\/(logs|services|shutdown)/,
+                issuer: /shell/,
                 test: require.resolve('jquery'),
                 loader: 'expose-loader',
                 options: {

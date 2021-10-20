@@ -259,11 +259,13 @@ class TestStorageLuks(StorageCase):
         self.confirm()
         b.wait_not_present(panel + "ul li:nth-child(2)")
 
-    @skipImage("No clevis/tang", "debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable")
     def testLuks1Slots(self):
         self.allow_journal_messages("Device is not initialized.*", ".*could not be opened.")
         m = self.machine
         b = self.browser
+
+        # This should work without any of the Clevis stuff.
+        m.execute("rm /usr/bin/luksmeta /usr/bin/clevis*")
 
         mount_point_secret = "/run/secret"
 
@@ -288,6 +290,7 @@ class TestStorageLuks(StorageCase):
                      "passphrase2": "vainu-reku-toma-rolle-kaja"})
         self.content_row_wait_in_col(1, 1, "Filesystem (encrypted)")
         self.content_tab_wait_in_info(1, 1, "Mount point", "The filesystem is not mounted")
+        self.content_tab_wait_in_info(1, 2, "Encryption type", "LUKS1")
         self.content_tab_wait_in_info(1, 2, "Options", "none")
 
         # add one more passphrase
@@ -297,7 +300,6 @@ class TestStorageLuks(StorageCase):
         b.click(panel + "[aria-label=Add]")
         self.dialog_wait_open()
         self.dialog_wait_apply_enabled()
-        self.dialog_set_val("type", "luks-passphrase")
         self.dialog_set_val("new_passphrase", "vainu-reku-toma-rolle-kaja-1")
         self.dialog_set_val("new_passphrase2", "vainu-reku-toma-rolle-kaja-1")
         self.dialog_set_val("passphrase", "vainu-reku-toma-rolle-kaja")
@@ -339,7 +341,6 @@ class TestStorageLuks(StorageCase):
             b.click(panel + "button[aria-label=Add]")
             self.dialog_wait_open()
             self.dialog_wait_apply_enabled()
-            self.dialog_set_val("type", "luks-passphrase")
             self.dialog_set_val("new_passphrase", "vainu-reku-toma-rolle-kaja-%s" % i)
             self.dialog_set_val("new_passphrase2", "vainu-reku-toma-rolle-kaja-%s" % i)
             self.dialog_set_val("passphrase", "vainu-reku-toma-rolle-kaja")

@@ -19,8 +19,8 @@
 
 import cockpit from "cockpit";
 import {
-    dialog_open, TextInput, PassInput, SelectOne, SizeSlider,
-    BlockingMessage, TeardownMessage
+    dialog_open, TextInput, PassInput, SelectOne, SizeSlider, CheckBoxes,
+    BlockingMessage, TeardownMessage, teardown_and_apply_title
 } from "./dialog.jsx";
 import * as utils from "./utils.js";
 
@@ -34,7 +34,9 @@ import { ExclamationTriangleIcon } from "@patternfly/react-icons";
 import { ListingTable } from "cockpit-components-table.jsx";
 import { ListingPanel } from 'cockpit-components-listing-panel.jsx';
 import { StorageButton, StorageBarMenu, StorageMenuItem } from "./storage-controls.jsx";
-import { format_dialog, parse_options, extract_option, unparse_options } from "./format-dialog.jsx";
+import {
+    format_dialog, parse_options, extract_option, unparse_options
+} from "./format-dialog.jsx";
 import { job_progress_wrapper } from "./jobs-panel.jsx";
 
 import { FilesystemTab, is_mounted, mounting_dialog, get_fstab_config } from "./fsys-tab.jsx";
@@ -358,11 +360,14 @@ function create_tabs(client, target, is_partition) {
             }
 
             dialog_open({
-                Title: cockpit.format(_("Please confirm deletion of $0"), name),
-                Footer: TeardownMessage(usage),
+                Title: cockpit.format(_("Permanently delete $0?"), name),
+                Teardown: TeardownMessage(usage),
                 Action: {
                     Danger: danger,
-                    Title: _("Delete"),
+                    Title: teardown_and_apply_title(usage,
+                                                    _("Delete"),
+                                                    _("Unmount and delete"),
+                                                    _("Remove and delete")),
                     action: function () {
                         return utils.teardown_active_usage(client, usage)
                                 .then(function () {
@@ -606,16 +611,9 @@ const BlockContent = ({ client, block, allow_partitions }) => {
         }
 
         dialog_open({
-            Title: cockpit.format(_("Format disk $0"), utils.block_name(block)),
-            Footer: TeardownMessage(usage),
+            Title: cockpit.format(_("Initialize disk $0"), utils.block_name(block)),
+            Teardown: TeardownMessage(usage),
             Fields: [
-                SelectOne("erase", _("Erase"),
-                          {
-                              choices: [
-                                  { value: "no", title: _("Don't overwrite existing data") },
-                                  { value: "zero", title: _("Overwrite existing data with zeros") }
-                              ]
-                          }),
                 SelectOne("type", _("Partitioning"),
                           {
                               value: "gpt",
@@ -627,18 +625,27 @@ const BlockContent = ({ client, block, allow_partitions }) => {
                                   },
                                   { value: "empty", title: _("No partitioning") }
                               ]
-                          })
+                          }),
+                CheckBoxes("erase", _("Overwrite"),
+                           {
+                               fields: [
+                                   { tag: "on", title: _("Overwrite existing data with zeros (slower)") }
+                               ],
+                           }),
             ],
             Action: {
-                Title: _("Format"),
-                Danger: _("Formatting a disk will erase all data on it."),
+                Title: teardown_and_apply_title(usage,
+                                                _("Initialize"),
+                                                _("Unmount and initialize"),
+                                                _("Remove and initialize")),
+                Danger: _("Initializing erases all data on a disk."),
                 wrapper: job_progress_wrapper(client, block.path),
                 action: function (vals) {
                     const options = {
                         'tear-down': { t: 'b', v: true }
                     };
-                    if (vals.erase != "no")
-                        options.erase = { t: 's', v: vals.erase };
+                    if (vals.erase.on)
+                        options.erase = { t: 's', v: "zero" };
                     return utils.teardown_active_usage(client, usage)
                             .then(function () {
                                 return block.Format(vals.type, options);

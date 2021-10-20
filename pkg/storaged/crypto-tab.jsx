@@ -89,9 +89,8 @@ export function edit_config(block, modify) {
 export class CryptoTab extends React.Component {
     constructor() {
         super();
-        // Initialize for LUKSv1 and set max_slots to 8.
         this.state = {
-            luks_version: 1, slots: null, slot_error: null, max_slots: 8,
+            luks_version: null, slots: null, slot_error: null, max_slots: null,
             stored_passphrase_mtime: 0,
         };
     }
@@ -232,15 +231,13 @@ export class CryptoTab extends React.Component {
 
         return (
             <div>
-                <DescriptionList className="pf-m-horizontal-on-sm">
-                    { !this.state.slot_error &&
+                <DescriptionList className="pf-m-horizontal-on-sm ct-wide-labels">
                     <DescriptionListGroup>
                         <DescriptionListTerm>{_("Encryption type")}</DescriptionListTerm>
                         <DescriptionListDescription>
-                            { "LUKS" + this.state.luks_version }
+                            { this.state.luks_version ? "LUKS" + this.state.luks_version : "-" }
                         </DescriptionListDescription>
                     </DescriptionListGroup>
-                    }
                     <DescriptionListGroup>
                         <DescriptionListTerm>{_("Cleartext device")}</DescriptionListTerm>
                         <DescriptionListDescription>

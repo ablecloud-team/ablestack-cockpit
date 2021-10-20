@@ -303,10 +303,6 @@ export function mounting_dialog(client, block, mode) {
                 .then(utils.reload_systemd));
     }
 
-    function remove() {
-        dlg.run(null, maybe_update_config("", "").then(() => dlg.close()));
-    }
-
     let fields = null;
     if (mode == "mount" || mode == "update") {
         fields = [
@@ -343,14 +339,11 @@ export function mounting_dialog(client, block, mode) {
             ]);
     }
 
-    let footer = null;
-    const show_clear_button = false;
-    if (old_dir && mode == "update" && show_clear_button)
-        footer = <div className="modal-footer-teardown"><button className="pf-c-button pf-m-link" onClick={remove}>{_("Clear mount point configuration")}</button></div>;
+    let teardown = null;
     if (!is_filesystem_mounted && block_fsys && block_fsys.MountPoints.length > 0)
-        footer = (
+        teardown = (
             <>
-                {footer}
+                {teardown}
                 <div className="modal-footer-teardown">
                     <p>{cockpit.format(_("The filesystem is already mounted at $0. Proceeding will unmount it."),
                                        utils.decode_filename(block_fsys.MountPoints[0]))}</p>
@@ -400,7 +393,7 @@ export function mounting_dialog(client, block, mode) {
     const dlg = dialog_open({
         Title: mode_title[mode],
         Fields: fields,
-        Footer: footer,
+        Teardown: teardown,
         Action: {
             Title: mode_action[mode],
             action: function (vals) {
