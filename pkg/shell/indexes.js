@@ -401,7 +401,7 @@ function MachinesIndex(index_options, machines, loader) {
         if (os_release.DOCUMENTATION_URL)
             create_item(cockpit.format(_("$0 documentation"), os_release.NAME), os_release.DOCUMENTATION_URL);
 
-        create_item(_("Web Console"), "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/managing_systems_using_the_rhel_8_web_console/index");
+        create_item(_("Web Console"), "https://docs.ablecloud.io/1.0%20Allo/administration/cube/userinterface-guide/");
 
         docs.forEach(e => create_item(_(e.label), e.url));
 
