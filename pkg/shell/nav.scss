@@ -168,7 +168,7 @@ $desktop: $phone + 1px;
         bottom: 0;
         left: 0;
         background: var(--pf-global--BackgroundColor--dark-200);
-        z-index: 999;
+        z-index: 399; // Modals have 400 and modals should be in front of host switcher
 
         &.edit-hosts {
             .pf-c-nav__list {
@@ -316,19 +316,21 @@ $desktop: $phone + 1px;
         }
     }
 
-    .pf-c-select__toggle {
-        display: block;
-        width: auto;
-    }
+    .ct-switcher > .pf-c-select {
+        .pf-c-select__toggle {
+            display: block;
+            width: auto;
+        }
 
-    .pf-c-select__toggle-arrow {
-        transform: rotate(180deg) scale(1.5);
-        margin: unset;
-        margin-top: 4px;
-    }
+        .pf-c-select__toggle-arrow {
+            transform: rotate(180deg) scale(1.5);
+            margin: unset;
+            margin-top: 4px;
+        }
 
-    .ct-switcher > .pf-c-select > button {
-        padding-left: 0;
+        > button {
+            padding-left: 0;
+        }
     }
 
     .menu-toggle,

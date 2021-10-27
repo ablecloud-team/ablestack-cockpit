@@ -163,7 +163,7 @@ export function check_mismounted_fsys(client, path, enter_warning) {
         enter_warning(path, { warning: "mismounted-fsys", type: type, other: other_mounts[0] });
 }
 
-export function mounting_dialog(client, block, mode) {
+export function mounting_dialog(client, block, mode, forced_options) {
     const block_fsys = client.blocks_fsys[block.path];
     const [old_config, old_dir, old_opts, old_parents] = get_fstab_config(block, true);
     const options = old_config ? old_opts : initial_tab_options(client, block, true);
@@ -172,6 +172,9 @@ export function mounting_dialog(client, block, mode) {
     extract_option(split_options, "noauto");
     const opt_never_auto = extract_option(split_options, "x-cockpit-never-auto");
     const opt_ro = extract_option(split_options, "ro");
+    if (forced_options)
+        for (const opt of forced_options)
+            extract_option(split_options, opt);
     const extra_options = unparse_options(split_options);
 
     const is_filesystem_mounted = is_mounted(client, block);
@@ -369,6 +372,8 @@ export function mounting_dialog(client, block, mode) {
             opts.push("ro");
         if (opt_never_auto)
             opts.push("x-cockpit-never-auto");
+        if (forced_options)
+            opts = opts.concat(forced_options);
         if (extra_options)
             opts = opts.concat(extra_options);
         return maybe_set_crypto_options(null, false).then(() => maybe_update_config(old_dir, unparse_options(opts)));
@@ -407,6 +412,8 @@ export function mounting_dialog(client, block, mode) {
                         opts.push("ro");
                     if (vals.mount_options.never_auto)
                         opts.push("x-cockpit-never-auto");
+                    if (forced_options)
+                        opts = opts.concat(forced_options);
                     if (vals.mount_options.extra !== false)
                         opts = opts.concat(parse_options(vals.mount_options.extra));
                     return (maybe_update_config(vals.mount_point, unparse_options(opts),
@@ -443,8 +450,11 @@ export class FilesystemTab extends React.Component {
     render() {
         const self = this;
         const block = self.props.block;
+        const forced_options = self.props.forced_options;
         const is_locked = block && block.IdUsage == 'crypto';
         const block_fsys = block && self.props.client.blocks_fsys[block.path];
+        const stratis_fsys = block && self.props.client.blocks_stratis_fsys[block.path];
+
         const mismounted_fsys_warning = self.props.warnings.find(w => w.warning == "mismounted-fsys");
 
         function rename_dialog() {
@@ -472,9 +482,15 @@ export class FilesystemTab extends React.Component {
         extract_option(split_options, "noauto");
         const opt_ro = extract_option(split_options, "ro");
         const opt_never_auto = extract_option(split_options, "x-cockpit-never-auto");
+        const split_options_for_fix_config = split_options.slice();
+        if (forced_options)
+            for (const opt of forced_options)
+                extract_option(split_options, opt);
 
         let used;
-        if (is_filesystem_mounted) {
+        if (stratis_fsys) {
+            used = utils.fmt_size(Number(stratis_fsys.data.Used));
+        } else if (is_filesystem_mounted) {
             const samples = self.props.client.fsys_sizes.data[old_dir];
             if (samples)
                 used = cockpit.format(_("$0 of $1"),
@@ -520,7 +536,7 @@ export class FilesystemTab extends React.Component {
         function fix_config() {
             const { type, other } = mismounted_fsys_warning;
 
-            const opts = [];
+            let opts = [];
             if (type == "mount-on-boot")
                 opts.push("noauto");
             if (type == "locked-on-boot-mount") {
@@ -530,7 +546,13 @@ export class FilesystemTab extends React.Component {
             if (opt_ro)
                 opts.push("ro");
 
-            const new_opts = unparse_options(opts.concat(split_options));
+            // Add the forced options, but only to new entries.  We
+            // don't want to modify existing entries beyond what we
+            // say on the button.
+            if (!old_config && forced_options)
+                opts = opts.concat(forced_options);
+
+            const new_opts = unparse_options(opts.concat(split_options_for_fix_config));
             let all_new_opts;
             if (new_opts && old_parents)
                 all_new_opts = new_opts + "," + old_parents;
@@ -550,7 +572,8 @@ export class FilesystemTab extends React.Component {
                     type: { t: 'ay', v: utils.encode_filename("auto") },
                     opts: { t: 'ay', v: utils.encode_filename(all_new_opts || "defaults") },
                     freq: { t: 'i', v: 0 },
-                    passno: { t: 'i', v: 0 }
+                    passno: { t: 'i', v: 0 },
+                    "track-parents": { t: 'b', v: !old_config }
                 }];
 
             function fixup_crypto_backing() {
@@ -580,7 +603,7 @@ export class FilesystemTab extends React.Component {
 
             function do_mount() {
                 if (crypto_backing == block)
-                    mounting_dialog(client, block, "mount");
+                    mounting_dialog(client, block, "mount", forced_options);
                 else
                     return block_fsys.Mount({});
             }
@@ -654,6 +677,7 @@ export class FilesystemTab extends React.Component {
         return (
             <div>
                 <DescriptionList className="pf-m-horizontal-on-sm">
+                    { !stratis_fsys &&
                     <DescriptionListGroup>
                         <DescriptionListTerm>{_("Name")}</DescriptionListTerm>
                         <DescriptionListDescription>
@@ -667,7 +691,7 @@ export class FilesystemTab extends React.Component {
                                 </FlexItem>
                             </Flex>
                         </DescriptionListDescription>
-                    </DescriptionListGroup>
+                    </DescriptionListGroup> }
                     <DescriptionListGroup>
                         <DescriptionListTerm>{_("Mount point")}</DescriptionListTerm>
                         <DescriptionListDescription>
@@ -675,7 +699,8 @@ export class FilesystemTab extends React.Component {
                             <Flex>
                                 <FlexItem>{ mount_point_text }</FlexItem>
                                 <FlexItem>
-                                    <StorageLink onClick={() => mounting_dialog(self.props.client, block, "update")}>
+                                    <StorageLink onClick={() => mounting_dialog(self.props.client, block, "update",
+                                                                                forced_options)}>
                                         {_("edit")}
                                     </StorageLink>
                                 </FlexItem>
