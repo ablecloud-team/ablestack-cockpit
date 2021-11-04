@@ -72,6 +72,12 @@
     "tools": {
         "terminal": {
             "label": "Terminal",
+            "docs": [
+                {
+                    "label": "Terminal",
+                    "url": "https://docs.ablecloud.io/1.0%20Allo/administration/cube/terminal-guide/"
+                }
+            ],
             "keywords": [
                 {
                     "matches": ["console", "command", "bash", "shell"]
