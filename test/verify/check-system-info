@@ -276,8 +276,6 @@ class TestSystemInfo(MachineCase):
         # wait until icon settles down
         b.wait_visible("#systime-time-input-input[aria-invalid='false']")
         b.wait_not_present("#systime-manual-row .dialog-error")
-        # avoid blinking cursor
-        b.blur("#systime-time-input-input")
         if b.cdp.mobile:
             # HACK: the clock icon in the <input> has too much jitter on mobile
             ignore = ["#systime-time-input-input"]
@@ -451,7 +449,7 @@ class TestSystemInfo(MachineCase):
 
         # sort by model (no sort buttons in mobile mode)
         if not b.cdp.mobile:
-            b.click(pci_selector + ' thead th[data-label=Model] button')
+            b.click(pci_selector + ' thead th:nth-child(2) button')
             b.wait_in_text(pci_selector + ' tbody tr:first-of-type td[data-label=Model]', "440")
             b.wait_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Model]', "Virtio SCSI")
             b.wait_not_in_text(pci_selector + ' tbody tr:last-of-type td[data-label=Model]', "Unclassified")
@@ -562,7 +560,7 @@ revision\t: 2.3 (pvr 004e 1203)
             # first DIMM has unknown technology and rank
             b.wait_in_text('#memory-listing tr:nth-of-type(1) td[data-label=ID]', "ChannelA-DIMM0")
             b.wait_in_text('#memory-listing tr:nth-of-type(1) td[data-label=Type]', "DDR3")
-            b.wait_in_text('#memory-listing tr:nth-of-type(1) td[data-label=Size]', "8 GB")
+            b.wait_in_text('#memory-listing tr:nth-of-type(1) td[data-label=Size]', "8 GiB")
             b.wait_in_text('#memory-listing tr:nth-of-type(1) td[data-label=State]', "Present")
             b.wait_text('#memory-listing tr:nth-of-type(1) td[data-label="Memory technology"]', "Unknown")
             b.wait_text('#memory-listing tr:nth-of-type(1) td[data-label=Rank]', "Unknown")
