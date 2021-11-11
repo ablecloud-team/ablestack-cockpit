@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/timerfd.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -811,30 +812,40 @@ connection_thread_main (int fd)
  * @request_mode: Whether to ask for client certificates
  */
 void
-connection_crypto_init (const char *certfile,
+connection_crypto_init (const char *certificate_filename,
+                        const char *key_filename,
                         gnutls_certificate_request_t request_mode)
 {
-  parameters.certificate = certificate_load (certfile);
+  parameters.certificate = certificate_load (certificate_filename, key_filename);
   parameters.request_mode = request_mode;
 }
 
 void
 connection_set_directories (const char *wsinstance_sockdir,
-                            const char *cert_session_dir)
+                            const char *runtime_directory)
 {
   assert (parameters.wsinstance_sockdir == -1);
   assert (parameters.cert_session_dir == -1);
 
   assert (wsinstance_sockdir != NULL);
-  assert (cert_session_dir != NULL);
+  assert (runtime_directory != NULL);
 
-  parameters.wsinstance_sockdir = open (wsinstance_sockdir, O_DIRECTORY | O_PATH);
+  parameters.wsinstance_sockdir = open (wsinstance_sockdir, O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
   if (parameters.wsinstance_sockdir == -1)
     err (EXIT_FAILURE, "Unable to open wsinstance sockdir %s", wsinstance_sockdir);
 
-  parameters.cert_session_dir = open (cert_session_dir, O_DIRECTORY | O_PATH);
+  int runtimedir_fd = open (runtime_directory, O_PATH | O_DIRECTORY | O_NOFOLLOW);
+  if (runtimedir_fd == -1)
+    err (EXIT_FAILURE, "Unable to open runtime directory %s", runtime_directory);
+
+  if (mkdirat (runtimedir_fd, "clients", 0700) != 0)
+    err (EXIT_FAILURE, "mkdir: %s/clients", runtime_directory);
+
+  parameters.cert_session_dir = openat (runtimedir_fd, "clients", O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
   if (parameters.cert_session_dir == -1)
-    err (EXIT_FAILURE, "Unable to open certificate directory %s", cert_session_dir);
+    err (EXIT_FAILURE, "Unable to open certificate directory %s/clients", runtime_directory);
+
+  close (runtimedir_fd);
 }
 
 void

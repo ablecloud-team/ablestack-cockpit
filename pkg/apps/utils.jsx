@@ -77,11 +77,11 @@ export const show_error = ex => {
         {
             title: _("Error"),
             body: (
-                <p>{ex.detail || ex}</p>
+                <p>{typeof ex == 'string' ? ex : (ex.detail || ex.message)}</p>
             )
         },
         {
-            cancel_caption: _("Close"),
+            cancel_button: { text: _("Close"), variant: "secondary" },
             actions: []
         });
 };

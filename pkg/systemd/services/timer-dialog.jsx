@@ -37,12 +37,13 @@ import { ModalError } from 'cockpit-components-inline-notification.jsx';
 
 import { updateTime } from './services.jsx';
 import { create_timer } from './timer-dialog-helpers.js';
+import * as timeformat from "timeformat.js";
 
 import "./timers.scss";
 
 const _ = cockpit.gettext;
 
-export const CreateTimerDialog = () => {
+export const CreateTimerDialog = ({ owner }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -56,12 +57,12 @@ export const CreateTimerDialog = () => {
                     }}>
                 {_("Create timer")}
             </Button>
-            {isOpen && <CreateTimerDialogBody setIsOpen={setIsOpen} />}
+            {isOpen && <CreateTimerDialogBody setIsOpen={setIsOpen} owner={owner} />}
         </>
     );
 };
 
-const CreateTimerDialogBody = ({ setIsOpen }) => {
+const CreateTimerDialogBody = ({ setIsOpen, owner }) => {
     const [command, setCommand] = useState('');
     const [delay, setDelay] = useState('specific-time');
     const [delayNumber, setDelayNumber] = useState(0);
@@ -108,7 +109,7 @@ const CreateTimerDialogBody = ({ setIsOpen }) => {
             return false;
 
         setInProgress(true);
-        create_timer({ name, description, command, delay, delayUnit, delayNumber, repeat, specificTime, repeatPatterns })
+        create_timer({ name, description, command, delay, delayUnit, delayNumber, repeat, specificTime, repeatPatterns, owner })
                 .then(() => setIsOpen(false), exc => {
                     setDialogError(exc.message);
                     setInProgress(false);
@@ -309,11 +310,15 @@ const CreateTimerDialogBody = ({ setIsOpen }) => {
                                             {timePicker(idx)}
                                         </>}
                                         {repeat == "yearly" && <>
-                                            <DatePicker onChange={(str, data) => {
-                                                const arr = [...repeatPatterns];
-                                                arr[idx].date = str;
-                                                setRepeatPatterns(arr);
-                                            }} />
+                                            <DatePicker aria-label={_("Pick date")}
+                                                        buttonAriaLabel={_("Toggle date picker")}
+                                                        locale={cockpit.language}
+                                                        weekStart={timeformat.firstDayOfWeek()}
+                                                        onChange={(str, data) => {
+                                                            const arr = [...repeatPatterns];
+                                                            arr[idx].date = str;
+                                                            setRepeatPatterns(arr);
+                                                        }} />
                                             {timePicker(idx)}
                                         </>}
                                         {repeat !== "no" && <FlexItem align={{ default: 'alignRight' }}>

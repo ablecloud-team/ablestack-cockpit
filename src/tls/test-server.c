@@ -44,8 +44,7 @@
 #define COCKPIT_WS BUILDDIR "/cockpit-ws"
 /* this has a corresponding mock-server.key */
 #define CERTFILE SRCDIR "/src/bridge/mock-server.crt"
-#define CERTKEYFILE SRCDIR "/src/ws/mock-combined.crt"
-#define CERTCHAINKEYFILE SRCDIR "/test/verify/files/cert-chain.cert"
+#define KEYFILE SRCDIR "/src/bridge/mock-server.key"
 
 #define CLIENT_CERTFILE SRCDIR "/src/tls/ca/alice.pem"
 #define CLIENT_KEYFILE SRCDIR "/src/tls/ca/alice.key"
@@ -58,6 +57,7 @@ const unsigned server_port = 9123;
 typedef struct {
   gchar *ws_socket_dir;
   gchar *runtime_dir;
+  gchar *clients_dir;
   gchar *cgroup_line;
   GPid ws_spawner;
   struct sockaddr_in server_addr;
@@ -65,6 +65,7 @@ typedef struct {
 
 typedef struct {
   const char *certfile;
+  const char *keyfile;
   int cert_request_mode;
   int idle_timeout;
   const char *client_crt;
@@ -74,10 +75,12 @@ typedef struct {
 
 static const TestFixture fixture_separate_crt_key = {
   .certfile = CERTFILE,
+  .keyfile = KEYFILE,
 };
 
 static const TestFixture fixture_separate_crt_key_client_cert = {
   .certfile = CERTFILE,
+  .keyfile = KEYFILE,
   .cert_request_mode = GNUTLS_CERT_REQUEST,
   .client_crt = CLIENT_CERTFILE,
   .client_key = CLIENT_KEYFILE,
@@ -86,6 +89,7 @@ static const TestFixture fixture_separate_crt_key_client_cert = {
 
 static const TestFixture fixture_expired_client_cert = {
   .certfile = CERTFILE,
+  .keyfile = KEYFILE,
   .cert_request_mode = GNUTLS_CERT_REQUEST,
   .client_crt = CLIENT_EXPIRED_CERTFILE,
   .client_key = CLIENT_KEYFILE,
@@ -94,18 +98,11 @@ static const TestFixture fixture_expired_client_cert = {
 
 static const TestFixture fixture_alternate_client_cert = {
   .certfile = CERTFILE,
+  .keyfile = KEYFILE,
   .cert_request_mode = GNUTLS_CERT_REQUEST,
   .client_crt = ALTERNATE_CERTFILE,
   .client_key = ALTERNATE_KEYFILE,
   .client_fingerprint = ALTERNATE_FINGERPRINT,
-};
-
-static const TestFixture fixture_combined_crt_key = {
-  .certfile = CERTKEYFILE,
-};
-
-static const TestFixture fixture_cert_chain = {
-  .certfile = CERTCHAINKEYFILE,
 };
 
 static const TestFixture fixture_run_idle = {
@@ -125,13 +122,13 @@ static bool
 check_for_certfile (TestCase *tc,
                     char **out_contents)
 {
-  g_autoptr(GDir) dir = g_dir_open (tc->runtime_dir, 0, NULL);
+  g_autoptr(GDir) dir = g_dir_open (tc->clients_dir, 0, NULL);
   g_assert (dir != NULL);
 
   const char *name;
   while ((name = g_dir_read_name (dir)))
     {
-      g_autofree char *filename = g_build_filename (tc->runtime_dir, name, NULL);
+      g_autofree char *filename = g_build_filename (tc->clients_dir, name, NULL);
 
       g_autofree char *contents = NULL;
       g_autoptr(GError) error = NULL;
@@ -368,6 +365,7 @@ setup (TestCase *tc, gconstpointer data)
   tc->runtime_dir = g_mkdtemp (runtime_dir_template);
   g_assert (tc->runtime_dir);
   tc->runtime_dir = g_strdup (tc->runtime_dir);
+  tc->clients_dir = g_build_filename (tc->runtime_dir, "clients", NULL);
 
   if (fixture && fixture->client_fingerprint)
     tc->cgroup_line = g_strdup_printf ("0::/system.slice/system-cockpithttps.slice/cockpit-wsinstance-https@%s.service\n", fixture->client_fingerprint);
@@ -389,7 +387,7 @@ setup (TestCase *tc, gconstpointer data)
 
   server_init (tc->ws_socket_dir, tc->runtime_dir, fixture ? fixture->idle_timeout : 0, server_port);
   if (fixture && fixture->certfile)
-    connection_crypto_init (fixture->certfile, fixture->cert_request_mode);
+    connection_crypto_init (fixture->certfile, fixture->keyfile, fixture->cert_request_mode);
 
   tc->server_addr.sin_family = AF_INET;
   tc->server_addr.sin_port = htons (server_port);
@@ -428,6 +426,9 @@ teardown (TestCase *tc, gconstpointer data)
   g_free (tc->ws_socket_dir);
 
   g_free (tc->cgroup_line);
+
+  g_assert_cmpint (g_rmdir (tc->clients_dir), ==, 0);
+  g_free (tc->clients_dir);
 
   g_assert_cmpint (g_rmdir (tc->runtime_dir), ==, 0);
   g_free (tc->runtime_dir);
@@ -749,13 +750,6 @@ test_tls_client_cert_parallel (TestCase *tc, gconstpointer data)
 }
 
 static void
-test_tls_cert_chain (TestCase *tc, gconstpointer data)
-{
-  /* CERTCHAINKEYFILE has two certs */
-  assert_https (tc, data, 2);
-}
-
-static void
 test_mixed_protocols (TestCase *tc, gconstpointer data)
 {
   assert_https (tc, data, 1);
@@ -802,13 +796,9 @@ main (int argc, char *argv[])
               setup, test_tls_client_cert_parallel, teardown);
   g_test_add ("/server/tls/client-cert-parallel/alternate", TestCase, &fixture_alternate_client_cert,
               setup, test_tls_client_cert_parallel, teardown);
-  g_test_add ("/server/tls/combined-server-cert-key", TestCase, &fixture_combined_crt_key,
-              setup, test_tls_no_client_cert, teardown);
-  g_test_add ("/server/tls/cert-chain", TestCase, &fixture_cert_chain,
-              setup, test_tls_cert_chain, teardown);
   g_test_add ("/server/tls/no-server-cert", TestCase, NULL,
               setup, test_tls_no_server_cert, teardown);
-  g_test_add ("/server/tls/redirect", TestCase, &fixture_combined_crt_key,
+  g_test_add ("/server/tls/redirect", TestCase, &fixture_separate_crt_key,
               setup, test_tls_redirect, teardown);
   g_test_add ("/server/tls/blocked-handshake", TestCase, &fixture_separate_crt_key,
               setup, test_tls_blocked_handshake, teardown);

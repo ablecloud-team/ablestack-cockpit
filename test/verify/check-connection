@@ -382,8 +382,8 @@ class TestConnection(MachineCase):
             m.execute("umount /etc/cockpit")
 
         # Install a certificate chain, and make it accessible for cockpit
-        m.upload(["verify/files/cert-chain.cert"], "/etc/cockpit/ws-certs.d")
-        m.execute("cd /etc/cockpit/ws-certs.d; chgrp cockpit-ws cert-chain.cert; ! selinuxenabled || chcon --type etc_t cert-chain.cert")
+        m.upload(["verify/files/cert-chain.cert", "verify/files/cert-chain.key"], "/etc/cockpit/ws-certs.d")
+        m.execute("cd /etc/cockpit/ws-certs.d; chgrp cockpit-ws cert-chain.key; ! selinuxenabled || chcon --type etc_t cert-chain.cert cert-chain.key")
 
         def check_cert_chain():
             # This should also reset the file context
@@ -399,19 +399,19 @@ class TestConnection(MachineCase):
         m.execute("mv /etc/cockpit/ws-certs.d/cert-chain.cert /etc/cockpit/ws-certs.d/cert-chain.crt")
         check_cert_chain()
 
-        # separate *.key file instead of merged .cert
-        m.execute("sed -n '/---BEGIN PRIVATE KEY/,$ p' /etc/cockpit/ws-certs.d/cert-chain.crt > /etc/cockpit/ws-certs.d/cert-chain.key")
-        m.execute("sed -i '/---BEGIN PRIVATE KEY/,$ d' /etc/cockpit/ws-certs.d/cert-chain.crt")
-        check_cert_chain()
+        # backwards compat: merged cert+key file also still works with cockpit-tls (but not any more with cockpit-ws/container)
+        if not m.ostree_image:
+            m.execute("""cat /etc/cockpit/ws-certs.d/cert-chain.key >> /etc/cockpit/ws-certs.d/cert-chain.crt
+                         chmod 640 /etc/cockpit/ws-certs.d/cert-chain.crt
+                         chown root:cockpit-ws /etc/cockpit/ws-certs.d/cert-chain.crt
+                         rm /etc/cockpit/ws-certs.d/cert-chain.key""")
+            check_cert_chain()
 
         # certmonger generated certificate; asciibetically later than the above
         # not all images have certmonger
         if m.image not in ["debian-stable", "debian-testing", "fedora-coreos"]:
-            # on RHEL 8 we need to fix the context as that does not have our own SELinux policy
-            if m.image.startswith("rhel-8") or m.image in ["centos-8-stream"]:
-                m.execute(r"semanage fcontext -a -t cert_t '/etc/cockpit/ws-certs\.d(/.*)?' && restorecon -v /etc/cockpit/ws-certs.d")
             hostname = m.execute("hostname --fqdn").strip()
-            m.execute(f"getcert request -f /etc/cockpit/ws-certs.d/monger.cert -k /etc/cockpit/ws-certs.d/monger.key -D {hostname} -m 640 -o root:cockpit-ws -M 644 --ca=local --wait")
+            m.execute(f"getcert request -f /etc/cockpit/ws-certs.d/monger.cert -k /etc/cockpit/ws-certs.d/monger.key -D {hostname} --ca=local --wait")
             # cert generation succeeded, and it is being tracked
             self.assertIn("MONITORING", m.execute("getcert list"))
             self.assertIn("/etc/cockpit/ws-certs.d/monger.cert",

@@ -20,15 +20,17 @@
 import '../../lib/patternfly/patternfly-4-cockpit.scss';
 import 'polyfills'; // once per application
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ReactDOM from 'react-dom';
 import {
     Button,
     Bullseye,
+    Flex, FlexItem,
     Select, SelectVariant, SelectOption,
     Page, PageSection, PageSectionVariants,
     Card,
     SearchInput,
+    ToggleGroup, ToggleGroupItem,
     Toolbar,
     ToolbarContent,
     ToolbarItem,
@@ -46,6 +48,7 @@ import { page_status } from "notifications";
 import * as timeformat from "timeformat";
 import cockpit from "cockpit";
 import { superuser } from 'superuser';
+import { useEvent, usePageLocation } from "hooks";
 
 const _ = cockpit.gettext;
 
@@ -54,7 +57,10 @@ const _ = cockpit.gettext;
 //
 superuser.reload_page_on_change();
 
-export const systemd_client = cockpit.dbus("org.freedesktop.systemd1", { superuser: "try" });
+export const systemd_client = {
+    system: cockpit.dbus("org.freedesktop.systemd1", { bus: "system", superuser: "try" }),
+    user: cockpit.dbus("org.freedesktop.systemd1", { bus: "session" }),
+};
 const timedate_client = cockpit.dbus('org.freedesktop.timedate1');
 export let clock_realtime_now;
 export let clock_monotonic_now;
@@ -134,12 +140,11 @@ export function updateTime() {
  *   changed because of the reload, such as UnitFileState.
  *
  */
-class ServicesPage extends React.Component {
+class ServicesPageBody extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            /* State related to the toolbar/tabs components */
-            activeTab: 'service',
+            /* State related to the toolbar components */
             stateDropdownIsExpanded: false,
             filters: {
                 activeState: [],
@@ -149,11 +154,19 @@ class ServicesPage extends React.Component {
 
             unit_by_path: {},
             loadingUnits: false,
-            privileged: true,
             path: cockpit.location.path,
-            tabErrors: {},
             isFullyLoaded: false,
         };
+
+        this.onCurrentTextFilterChanged = (currentTextFilter) => {
+            this.setState({ currentTextFilter });
+        };
+
+        this.onFiltersChanged = (filters) => {
+            this.setState({ filters });
+        };
+
+        this.filtersRef = React.createRef();
 
         // Possible LoadState values: stub, loaded, not-found, bad-setting, error, merged, masked
         // See: typedef enum UnitLoadStateState https://github.com/systemd/systemd/blob/main/src/basic/unit-def.h
@@ -201,17 +214,6 @@ class ServicesPage extends React.Component {
         this.seenActiveStates = new Set();
         this.seenUnitFileStates = new Set();
 
-        /* Functions for controlling the toolbar's components
-         * FIXME: https://github.com/patternfly/patternfly-react/issues/5836
-         */
-        this.onClearAllFilters = this.onClearAllFilters.bind(this);
-        this.onActiveStateSelect = this.onActiveStateSelect.bind(this);
-        this.onFileStateSelect = this.onFileStateSelect.bind(this);
-        this.onSelect = this.onSelect.bind(this);
-        this.onDeleteChip = this.onDeleteChip.bind(this);
-        this.onDeleteChipGroup = this.onDeleteChipGroup.bind(this);
-        this.onInputChange = this.onInputChange.bind(this);
-
         /* Function for manipulating with the API results and store the units in the React state */
         this.processFailedUnits = this.processFailedUnits.bind(this);
         this.listUnits = this.listUnits.bind(this);
@@ -222,24 +224,13 @@ class ServicesPage extends React.Component {
         this.updateComputedProperties = this.updateComputedProperties.bind(this);
         this.compareUnits = this.compareUnits.bind(this);
 
-        this.onPermissionChanged = this.onPermissionChanged.bind(this);
-
         this.seenPaths = new Set();
         this.path_by_id = {};
         this.operationInProgress = {};
-
-        this.on_navigate = this.on_navigate.bind(this);
     }
 
     componentDidMount() {
-        /* Listen for permission changes for "Create timer" button */
-        superuser.addEventListener("changed", this.onPermissionChanged);
-        this.onPermissionChanged();
-
-        cockpit.addEventListener("locationchanged", this.on_navigate);
-        this.on_navigate();
-
-        this.systemd_subscription = systemd_client.call(SD_OBJ, SD_MANAGER, "Subscribe", null)
+        this.systemd_subscription = systemd_client[this.props.owner].call(SD_OBJ, SD_MANAGER, "Subscribe", null)
                 .finally(this.listUnits)
                 .catch(error => {
                     if (error.name != "org.freedesktop.systemd1.AlreadySubscribed" &&
@@ -266,7 +257,7 @@ class ServicesPage extends React.Component {
          * - JobNew is also useless, JobRemoved is enough since it comes in pair with JobNew
          *   but we are interested to update the state when the operation finished
          */
-        systemd_client.subscribe({
+        systemd_client[this.props.owner].subscribe({
             interface: "org.freedesktop.DBus.Properties",
             member: "PropertiesChanged"
         }, (path, iface, signal, args) => {
@@ -291,9 +282,9 @@ class ServicesPage extends React.Component {
         });
 
         ["JobNew", "JobRemoved"].forEach(signalName => {
-            systemd_client.subscribe({ interface: SD_MANAGER, member: signalName }, (path, iface, signal, args) => {
+            systemd_client[this.props.owner].subscribe({ interface: SD_MANAGER, member: signalName }, (path, iface, signal, args) => {
                 const unit_id = args[2];
-                systemd_client.call(SD_OBJ, SD_MANAGER, "LoadUnit", [unit_id])
+                systemd_client[this.props.owner].call(SD_OBJ, SD_MANAGER, "LoadUnit", [unit_id])
                         .then(([path]) => {
                             if (!this.seenPaths.has(path))
                                 this.seenPaths.add(path);
@@ -303,7 +294,7 @@ class ServicesPage extends React.Component {
             });
         });
 
-        systemd_client.subscribe({ interface: SD_MANAGER, member: "Reloading" }, (path, iface, signal, args) => {
+        systemd_client[this.props.owner].subscribe({ interface: SD_MANAGER, member: "Reloading" }, (path, iface, signal, args) => {
             const reloading = args[0];
             if (!reloading && !this.state.loadingUnits)
                 this.listUnits();
@@ -316,22 +307,11 @@ class ServicesPage extends React.Component {
         updateTime();
     }
 
-    componentWillUnmount() {
-        cockpit.removeEventListener("locationchanged", this.on_navigate);
-    }
-
     shouldComponentUpdate(nextProps, nextState) {
         if (cockpit.hidden)
             return false;
 
         return true;
-    }
-
-    on_navigate() {
-        const newState = { path: cockpit.location.path };
-        if (cockpit.location.options && cockpit.location.options.type)
-            newState.activeTab = cockpit.location.options.type;
-        this.setState(newState);
     }
 
     /**
@@ -350,7 +330,7 @@ class ServicesPage extends React.Component {
      * might have changed the failed units array
      */
     listFailedUnits() {
-        return systemd_client.call(SD_OBJ, SD_MANAGER, "ListUnitsFiltered", [["failed"]])
+        return systemd_client[this.props.owner].call(SD_OBJ, SD_MANAGER, "ListUnitsFiltered", [["failed"]])
                 .then(([failed]) => {
                     failed.forEach(result => {
                         const path = result[6];
@@ -399,7 +379,7 @@ class ServicesPage extends React.Component {
 
         // Run ListUnits before LIstUnitFiles so that we avoid the extra LoadUnit calls
         // Now we call LoadUnit only for those that ListUnits didn't tell us about
-        systemd_client.call(SD_OBJ, SD_MANAGER, "ListUnits", null)
+        systemd_client[this.props.owner].call(SD_OBJ, SD_MANAGER, "ListUnits", null)
                 .then(([results]) => {
                     results.forEach(result => {
                         const path = result[6];
@@ -422,7 +402,7 @@ class ServicesPage extends React.Component {
                         );
                     });
 
-                    systemd_client.call(SD_OBJ, SD_MANAGER, "ListUnitFiles", null)
+                    systemd_client[this.props.owner].call(SD_OBJ, SD_MANAGER, "ListUnitFiles", null)
                             .then(([results]) => {
                                 results.forEach(result => {
                                     const unit_path = result[0];
@@ -444,7 +424,7 @@ class ServicesPage extends React.Component {
                                         return;
                                     }
 
-                                    promisesLoad.push(systemd_client.call(SD_OBJ, SD_MANAGER, "LoadUnit", [unit_id]).then(([unit_path]) => {
+                                    promisesLoad.push(systemd_client[this.props.owner].call(SD_OBJ, SD_MANAGER, "LoadUnit", [unit_id]).then(([unit_path]) => {
                                         this.updateProperties(
                                             {
                                                 Id: cockpit.variant("s", unit_id),
@@ -485,80 +465,6 @@ class ServicesPage extends React.Component {
                                         });
                             }, ex => console.warn('ListUnitFiles failed: ', ex.toString()));
                 }, ex => console.warn('ListUnits failed: ', ex.toString()));
-    }
-
-    onPermissionChanged() {
-        this.setState({ privileged: superuser.allowed });
-    }
-
-    onClearAllFilters() {
-        this.setState({ currentTextFilter: '' });
-        this.onDeleteChip();
-    }
-
-    onInputChange(newValue) {
-        this.setState({ currentTextFilter: newValue });
-    }
-
-    onSelect(type, event, selection) {
-        const checked = event.target.checked;
-
-        this.setState(prevState => {
-            const prevSelections = prevState.filters[type];
-            return {
-                filters: {
-                    ...prevState.filters,
-                    [type]: checked ? [...prevSelections, selection] : prevSelections.filter(value => value !== selection)
-                }
-            };
-        });
-    }
-
-    onActiveStateSelect(event, selection) {
-        this.onSelect('activeState', event, selection);
-    }
-
-    onFileStateSelect(event, selection) {
-        this.onSelect('fileState', event, selection);
-    }
-
-    getFilterLabelKey(typeLabel) {
-        if (typeLabel == 'Active state')
-            return 'activeState';
-        else if (typeLabel == 'File state')
-            return 'fileState';
-    }
-
-    onDeleteChip(typeLabel = '', id = '') {
-        const type = this.getFilterLabelKey(typeLabel);
-
-        if (type) {
-            this.setState(prevState => {
-                const newState = Object.assign(prevState);
-                newState.filters[type] = newState.filters[type].filter(s => s !== id);
-                return {
-                    filters: newState.filters
-                };
-            });
-        } else {
-            this.setState({
-                filters: {
-                    activeState: [],
-                    fileState: []
-                }
-            });
-        }
-    }
-
-    onDeleteChipGroup(typeLabel) {
-        const type = this.getFilterLabelKey(typeLabel);
-
-        this.setState(prevState => {
-            prevState.filters[type] = [];
-            return {
-                filters: prevState.filters
-            };
-        });
     }
 
     /**
@@ -739,7 +645,7 @@ class ServicesPage extends React.Component {
         if (unitNew.Id.endsWith("socket")) {
             unitNew.is_socket = true;
             if (unitNew.ActiveState == "active") {
-                const socket_unit = systemd_client.proxy('org.freedesktop.systemd1.Socket', unitNew.path);
+                const socket_unit = systemd_client[this.props.owner].proxy('org.freedesktop.systemd1.Socket', unitNew.path);
                 socket_unit.wait(() => {
                     if (socket_unit.valid)
                         this.addSocketProperties(socket_unit, path, unitNew);
@@ -750,7 +656,7 @@ class ServicesPage extends React.Component {
         if (unitNew.Id.endsWith("timer")) {
             unitNew.is_timer = true;
             if (unitNew.ActiveState == "active") {
-                const timer_unit = systemd_client.proxy('org.freedesktop.systemd1.Timer', unitNew.path);
+                const timer_unit = systemd_client[this.props.owner].proxy('org.freedesktop.systemd1.Timer', unitNew.path);
                 timer_unit.wait(() => {
                     if (timer_unit.valid)
                         this.addTimerProperties(timer_unit, path, unitNew);
@@ -773,9 +679,9 @@ class ServicesPage extends React.Component {
       * Fetches all Properties for the unit specified by path @param and add the unit to the state
       */
     getUnitByPath(path) {
-        return systemd_client.call(path,
-                                   "org.freedesktop.DBus.Properties", "GetAll",
-                                   ["org.freedesktop.systemd1.Unit"])
+        return systemd_client[this.props.owner].call(path,
+                                                     "org.freedesktop.DBus.Properties", "GetAll",
+                                                     ["org.freedesktop.systemd1.Unit"])
                 .then(result => this.updateProperties(result[0], path))
                 .catch(error => console.warn('GetAll failed for', path, error.toString()));
     }
@@ -794,7 +700,7 @@ class ServicesPage extends React.Component {
                 }
             }
         }
-        this.setState({ tabErrors });
+        this.props.setTabErrors(tabErrors);
 
         if (failed.size > 0) {
             page_status.set_own({
@@ -810,7 +716,8 @@ class ServicesPage extends React.Component {
     }
 
     render() {
-        const { path, unit_by_path } = this.state;
+        const { unit_by_path } = this.state;
+        const path = this.props.path;
 
         if (!this.state.isFullyLoaded)
             return <EmptyStatePanel loading title={_("Loading...")} />;
@@ -829,6 +736,7 @@ class ServicesPage extends React.Component {
 
             const unit = this.state.unit_by_path[unit_path];
             return <Service unitIsValid={unitId => { const path = get_unit_path(unitId); return path !== undefined && this.state.unit_by_path[path].LoadState != 'not-found' }}
+                            owner={this.props.owner}
                             key={unit_id}
                             loadingUnits={this.state.loadingUnits}
                             getUnitByPath={this.getUnitByPath}
@@ -854,7 +762,8 @@ class ServicesPage extends React.Component {
                 activeStateDropdownOptions.push({ value: activeState, label: this.activeState[activeState] });
             }
         });
-        const { currentTextFilter, activeTab, filters } = this.state;
+        const { currentTextFilter, filters } = this.state;
+        const activeTab = this.props.activeTab;
 
         const units = Object.keys(this.path_by_id)
                 .filter(unit_id => {
@@ -886,87 +795,225 @@ class ServicesPage extends React.Component {
                 .map(unit_id => [unit_id, unit_by_path[this.path_by_id[unit_id]]])
                 .sort(this.compareUnits);
 
-        const toolbarItems = <>
-            <ToolbarToggleGroup toggleIcon={<><span className="pf-c-button__icon pf-m-start"><FilterIcon /></span>{_("Toggle filters")}</>} breakpoint="sm"
-                                variant="filter-group" alignment={{ default: 'alignLeft' }}>
-                <ToolbarItem variant="search-filter">
-                    <SearchInput id="services-text-filter"
-                                 className="services-text-filter"
-                                 placeholder={_("Filter by name or description")}
-                                 value={currentTextFilter}
-                                 onChange={this.onInputChange}
-                                 onClear={() => this.setState({ currentTextFilter: "" })} />
-                </ToolbarItem>
-                <ToolbarFilter chips={filters.activeState}
-                               deleteChip={this.onDeleteChip}
-                               deleteChipGroup={this.onDeleteChipGroup}
-                               categoryName={_("Active state")}>
-                    <Select aria-label={_("Active state")}
-                            toggleId="services-dropdown-active-state"
-                            variant={SelectVariant.checkbox}
-                            onToggle={isOpen => this.setState({ activeStateFilterIsOpen: isOpen })}
-                            onSelect={this.onActiveStateSelect}
-                            selections={filters.activeState}
-                            isOpen={this.state.activeStateFilterIsOpen}
-                            placeholderText={_("Active state")}>
-                        {activeStateDropdownOptions.map(option => <SelectOption key={option.value}
-                                                                                value={option.label} />)}
-                    </Select>
-                </ToolbarFilter>
-                <ToolbarFilter chips={filters.fileState}
-                               deleteChip={this.onDeleteChip}
-                               deleteChipGroup={this.onDeleteChipGroup}
-                               categoryName={_("File state")}>
-                    <Select aria-label={_("File state")}
-                            toggleId="services-dropdown-file-state"
-                            variant={SelectVariant.checkbox}
-                            onToggle={isOpen => this.setState({ fileStateFilterIsOpen: isOpen })}
-                            onSelect={this.onFileStateSelect}
-                            selections={filters.fileState}
-                            isOpen={this.state.fileStateFilterIsOpen}
-                            placeholderText={_("File state")}>
-                        {fileStateDropdownOptions.map(option => <SelectOption key={option.value}
-                                                                              value={option.label} />)}
-                    </Select>
-                </ToolbarFilter>
-            </ToolbarToggleGroup>
-        </>;
-
         return (
-            <Page>
-                <PageSection variant={PageSectionVariants.light} type='nav' className="services-header">
-                    <ServiceTabs activeTab={activeTab}
-                                 tabErrors={this.state.tabErrors}
-                                 onChange={activeTab => {
-                                     cockpit.location.go([], Object.assign(cockpit.location.options, { type: activeTab }));
-                                 }} />
-                    {activeTab == "timer" &&
-                    this.state.privileged && <CreateTimerDialog /> }
-                </PageSection>
-                <PageSection>
-                    <Card isCompact>
-                        <Toolbar data-loading={this.state.loadingUnits}
-                                 clearAllFilters={this.onClearAllFilters}
-                                 className="pf-m-sticky-top ct-compact services-toolbar"
-                                 id="services-toolbar">
-                            <ToolbarContent>{toolbarItems}</ToolbarContent>
-                        </Toolbar>
-                        {units.length ? <ServicesList key={cockpit.format("$0-list", activeTab)}
-                            isTimer={activeTab == 'timer'}
-                            units={units} /> : null}
-                        {units.length == 0
-                            ? <Bullseye>
-                                <EmptyStatePanel icon={SearchIcon}
-                                    paragraph={_("No results match the filter criteria. Clear all filters to show results.")}
-                                    action={<Button id="clear-all-filters" onClick={this.onClearAllFilters} isInline variant='link'>{_("Clear all filters")}</Button>}
-                                    title={_("No matching results")} />
-                            </Bullseye> : null}
-                    </Card>
-                </PageSection>
-            </Page>
+            <PageSection>
+                <Card isCompact>
+                    <ServicesPageFilters activeStateDropdownOptions={activeStateDropdownOptions}
+                                         fileStateDropdownOptions={fileStateDropdownOptions}
+                                         filtersRef={this.filtersRef}
+                                         loadingUnits={this.state.loadingUnits}
+                                         onCurrentTextFilterChanged={this.onCurrentTextFilterChanged}
+                                         onFiltersChanged={this.onFiltersChanged}
+                    />
+                    {units.length ? <ServicesList key={cockpit.format("$0-list", activeTab)}
+                        isTimer={activeTab == 'timer'}
+                        units={units} /> : null}
+                    {units.length == 0
+                        ? <Bullseye>
+                            <EmptyStatePanel icon={SearchIcon}
+                                paragraph={_("No results match the filter criteria. Clear all filters to show results.")}
+                                action={<Button id="clear-all-filters" onClick={() => { this.filtersRef.current() }} isInline variant='link'>{_("Clear all filters")}</Button>}
+                                title={_("No matching results")} />
+                        </Bullseye> : null}
+                </Card>
+            </PageSection>
         );
     }
 }
+
+const ServicesPageFilters = ({
+    activeStateDropdownOptions,
+    fileStateDropdownOptions,
+    filtersRef,
+    loadingUnits,
+    onCurrentTextFilterChanged,
+    onFiltersChanged,
+}) => {
+    const [activeStateFilterIsOpen, setActiveStateFilterIsOpen] = useState(false);
+    const [currentTextFilter, setCurrentTextFilter] = useState('');
+    const [fileStateFilterIsOpen, setFileStateFilterIsOpen] = useState(false);
+    const [filters, setFilters] = useState({
+        activeState: [],
+        fileState: [],
+    });
+
+    /* Functions for controlling the toolbar's components
+     * FIXME: https://github.com/patternfly/patternfly-react/issues/5836
+     */
+    const onSelect = (type, event, selection) => {
+        const checked = event.target.checked;
+
+        setFilters({ ...filters, [type]: checked ? [...filters[type], selection] : filters[type].filter(value => value !== selection) });
+    };
+
+    const onActiveStateSelect = (event, selection) => {
+        onSelect('activeState', event, selection);
+    };
+
+    const onFileStateSelect = (event, selection) => {
+        onSelect('fileState', event, selection);
+    };
+
+    const getFilterLabelKey = (typeLabel) => {
+        if (typeLabel == 'Active state')
+            return 'activeState';
+        else if (typeLabel == 'File state')
+            return 'fileState';
+    };
+
+    const onDeleteChip = useCallback((typeLabel = '', id = '') => {
+        const type = getFilterLabelKey(typeLabel);
+
+        if (type) {
+            setFilters({ ...filters, [type]: filters[type].filter(s => s !== id) });
+        } else {
+            setFilters({
+                activeState: [],
+                fileState: []
+            });
+        }
+    }, [filters]);
+
+    const onDeleteChipGroup = (typeLabel) => {
+        const type = getFilterLabelKey(typeLabel);
+
+        setFilters({ ...filters, [type]: [] });
+    };
+
+    const onClearAllFilters = useCallback(() => {
+        setCurrentTextFilter('');
+        onDeleteChip();
+    }, [setCurrentTextFilter, onDeleteChip]);
+
+    /* Make onClearAllFilters global so at to let it be used by the parent component */
+    useEffect(() => {
+        filtersRef.current = onClearAllFilters;
+    }, [filtersRef, onClearAllFilters]);
+
+    useEffect(() => {
+        onFiltersChanged(filters);
+    }, [filters, onFiltersChanged]);
+
+    useEffect(() => {
+        onCurrentTextFilterChanged(currentTextFilter);
+    }, [currentTextFilter, onCurrentTextFilterChanged]);
+
+    const toolbarItems = <>
+        <ToolbarToggleGroup toggleIcon={<><span className="pf-c-button__icon pf-m-start"><FilterIcon /></span>{_("Toggle filters")}</>} breakpoint="sm"
+                            variant="filter-group" alignment={{ default: 'alignLeft' }}>
+            <ToolbarItem variant="search-filter">
+                <SearchInput id="services-text-filter"
+                             className="services-text-filter"
+                             placeholder={_("Filter by name or description")}
+                             value={currentTextFilter}
+                             onChange={setCurrentTextFilter}
+                             onClear={() => setCurrentTextFilter('')} />
+            </ToolbarItem>
+            <ToolbarFilter chips={filters.activeState}
+                           deleteChip={onDeleteChip}
+                           deleteChipGroup={onDeleteChipGroup}
+                           categoryName={_("Active state")}>
+                <Select aria-label={_("Active state")}
+                        toggleId="services-dropdown-active-state"
+                        variant={SelectVariant.checkbox}
+                        onToggle={setActiveStateFilterIsOpen}
+                        onSelect={onActiveStateSelect}
+                        selections={filters.activeState}
+                        isOpen={activeStateFilterIsOpen}
+                        placeholderText={_("Active state")}>
+                    {activeStateDropdownOptions.map(option => <SelectOption key={option.value}
+                                                                            value={option.label} />)}
+                </Select>
+            </ToolbarFilter>
+            <ToolbarFilter chips={filters.fileState}
+                           deleteChip={onDeleteChip}
+                           deleteChipGroup={onDeleteChipGroup}
+                           categoryName={_("File state")}>
+                <Select aria-label={_("File state")}
+                        toggleId="services-dropdown-file-state"
+                        variant={SelectVariant.checkbox}
+                        onToggle={setFileStateFilterIsOpen}
+                        onSelect={onFileStateSelect}
+                        selections={filters.fileState}
+                        isOpen={fileStateFilterIsOpen}
+                        placeholderText={_("File state")}>
+                    {fileStateDropdownOptions.map(option => <SelectOption key={option.value}
+                                                                          value={option.label} />)}
+                </Select>
+            </ToolbarFilter>
+        </ToolbarToggleGroup>
+    </>;
+
+    return (
+        <Toolbar data-loading={loadingUnits}
+                 clearAllFilters={onClearAllFilters}
+                 className="pf-m-sticky-top ct-compact services-toolbar"
+                 id="services-toolbar">
+            <ToolbarContent>{toolbarItems}</ToolbarContent>
+        </Toolbar>
+    );
+};
+
+const ServicesPage = () => {
+    const [tabErrors, setTabErrors] = useState({});
+    const [loggedUser, setLoggedUser] = useState();
+
+    useEffect(() => {
+        cockpit.user()
+                .then(user => setLoggedUser(user.name))
+                .catch(ex => console.warn(ex.message));
+    }, []);
+
+    /* Listen for permission changes for "Create timer" button */
+    useEvent(superuser, "changed");
+    const { path, options } = usePageLocation();
+
+    const activeTab = options.type || 'service';
+    const owner = options.owner || 'system';
+    const setOwner = (owner) => cockpit.location.go([], Object.assign(options, { owner }));
+
+    if (owner !== 'system' && owner !== 'user') {
+        console.warn("not a valid location: " + path);
+        cockpit.location = '';
+        return;
+    }
+
+    return (
+        <Page>
+            {path.length == 0 &&
+            <PageSection variant={PageSectionVariants.light} type="nav" className="services-header">
+                <Flex>
+                    <ServiceTabs activeTab={activeTab}
+                                 tabErrors={tabErrors}
+                                 onChange={activeTab => {
+                                     cockpit.location.go([], Object.assign(options, { type: activeTab }));
+                                 }} />
+                    <FlexItem align={{ default: 'alignRight' }}>
+                        {loggedUser && loggedUser !== 'root' && <ToggleGroup>
+                            <ToggleGroupItem isSelected={owner == "system"}
+                                             buttonId="system"
+                                             text={_("System")}
+                                             onChange={() => setOwner("system")} />
+                            <ToggleGroupItem isSelected={owner == "user"}
+                                             buttonId="user"
+                                             text={_("User")}
+                                             onChange={() => setOwner("user")} />
+                        </ToggleGroup>}
+                    </FlexItem>
+                    {activeTab == "timer" && owner == "system" && superuser.allowed && <CreateTimerDialog owner={owner} />}
+                </Flex>
+            </PageSection>}
+            <ServicesPageBody
+                key={owner}
+                activeTab={activeTab}
+                owner={owner}
+                path={path}
+                privileged={superuser.allowed}
+                setTabErrors={setTabErrors}
+            />
+        </Page>
+    );
+};
 
 function init() {
     ReactDOM.render(
