@@ -38,14 +38,14 @@ class TestActivePages(MachineCase):
 
         def showPagesAssertCount(count):
             b.switch_to_top()
-            b.mouse("#navbar-dropdown", "click", altKey=True)
+            b.mouse("#toggle-menu", "click", altKey=True)
             b.click("#active-pages")
             b.wait_visible("#active-pages-dialog")
             b.wait_js_func("ph_count_check", "#active-pages-dialog tr", count)
 
         # Initially we have /system
         showPagesAssertCount(1)
-        b.click("button.cancel")
+        b.click("button:contains('Cancel')")
         b.wait_not_present("#active-pages-dialog")
 
         b.go("/users")
@@ -54,7 +54,7 @@ class TestActivePages(MachineCase):
 
         # now we have the users page be present in the pages menu
         showPagesAssertCount(2)
-        b.click("button.cancel")
+        b.click("button:contains('Cancel')")
         b.wait_not_present("#active-pages-dialog")
 
         # open the terminal page and start a session we can see on the machine

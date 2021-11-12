@@ -17,17 +17,13 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-import $ from "jquery";
-import "bootstrap/dist/js/bootstrap";
-
 import cockpit from "cockpit";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { SuperuserIndicator } from "./superuser.jsx";
 import { CockpitNav, CockpitNavItem } from "./nav.jsx";
+import { TopNav } from ".//topnav.jsx";
 import { CockpitHosts } from "./hosts.jsx";
-import { AboutCockpitModal } from "./shell-modals.jsx";
 import { codes, HostModal } from "./hosts_dialog.jsx";
 
 import * as base_index from "./base_index";
@@ -58,28 +54,31 @@ function MachinesIndex(index_options, machines, loader) {
     const index = base_index.new_index_from_proto(index_options);
 
     /* Restarts */
-    $(index).on("expect_restart", function (ev, host) {
-        loader.expect_restart(host);
-    });
+    index.addEventListener("expect_restart", (ev, host) => loader.expect_restart(host));
 
     /* Disconnection Dialog */
     let watchdog_problem = null;
-    $(index).on("disconnect", function (ev, problem) {
+    index.addEventListener("disconnect", (ev, problem) => {
         watchdog_problem = problem;
         show_disconnected();
+    });
+
+    index.addEventListener("update", () => {
+        update_topbar();
     });
 
     /* Is troubleshooting dialog open */
     let troubleshooting_opened = false;
 
-    $("#nav-system-item").on("click", function (ev) {
-        $(this).toggleClass("active");
-        $("#nav-system").toggleClass("interact");
+    const nav_item = document.getElementById("nav-system-item");
+    nav_item.addEventListener("click", ev => {
+        nav_item.classList.toggle("active");
+        document.getElementById("nav-system").classList.toggle("interact");
         ev.preventDefault();
     });
 
     /* Reconnect button */
-    $("#machine-reconnect").on("click", function(ev) {
+    document.getElementById("machine-reconnect").addEventListener("click", ev => {
         if (watchdog_problem) {
             cockpit.sessionStorage.clear();
             window.location.reload(true);
@@ -89,9 +88,12 @@ function MachinesIndex(index_options, machines, loader) {
     });
 
     // Focus with skiplinks
-    $(".skiplink").on("click", ev => {
-        $(ev.target.hash).focus();
-        return false;
+    const skiplinks = document.getElementsByClassName("skiplink");
+    Array.from(skiplinks).forEach(skiplink => {
+        skiplink.addEventListener("click", ev => {
+            document.getElementById(ev.target.hash.substring(1)).focus();
+            return false;
+        });
     });
 
     let current_user = "";
@@ -112,23 +114,24 @@ function MachinesIndex(index_options, machines, loader) {
     }
 
     /* When the machine list is ready we start processing navigation */
-    $(machines)
-            .on("ready", on_ready)
-            .on("added updated", function(ev, machine) {
-                if (!machine.visible)
-                    index.frames.remove(machine);
-                else if (machine.problem)
-                    index.frames.remove(machine);
-
-                update_machines();
-                preload_frames();
-                if (ready)
-                    navigate();
-            })
-            .on("removed", function(ev, machine) {
+    machines.addEventListener("ready", on_ready);
+    machines.addEventListener("removed", (ev, machine) => {
+        index.frames.remove(machine);
+        update_machines();
+    });
+    ["added", "updated"].forEach(evn => {
+        machines.addEventListener(evn, (ev, machine) => {
+            if (!machine.visible)
                 index.frames.remove(machine);
-                update_machines();
-            });
+            else if (machine.problem)
+                index.frames.remove(machine);
+
+            update_machines();
+            preload_frames();
+            if (ready)
+                navigate();
+        });
+    });
 
     if (machines.ready)
         on_ready();
@@ -137,28 +140,27 @@ function MachinesIndex(index_options, machines, loader) {
         if (!ready) {
             const ca_cert_url = window.sessionStorage.getItem("CACertUrl");
             if (window.navigator.userAgent.indexOf("Safari") >= 0 && ca_cert_url) {
-                $("#safari-cert-help a").attr("href", ca_cert_url);
-                $("#safari-cert-help").prop("hidden", false);
+                document.getElementById("safari-cert").setAttribute("href", ca_cert_url);
+                document.getElementById("safari-cert-help").removeAttribute("hidden");
             }
-            $("#early-failure").prop("hidden", false);
-            $("#main").hide();
-            $("body").prop("hidden", false);
+            document.getElementById("early-failure").removeAttribute("hidden");
+            document.getElementById("main").setAttribute("hidden", "hidden");
+            document.body.removeAttribute("hidden");
             return;
         }
 
         const current_frame = index.current_frame();
 
         if (current_frame)
-            $(current_frame).hide();
+            current_frame.setAttribute("hidden", "hidden");
 
-        $(".curtains-ct .spinner").prop("hidden", true);
-        $("#machine-reconnect").toggle(true);
-        $("#machine-troubleshoot").toggle(false);
-        $(".curtains-ct i").toggle(true);
-        $(".curtains-ct h1").text(_("Disconnected"));
-        $(".curtains-ct p").text(cockpit.message(watchdog_problem));
-        $(".curtains-ct").prop("hidden", false);
-        $("#navbar-dropdown").addClass("disabled");
+        document.querySelector(".curtains-ct .spinner").setAttribute("hidden", "hidden");
+        document.getElementById("machine-reconnect").removeAttribute("hidden");
+        document.getElementById("machine-troubleshoot").setAttribute("hidden", "hidden");
+        document.querySelector(".curtains-ct i").removeAttribute("hidden");
+        document.querySelector(".curtains-ct h1").innerHTML = _("Disconnected");
+        document.querySelector(".curtains-ct p").innerHTML = cockpit.message(watchdog_problem);
+        document.querySelector(".curtains-ct").removeAttribute("hidden");
     }
 
     /* Handles navigation */
@@ -195,9 +197,8 @@ function MachinesIndex(index_options, machines, loader) {
             state.component = choose_component(state, compiled);
 
         update_navbar(machine, state, compiled);
+        update_topbar(machine, state, compiled);
         update_frame(machine, state, compiled);
-        update_docs(machine, state, compiled);
-        update_superuser(machine, state, compiled);
 
         /* Just replace the state, and URL */
         index.jump(state, true);
@@ -210,6 +211,26 @@ function MachinesIndex(index_options, machines, loader) {
             return menu_items[0].path;
 
         return "system";
+    }
+
+    function update_topbar(machine, state, compiled) {
+        if (!state)
+            state = index.retrieve_state();
+
+        if (!machine)
+            machine = machines.lookup(state.host);
+
+        if (!compiled)
+            compiled = compile(machine);
+
+        ReactDOM.render(
+            React.createElement(TopNav, {
+                index: index,
+                state: state,
+                machine: machine,
+                compiled: compiled,
+            }),
+            document.getElementById("topnav"));
     }
 
     function update_navbar(machine, state, compiled) {
@@ -477,10 +498,27 @@ function MachinesIndex(index_options, machines, loader) {
     }
 
     function update_frame(machine, state, compiled) {
+        function render_troubleshoot() {
+            troubleshooting_opened = true;
+            const template = codes[machine.problem] || "change-port";
+            ReactDOM.render(React.createElement(HostModal, {
+                template: template,
+                address: machine.address,
+                machines_ins: machines,
+                onClose: () => {
+                    ReactDOM.unmountComponentAtNode(document.getElementById('troubleshoot-dialog'));
+                    troubleshooting_opened = false;
+                    navigate(null, true);
+                }
+            }),
+                            document.getElementById('troubleshoot-dialog'));
+        }
+
         let current_frame = index.current_frame();
 
         if (machine.state != "connected") {
-            $(current_frame).hide();
+            if (current_frame)
+                current_frame.setAttribute("hidden", "hidden");
             current_frame = null;
             index.current_frame(current_frame);
 
@@ -507,39 +545,39 @@ function MachinesIndex(index_options, machines, loader) {
 
             let troubleshooting = false;
 
+            const tr_button = document.getElementById("machine-troubleshoot");
             if (!machine.restarting && (machine.problem === "no-host" || !!codes[machine.problem])) {
-                const template = codes[machine.problem] || "change-port";
-                $("#machine-troubleshoot").off()
-                        .on("click", () => {
-                            troubleshooting_opened = true;
-                            ReactDOM.render(React.createElement(HostModal, {
-                                template: template,
-                                address: machine.address,
-                                machines_ins: machines,
-                                onClose: () => {
-                                    ReactDOM.unmountComponentAtNode(document.getElementById('troubleshoot-dialog'));
-                                    troubleshooting_opened = false;
-                                    navigate(null, true);
-                                }
-                            }),
-                                            document.getElementById('troubleshoot-dialog'));
-                        });
-                troubleshooting = true;
-                $("#machine-troubleshoot").show();
+                if (!troubleshooting) {
+                    troubleshooting = true;
+
+                    const new_tr_button = tr_button.cloneNode(true);
+                    tr_button.parentNode.replaceChild(new_tr_button, tr_button);
+                    new_tr_button.addEventListener("click", render_troubleshoot);
+                    new_tr_button.removeAttribute("hidden");
+                }
             } else {
                 troubleshooting = false;
-                $("#machine-troubleshoot").hide();
+                tr_button.setAttribute("hidden", "hidden");
             }
 
             const restarting = !!machine.restarting;
-            $(".curtains-ct").prop("hidden", false);
-            $(".curtains-ct .spinner").prop("hidden", !connecting && !restarting);
-            $("#machine-reconnect").toggle(!connecting && machine.problem != "not-found" && !troubleshooting);
-            $(".curtains-ct i").toggle(!connecting && !restarting);
-            $(".curtains-ct h1").text(title);
-            $(".curtains-ct p").text(message);
+            document.querySelector(".curtains-ct").removeAttribute("hidden");
 
-            $("#machine-spinner").hide();
+            if (!connecting && !restarting) {
+                document.querySelector(".curtains-ct .spinner").setAttribute("hidden", "hidden");
+                document.querySelector(".curtains-ct i").removeAttribute("hidden");
+            } else {
+                document.querySelector(".curtains-ct .spinner").removeAttribute("hidden");
+                document.querySelector(".curtains-ct i").setAttribute("hidden", "hidden");
+            }
+
+            if (!connecting && machine.problem != "not-found" && !troubleshooting)
+                document.getElementById("machine-reconnect").removeAttribute("hidden");
+            else
+                document.getElementById("machine-reconnect").setAttribute("hidden", "hidden");
+
+            document.querySelector(".curtains-ct h1").innerHTML = title;
+            document.querySelector(".curtains-ct p").innerHTML = message;
 
             update_title(null, machine);
 
@@ -562,26 +600,27 @@ function MachinesIndex(index_options, machines, loader) {
 
         const frame = component ? index.frames.lookup(machine, component, hash) : undefined;
         if (frame != current_frame) {
-            $(current_frame).css('display', 'none');
-            if (current_frame)
+            if (current_frame) {
+                current_frame.style.display = "none";
                 // Reset 'data-active' only on the same host
                 if (frame.getAttribute('data-host') === current_frame.getAttribute('data-host'))
-                    $(current_frame).attr('data-active', 'false');
+                    current_frame.setAttribute('data-active', 'false');
+            }
             index.current_frame(frame);
         }
 
         if (machine.state == "connected") {
-            $(".curtains-ct").prop("hidden", true);
-            $("#machine-spinner").toggle(frame && !$(frame).attr("data-ready"));
-            $(frame).css('display', 'block');
-            $(frame).attr('data-active', 'true');
+            document.querySelector(".curtains-ct").setAttribute("hidden", "hidden");
+            frame.style.display = "block";
+            frame.setAttribute('data-active', 'true');
+            frame.removeAttribute("hidden");
 
             const component_manifest = find_component(state, compiled);
             const item = compiled.items[component_manifest];
             const label = item ? item.label : "";
             update_title(label, machine);
             if (label)
-                $(frame).attr('title', label);
+                frame.setAttribute('title', label);
         }
     }
 
