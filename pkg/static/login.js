@@ -108,6 +108,23 @@
         hideToggle(arguments, true);
     }
 
+    function show_captured_stderr(msg) {
+        if (window.console)
+            console.warn("stderr:", msg);
+
+        hide("#login-wait-validating");
+
+        hide("#login", "#login-details");
+        show("#login-fatal");
+
+        id("login-again").onclick = () => { hide('#login-fatal'); show_login() };
+        show("#login-again");
+
+        const el = id("login-fatal-message");
+        el.textContent = "";
+        el.appendChild(document.createTextNode(msg));
+    }
+
     function fatal(msg) {
         if (window.console)
             console.warn("fatal:", msg);
@@ -299,6 +316,8 @@
 
         // Setup title
         let title = environment.page.title;
+        if (environment.is_cockpit_client)
+            title = _("Login");
         if (!title || application.indexOf("cockpit+=") === 0)
             title = environment.hostname;
         document.title = title;
@@ -350,6 +369,8 @@
             }
         } else if (logout_intent) {
             show_login(logout_reason);
+        } else if (need_host()) {
+            show_login();
         } else {
             standard_auto_login();
         }
@@ -499,7 +520,7 @@
     function call_login() {
         login_failure(null);
         const user = trim(id("login-user-input").value);
-        if (user === "") {
+        if (user === "" && !environment.is_cockpit_client) {
             login_failure(_("User name cannot be empty"));
         } else if (need_host() && id("server-field").value === "") {
             login_failure(_("Please specify the host to connect to"));
@@ -547,16 +568,17 @@
         let expanded = id("option-group").getAttribute("data-state");
 
         hide("#login-wait-validating");
-        show("#login", "#login-details");
+        show("#login");
+        hideToggle("#login-details", environment.is_cockpit_client);
 
-        hideToggle(["#user-group", "#password-group"], form != "login");
+        hideToggle(["#user-group", "#password-group"], form != "login" || environment.is_cockpit_client);
         hideToggle("#conversation-group", form != "conversation");
         hideToggle("#hostkey-group", form != "hostkey");
 
         id("login-button-text").textContent = (form == "hostkey") ? _("Accept key and log in") : _("Log in");
         id("login-password-input").value = '';
 
-        if (need_host()) {
+        if (environment.page.require_host) {
             hide("#option-group");
             expanded = true;
         } else {
@@ -601,7 +623,12 @@
         id("login-password-toggle").addEventListener("click", toggle_password);
 
         show_form("login");
-        id("login-user-input").focus();
+
+        if (!environment.is_cockpit_client) {
+            id("login-user-input").focus();
+        } else if (environment.page.require_host) {
+            id("server-field").focus();
+        }
     }
 
     function get_known_hosts_db() {
@@ -785,7 +812,9 @@
                 } else {
                     if (window.console)
                         console.log(xhr.statusText);
-                    if (xhr.statusText.indexOf("authentication-not-supported") > -1) {
+                    if (xhr.statusText.startsWith("captured-stderr:")) {
+                        show_captured_stderr(decodeURIComponent(xhr.statusText.replace(/^captured-stderr:/, '')));
+                    } else if (xhr.statusText.indexOf("authentication-not-supported") > -1) {
                         const user = trim(id("login-user-input").value);
                         fatal(format(_("The server refused to authenticate '$0' using password authentication, and no other supported authentication methods are available."), user));
                     } else if (xhr.statusText.indexOf("terminated") > -1) {

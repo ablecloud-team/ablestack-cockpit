@@ -233,7 +233,7 @@ import {
     Popover,
     HelperText, HelperTextItem
 } from "@patternfly/react-core";
-import { ExclamationTriangleIcon, HelpIcon } from "@patternfly/react-icons";
+import { ExclamationTriangleIcon, InfoIcon, HelpIcon } from "@patternfly/react-icons";
 
 import { show_modal_dialog, apply_modal_dialog } from "cockpit-components-dialog.jsx";
 
@@ -841,6 +841,14 @@ export const Skip = (className, options) => {
         render: () => {
             return <div className={className} />;
         }
+    };
+};
+
+export const Message = (text, options) => {
+    return {
+        options: options,
+
+        render: () => <HelperText><HelperTextItem icon={<InfoIcon />}>{text}</HelperTextItem></HelperText>,
     };
 };
 

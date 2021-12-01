@@ -50,7 +50,8 @@ EXTRA_DIST += \
 
 # ----------------------------------------------------------------------------------------------------
 
-libexec_PROGRAMS += cockpit-ws
+cockpitwsdir = $(libexecdir)
+cockpitws_PROGRAMS = cockpit-ws
 
 cockpit_ws_SOURCES =					\
 	src/ws/main.c					\
@@ -117,7 +118,7 @@ install-exec-local::
 uninstall-local::
 	$(RM) -f $(DESTDIR)$(pamdir)/pam_cockpit_cert.so
 
-libexec_SCRIPTS = cockpit-desktop
+libexec_SCRIPTS += cockpit-desktop
 
 cockpit-desktop: src/ws/cockpit-desktop.in
 	$(SUBST_RULE)

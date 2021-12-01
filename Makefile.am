@@ -6,6 +6,7 @@ check_SCRIPTS =
 check_PROGRAMS =
 noinst_SCRIPTS =
 libexec_PROGRAMS =
+libexec_SCRIPTS =
 noinst_PROGRAMS =
 sbin_PROGRAMS =
 noinst_LIBRARIES =
@@ -256,6 +257,7 @@ include src/branding/rhel/Makefile.am
 include src/branding/scientific/Makefile.am
 include src/branding/ubuntu/Makefile.am
 include src/bridge/Makefile.am
+include src/client/Makefile.am
 include src/common/Makefile-common.am
 include src/websocket/Makefile-websocket.am
 include tools/Makefile-tools.am
@@ -265,6 +267,7 @@ include src/session/Makefile-session.am
 include src/tls/Makefile-tls.am
 include src/retest/Makefile.am
 include src/pam-ssh-add/Makefile.am
+include containers/flatpak/Makefile.am
 include containers/Makefile.am
 include doc/Makefile-doc.am
 include doc/guide/Makefile-guide.am
