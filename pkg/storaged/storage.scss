@@ -166,7 +166,7 @@ td.job-action {
 
 .content-action {
     text-align: right;
-    width: 1% !important;
+    white-space: nowrap !important;
 }
 
 .dialog-item-tooltip {
@@ -195,7 +195,7 @@ tr[class*=content-level-] {
 
     // Add space for the button and offset
     > .pf-c-table__toggle + td {
-        padding-left: var(--offset);
+        padding-left: calc(var(--offset) + var(--pf-c-table--cell--PaddingLeft));
     }
 }
 
@@ -379,6 +379,7 @@ td.storage-action {
 
 .sidepanel-row-info {
     font-size: var(--pf-global--FontSize--xs);
+    max-width: 50ch;
 }
 
 .panel-heading {
@@ -410,7 +411,7 @@ td.storage-action {
     max-width: 30ch;
 }
 
-#mounts .pf-c-progress__measure, #nfs-mounts .pf-c-progress__measure {
+#mounts .pf-c-progress__measure, #nfs-mounts .pf-c-progress__measure, #detail-content .pf-c-progress__measure {
     min-width: 7rem;
 }
 

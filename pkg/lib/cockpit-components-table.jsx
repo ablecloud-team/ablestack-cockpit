@@ -155,18 +155,18 @@ export const ListingTable = ({
                 <Tr {...rowProps}>
                     {isExpandable
                         ? (row.expandedContent
-                            ? <Td expand={
-                                {
-                                    rowKey,
-                                    isExpanded,
-                                    onToggle: () => {
-                                        if (afterToggle)
-                                            afterToggle(!expanded[rowKey]);
-                                        setExpanded({ ...expanded, [rowKey]: !expanded[rowKey] });
-                                    }
-                                }} />
-                            : <Td />
-                        ) : null}
+                            ? <Td expand={{
+                                rowKey,
+                                isExpanded,
+                                onToggle: () => {
+                                    if (afterToggle)
+                                        afterToggle(!expanded[rowKey]);
+                                    setExpanded({ ...expanded, [rowKey]: !expanded[rowKey] });
+                                }
+                            }} />
+                            : <Td className="pf-c-table__toggle" />)
+                        : null
+                    }
                     {onSelect &&
                         <Td select={{
                             rowIndex,

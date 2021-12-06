@@ -447,7 +447,7 @@ export const StratisPoolDetails = ({ client, pool }) => {
 
     const sidebar = <StratisPoolSidebar client={client} pool={pool} />;
 
-    function render_fsys(fsys) {
+    function render_fsys(fsys, offset, total) {
         const block = client.slashdevs_block[fsys.Devnode];
 
         if (!block) {
@@ -578,19 +578,6 @@ export const StratisPoolDetails = ({ client, pool }) => {
         if (info)
             info = <>{"\n"}{info}</>;
 
-        const cols = [
-            {
-                title: (
-                    <span key={name}>
-                        {mount_point || "-"}
-                        {info}
-                    </span>)
-            },
-            {
-                title: fsys.Devnode
-            }
-        ];
-
         const tabs = [
             {
                 name: name,
@@ -608,23 +595,35 @@ export const StratisPoolDetails = ({ client, pool }) => {
         if (!fs_is_mounted)
             actions.push(<StorageButton key="mount" onClick={mount}>{_("Mount")}</StorageButton>);
 
-        cols.push({
-            title: actions,
-            props: { className: "content-action" }
-        });
-
         const menuitems = [];
-
         if (fs_is_mounted)
             menuitems.push(<StorageMenuItem key="unmount" onClick={unmount}>{_("Unmount")}</StorageMenuItem>);
-
         menuitems.push(<StorageMenuItem key="rename" onClick={rename_fsys}>{_("Rename")}</StorageMenuItem>);
         menuitems.push(<StorageMenuItem key="snapshot" onClick={snapshot_fsys}>{_("Snapshot")}</StorageMenuItem>);
         menuitems.push(<StorageMenuItem key="del" onClick={delete_fsys}>{_("Delete")}</StorageMenuItem>);
-        cols.push({
-            title: <StorageBarMenu key="menu" menuItems={menuitems} isKebab />,
-            props: { className: "content-action" }
-        });
+
+        const cols = [
+            {
+                title: (
+                    <span>
+                        {fsys.Name}
+                        {info}
+                    </span>)
+            },
+            {
+                title: mount_point
+            },
+            {
+                title: <StorageUsageBar stats={[Number(fsys.Used[0] && Number(fsys.Used[1])),
+                    Number(pool.TotalPhysicalSize)]}
+                                        critical={1} total={total} offset={offset} />,
+                props: { className: "ct-text-align-right" }
+            },
+            {
+                title: <>{actions}<StorageBarMenu key="menu" menuItems={menuitems} isKebab /></>,
+                props: { className: "pf-c-table__action content-action" }
+            }
+        ];
 
         return {
             props: { key: fsys.Name },
@@ -632,6 +631,15 @@ export const StratisPoolDetails = ({ client, pool }) => {
             expandedContent: <ListingPanel tabRenderers={tabs} />
         };
     }
+
+    const offsets = [];
+    let total = 0;
+    filesystems.forEach(fs => {
+        offsets.push(total);
+        total += fs.Used[0] ? Number(fs.Used[1]) : 0;
+    });
+
+    const rows = filesystems.map((fs, i) => render_fsys(fs, offsets[i], total));
 
     const content = (
         <Card>
@@ -644,10 +652,9 @@ export const StratisPoolDetails = ({ client, pool }) => {
             <CardBody className="contains-list">
                 <ListingTable emptyCaption={_("No filesystems")}
                               aria-label={_("Filesystems")}
-                              columns={[_("Name"), { title: _("Blockdev"), header: true }, _("Actions"), _("Menu")]}
+                              columns={[_("Name"), _("Used for"), _("Size")]}
                               showHeader={false}
-                              variant="compact"
-                              rows={filesystems.map(render_fsys).filter(row => !!row)} />
+                              rows={rows.filter(row => !!row)} />
             </CardBody>
         </Card>);
 
@@ -782,9 +789,8 @@ export const StratisLockedPoolDetails = ({ client, uuid }) => {
             <CardBody className="contains-list">
                 <ListingTable emptyCaption={_("Unlock pool to see filesystems.")}
                               aria-label={_("Filesystems")}
-                              columns={[_("Name"), { title: _("Blockdev"), header: true }, _("Actions"), _("Menu")]}
+                              columns={[_("Name"), _("Used for"), _("Size")]}
                               showHeader={false}
-                              variant="compact"
                               rows={[]} />
             </CardBody>
         </Card>);

@@ -320,7 +320,6 @@ on_handle_stream_socket (CockpitWebServer *server,
   GPid pid = 0;
 
   gchar *value;
-  gchar **env;
   gchar **argv;
 
   if (!g_str_has_prefix (path, "/cockpit/socket"))
@@ -344,17 +343,15 @@ on_handle_stream_socket (CockpitWebServer *server,
       g_clear_object (&bridge);
 
       value = g_strdup_printf ("%d", server_port);
-      env = g_environ_setenv (g_get_environ (), "COCKPIT_TEST_SERVER_PORT", value, TRUE);
 
       argv = g_strdupv (bridge_argv);
       if (query)
         argv[g_strv_length (argv) - 1] = g_strdup (query);
 
-      g_spawn_async_with_pipes (NULL, argv, env,
+      g_spawn_async_with_pipes (NULL, argv, NULL,
                                 G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
                                 NULL, NULL, &pid, &session_stdin, &session_stdout, NULL, &error);
 
-      g_strfreev (env);
       g_free (argv);
       g_free (value);
 
@@ -665,16 +662,12 @@ server_ready (void)
     server_port = 8765;
 
   server_roots = cockpit_web_response_resolve_roots (roots);
-  server = cockpit_web_server_new (NULL, server_port, /* TCP port to listen to */
-                                   NULL, /* TLS cert */
-                                   COCKPIT_WEB_SERVER_NONE,
-                                   NULL, /* GCancellable* */
-                                   &error);
-  if (server == NULL)
-    {
-      g_critical ("Error setting up web server: %s (%s, %d)",
-                  error->message, g_quark_to_string (error->domain), error->code);
-    }
+  server = cockpit_web_server_new (NULL, /* TLS cert */
+                                   COCKPIT_WEB_SERVER_NONE);
+  server_port = cockpit_web_server_add_inet_listener (server, NULL, server_port, &error);
+  g_assert_no_error (error);
+  g_assert (server_port != 0);
+
 
   g_signal_connect (server, "handle-stream",
                     G_CALLBACK (on_handle_stream_socket), NULL);
@@ -687,7 +680,6 @@ server_ready (void)
   g_signal_connect (server, "handle-resource::/mock/",
                     G_CALLBACK (on_handle_mock), NULL);
 
-  server_port = cockpit_web_server_get_port (server);
   url = g_strdup_printf("http://localhost:%d", server_port);
 
   cockpit_web_server_start (server);

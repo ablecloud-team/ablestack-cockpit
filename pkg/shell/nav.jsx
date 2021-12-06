@@ -1,16 +1,34 @@
 import cockpit from "cockpit";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 
 import {
     Button,
     Nav,
+    SearchInput,
     Tooltip, TooltipPosition,
 } from '@patternfly/react-core';
-import { ExclamationCircleIcon, ExclamationTriangleIcon, InfoCircleIcon } from '@patternfly/react-icons';
+import { ContainerNodeIcon, ExclamationCircleIcon, ExclamationTriangleIcon, InfoCircleIcon } from '@patternfly/react-icons';
 
 const _ = cockpit.gettext;
+
+export const SidebarToggle = () => {
+    const [active, setActive] = useState(false);
+
+    useEffect(() => {
+        document.getElementById("nav-system").classList.toggle("interact");
+    }, [active]);
+
+    return (
+        <Button className={"pf-c-select__toggle ct-nav-toggle " + (active ? "active" : "")}
+                id="nav-system-item" variant="plain"
+                onClick={() => setActive(!active)}>
+            <ContainerNodeIcon size="md" />
+            {_("System")}
+        </Button>
+    );
+};
 
 export class CockpitNav extends React.Component {
     constructor(props) {
@@ -21,7 +39,6 @@ export class CockpitNav extends React.Component {
             current: props.current,
         };
 
-        this.onSearchChanged = this.onSearchChanged.bind(this);
         this.clearSearch = this.clearSearch.bind(this);
     }
 
@@ -53,7 +70,7 @@ export class CockpitNav extends React.Component {
                 let i = all.findIndex(item => item === cur);
                 i += step;
                 if (i < 0 || i >= all.length)
-                    document.querySelector("#" + sel + " .filter-menus").focus();
+                    document.querySelector("#" + sel + " .pf-c-search-input__text-input").focus();
                 else
                     all[i].focus();
             }
@@ -68,7 +85,7 @@ export class CockpitNav extends React.Component {
                 focusNextItem(-1, -1);
             else if (ev.keyCode === 27) { // Escape - clean selection
                 self.setState({ search: "" });
-                document.querySelector("#" + sel + " .filter-menus").focus();
+                document.querySelector("#" + sel + " .pf-c-search-input__text-input").focus();
             }
         }
 
@@ -83,10 +100,6 @@ export class CockpitNav extends React.Component {
                 search: "",
             };
         return null;
-    }
-
-    onSearchChanged(e) {
-        this.setState({ search: e.target.value });
     }
 
     clearSearch() {
@@ -105,10 +118,7 @@ export class CockpitNav extends React.Component {
 
         return (
             <>
-                <div className="has-feedback search">
-                    <input className="filter-menus form-control" type="search" placeholder={_("Search")} aria-label={_("Search")} onChange={this.onSearchChanged} value={this.state.search} />
-                    <span className="fa fa-search form-control-feedback" />
-                </div>
+                <SearchInput placeholder={_("Search")} value={this.state.search} onChange={search => this.setState({ search })} className="search" />
                 <Nav onSelect={this.onSelect} theme="dark">
                     { groups.map(g =>
                         <section className="pf-c-nav__section" aria-labelledby={"section-title-" + g.name} key={g.name}>
