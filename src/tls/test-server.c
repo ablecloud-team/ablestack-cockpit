@@ -37,7 +37,6 @@
 #include "testing.h"
 #include "server.h"
 #include "utils.h"
-#include "common/cockpithacks.h"
 #include "common/cockpittest.h"
 
 #define SOCKET_ACTIVATION_HELPER BUILDDIR "/socket-activation-helper"
@@ -387,7 +386,7 @@ setup (TestCase *tc, gconstpointer data)
 
   server_init (tc->ws_socket_dir, tc->runtime_dir, fixture ? fixture->idle_timeout : 0, server_port);
   if (fixture && fixture->certfile)
-    connection_crypto_init (fixture->certfile, fixture->keyfile, fixture->cert_request_mode);
+    connection_crypto_init (fixture->certfile, fixture->keyfile, false, fixture->cert_request_mode);
 
   tc->server_addr.sin_family = AF_INET;
   tc->server_addr.sin_port = htons (server_port);
@@ -415,7 +414,6 @@ teardown (TestCase *tc, gconstpointer data)
   int socket_dir_fd = open (tc->ws_socket_dir, O_RDONLY | O_DIRECTORY);
   g_assert_cmpint (socket_dir_fd, >=, 0);
   g_assert_cmpint (unlinkat (socket_dir_fd, "http.sock", 0), ==, 0);
-  g_assert_cmpint (unlinkat (socket_dir_fd, "http-redirect.sock", 0), ==, 0);
   g_assert_cmpint (unlinkat (socket_dir_fd, "https-factory.sock", 0), ==, 0);
   g_assert_cmpint (unlinkat (socket_dir_fd, "https@" SHA256_NIL ".sock", 0), ==, 0);
   g_assert_cmpint (unlinkat (socket_dir_fd, "https@" CLIENT_CERT_FINGERPRINT ".sock", 0), ==, 0);
@@ -554,6 +552,9 @@ test_no_tls_many_parallel (TestCase *tc, gconstpointer data)
 static void
 test_no_tls_redirect (TestCase *tc, gconstpointer data)
 {
+  /* Make sure we connect on something other than localhost */
+  tc->server_addr.sin_addr.s_addr = htonl (INADDR_LOOPBACK + 1);
+
   /* without TLS support it should not redirect */
   const char *res = do_request (tc, "GET / HTTP/1.0\r\nHost: some.remote:1234\r\n\r\n");
   /* This succeeds (200 OK) when building in-tree, but fails with dist-check due to missing doc root */
@@ -580,6 +581,9 @@ test_tls_no_server_cert (TestCase *tc, gconstpointer data)
 static void
 test_tls_redirect (TestCase *tc, gconstpointer data)
 {
+  /* Make sure we connect on something other than localhost */
+  tc->server_addr.sin_addr.s_addr = htonl (INADDR_LOOPBACK + 1);
+
   /* with TLS support it should redirect */
   const char *res = do_request (tc, "GET / HTTP/1.0\r\nHost: some.remote:1234\r\n\r\n");
   cockpit_assert_strmatch (res, "HTTP/1.1 301 Moved Permanently*");
@@ -772,8 +776,6 @@ test_run_idle (TestCase *tc, gconstpointer data)
 int
 main (int argc, char *argv[])
 {
-  cockpit_hacks_valgrind_memfd_workaround_setenv ();
-
   cockpit_test_init (&argc, &argv);
 
   g_test_add ("/server/no-tls/single-request", TestCase, NULL,

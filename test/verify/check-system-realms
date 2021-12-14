@@ -74,6 +74,7 @@ def hotp_token(secret, counter, digits=6, hash_alg=hashlib.sha1):
     return numbers[-digits:].rjust(digits, '0')
 
 
+@skipImage("No realmd available", "arch")
 @skipDistroPackage()
 class CommonTests:
     def testQualifiedUsers(self):
@@ -354,12 +355,15 @@ class CommonTests:
         b.logout()
         m.execute('while ! id alice; do sleep 5; systemctl restart sssd; done', timeout=300)
 
-        # upload certificates to client machine
-        m.upload(["alice.pem", "alice.key", "bob.pem", "bob.key"], "/var/tmp",
-                 relative_dir="src/tls/ca/")
+        # alice's certificate was written by testClientCertAuthentication()
         alice_cert_key = ['--cert', "/var/tmp/alice.pem", '--key', "/var/tmp/alice.key"]
         alice_user_pass = ['-u', 'alice:' + self.alice_password]
-        bob_cert_key = ['--cert', "/var/tmp/bob.pem", '--key', "/var/tmp/bob.key"]
+
+        if self.__class__ == TestIPA:
+            # `realm join` does not automatically configure sssd to be able to validate certificates;
+            # it needs to be explicitly told the CA to trust. Use the IPA's CA. (That would be an
+            # excellent default, but oh well, we can't have all nice things.)
+            m.execute("mkdir -p /etc/sssd/pki/; cp /etc/ipa/ca.crt /etc/sssd/pki/sssd_auth_ca_db.pem")
 
         # ensure sssd certificate lookup works
         user_obj = m.execute('busctl call org.freedesktop.sssd.infopipe /org/freedesktop/sssd/infopipe/Users '
@@ -425,8 +429,11 @@ class CommonTests:
         # another certificate gets rejected
         self.allow_journal_messages("cockpit-session: .*User not found")
         self.allow_journal_messages("cockpit-session: No matching user for certificate")
-        do_test(bob_cert_key, ["HTTP/1.1 401 Authentication failed", '<h1>Authentication failed</h1>'],
+        m.upload(["bob.pem", "bob.key"], "/var/tmp", relative_dir="src/tls/ca/")
+        do_test(['--cert', "/var/tmp/bob.pem", '--key', "/var/tmp/bob.key"],
+                ["HTTP/1.1 401 Authentication failed", '<h1>Authentication failed</h1>'],
                 not_expected=["crsf-token"])
+        self.allow_journal_messages("cockpit-session: Failed to map certificate to user: .* Invalid certificate provided")
 
         # disallow password auth
         m.write("/etc/cockpit/cockpit.conf", "[Basic]\naction = none\n", append=True)
@@ -434,8 +441,21 @@ class CommonTests:
         do_test(alice_user_pass, ['HTTP/1.1 401 Authentication disabled', '<h1>Authentication disabled</h1>'],
                 not_expected=["crsf-token"])
 
+        # valid user certificate which fails CA validation; this requires sssd ≥ 2.6.1
+        m.execute("mv /etc/sssd/pki/sssd_auth_ca_db.pem /etc/sssd/pki/sssd_auth_ca_db.pem.valid")
+        with open("src/tls/ca/alice-expired.pem") as f:
+            m.write("/etc/sssd/pki/sssd_auth_ca_db.pem", f.read())
+        api = m.execute("busctl introspect org.freedesktop.sssd.infopipe /org/freedesktop/sssd/infopipe/Users")
+        has_validate_api = 'FindByValidCertificate' in api
+        if has_validate_api:
+            do_test(alice_cert_key, ["HTTP/1.1 401 Authentication failed"])
+        else:
+            # earlier sssd just matches the certificate verbatim, without CA validation
+            do_test(alice_cert_key, ['HTTP/1.1 200 OK', '"csrf-token"'])
+        m.execute("mv /etc/sssd/pki/sssd_auth_ca_db.pem.valid /etc/sssd/pki/sssd_auth_ca_db.pem")
 
-@skipImage("No realmd available", "fedora-coreos")
+
+@skipImage("No realmd available", "fedora-coreos", "arch")
 @skipDistroPackage()
 @no_retry_when_changed
 class TestRealms(MachineCase):
@@ -455,7 +475,7 @@ class TestRealms(MachineCase):
         self.machine.execute("hostnamectl set-hostname x0.cockpit.lan")
 
 
-@skipImage("freeipa not currently available", "debian-stable", "debian-testing")
+@skipImage("freeipa not currently available", "debian-stable", "debian-testing", "arch")
 @skipDistroPackage()
 @no_retry_when_changed
 class TestIPA(TestRealms, CommonTests):
@@ -491,6 +511,9 @@ ExecStart=/bin/true
 
         # during image creation the /var/cache directory gets cleaned up, recreate the krb5rcache
         self.machine.execute("mkdir -pZ /var/cache/krb5rcache")
+
+        # IPA CA cert has OCSP entry with that host name, make it available
+        self.machine.execute("echo '10.111.112.100 ipa-ca.cockpit.lan' >> /etc/hosts")
 
         # HACK: Figure out why this happens
         self.allow_journal_messages('''.*didn't receive expected "authorize" message''',
@@ -661,20 +684,23 @@ ExecStart=/bin/true
         b = self.browser
 
         ipa_machine = self.machines['services']
-        with open("src/tls/ca/alice.pem") as f:
-            alice_cert = f.read().strip()
-        # IPA does not like the ---BEGIN/END lines
-        alice_cert = '\n'.join([line for line in alice_cert.splitlines() if not line.startswith("----")])
         # set up an IPA user with a TLS certificate; can't use "admin" due to https://pagure.io/freeipa/issue/6683
-        ipa_machine.execute(r"""podman exec -i freeipa sh -exc '
+        ipa_machine.execute(f"""podman exec -i freeipa sh -exc '
 ipa user-add --first=Alice --last="Developer" --shell=/bin/bash alice
-yes "%(password)s" | ipa user-mod --password alice
-ipa user-mod --password-expiration='2030-01-01T00:00:00Z' alice
-ipa user-add-cert alice --certificate="%(cert)s"
+yes "{self.alice_password}" | ipa user-mod --password alice
+ipa user-mod --password-expiration=2030-01-01T00:00:00Z alice' """)
+
+        ipa_machine.execute(r"""podman exec -i freeipa sh -exc '
+# generate IPA CA signed certificate for alice
+openssl req -new -newkey rsa:2048 -days 365 -nodes -keyout /tmp/alice.key -out /tmp/alice.csr -subj "/CN=alice"
+ipa cert-request /tmp/alice.csr --principal=alice --certificate-out=/tmp/alice.pem
 # make alice an admin
 ipa group-add-member admins --users=alice
 ipa-advise enable-admins-sudo | sh -ex
-' """ % {"cert": alice_cert, "password": self.alice_password})
+' """)
+        # download certificate to cockpit machine
+        m.write("/var/tmp/alice.pem", ipa_machine.execute("podman exec -i freeipa cat /tmp/alice.pem").strip())
+        m.write("/var/tmp/alice.key", ipa_machine.execute("podman exec -i freeipa cat /tmp/alice.key").strip())
 
         self.checkClientCertAuthentication()
 
@@ -795,7 +821,7 @@ ipa-advise enable-admins-sudo | sh -ex
         m.execute(f"! su -c '{ccache_env} klist' alice")
 
 
-@skipImage("adcli not on test images", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2004")
+@skipImage("adcli not on test images", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2004", "arch")
 @skipDistroPackage()
 @no_retry_when_changed
 class TestAD(TestRealms, CommonTests):
@@ -861,6 +887,9 @@ class TestAD(TestRealms, CommonTests):
         m = self.machine
 
         services_machine = self.machines['services']
+        # samba has no default CA and no helpers, so just re-use our completely independent cockpit-tls unit test one
+        m.upload(["alice.pem", "alice.key"], "/var/tmp", relative_dir="src/tls/ca/")
+
         with open("src/tls/ca/alice.pem") as f:
             alice_cert = f.read().strip()
         # mangle into form palatable for LDAP
@@ -889,6 +918,10 @@ maprule = LDAP:(userCertificate={cert!base64})
 # this also requires CA validation in cockpit-tls or sssd, which we don't have yet
 # maprule = (|(userPrincipalName={subject_principal})(sAMAccountName={subject_principal.short_name}))
 """, perm="0600")
+        # tell sssd about our CA for validating certs
+        m.execute("mkdir -p /etc/sssd/pki")
+        with open("src/tls/ca/ca.pem") as f:
+            m.write("/etc/sssd/pki/sssd_auth_ca_db.pem", f.read())
 
         self.checkClientCertAuthentication()
 
@@ -938,8 +971,8 @@ sed -i '/^sudoers:/ s/files sss/sss files/' /etc/nsswitch.conf
 # This is here because our test framework can't run ipa VM's twice
 
 
-@skipImage("No realmd available", "fedora-coreos")
-@skipImage("freeipa not currently available", "debian-stable", "debian-testing")
+@skipImage("No realmd available", "fedora-coreos", "arch")
+@skipImage("freeipa not currently available", "debian-stable", "debian-testing", "arch")
 @skipDistroPackage()
 @no_retry_when_changed
 class TestKerberos(MachineCase):
@@ -1080,6 +1113,7 @@ ExecStart=/bin/true
         self.allow_journal_messages(".*Request ticket server HTTP/x0.cockpit.lan@COCKPIT.LAN not found in keytab.*")
 
 
+@skipImage("No realmd available", "arch")
 @skipImage("Package (un)install does not work on OSTree", "fedora-coreos")
 @skipDistroPackage()
 class TestPackageInstall(packagelib.PackageCase):

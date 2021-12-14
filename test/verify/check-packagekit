@@ -38,7 +38,7 @@ done
 
 OSesWithoutTracer = ["debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable", "fedora-coreos"]
 OSesWithoutKpatch = ["debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable",
-                     "fedora-coreos", "fedora-34", "fedora-35", "fedora-testing", "centos-8-stream"]
+                     "fedora-coreos", "fedora-34", "fedora-35", "fedora-testing", "centos-8-stream", "arch"]
 
 
 class NoSubManCase(PackageCase):
@@ -56,6 +56,7 @@ class NoSubManCase(PackageCase):
         self.allow_journal_messages("(Created symlink|Removed).*dnf-automatic-install.timer.*")
 
 
+@skipImage("TODO: Fails with 401 on our test runners", "arch")
 @skipImage("Image uses OSTree", "fedora-coreos")
 @nondestructive
 class TestUpdates(NoSubManCase):
@@ -396,6 +397,7 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
             self.assertEqual(b.attr(self.update_icon, "data-pficon"), "check")
         b.wait_text(self.update_text, "System is up to date")
 
+    @skipImage("TODO: Packagekit on Arch does not detect the pear update", "arch")
     @skipImage("tracer not available", *OSesWithoutTracer)
     def testTracer(self):
         b = self.browser
@@ -543,7 +545,10 @@ ExecStart=/usr/local/bin/{self.packageName}
             def cleanup(self):
                 if not self.rebootRequired:
                     m.execute(f"systemctl stop {self.packageName}")
-                m.execute(f"rpm -e {self.packageName}")
+                if m.image == "arch":
+                    m.execute(f"pacman -R --noconfirm {self.packageName}")
+                else:
+                    m.execute(f"rpm -e {self.packageName}")
                 if self.rebootRequired:
                     m.execute("rm /etc/tracer/applications.xml")
 
@@ -577,6 +582,7 @@ ExecStart=/usr/local/bin/{self.packageName}
 
         self.allow_restart_journal_messages()
 
+    @skipImage("Arch Linux does not start services by default", "arch")
     @skipImage("tracer not available", *OSesWithoutTracer)
     def testFailServiceRestart(self):
         b = self.browser
@@ -638,6 +644,7 @@ ExecStart=/usr/local/bin/{packageName}
         b.wait_not_in_text("#restart-services-modal .pf-c-modal-box__body", packageName)
         b.wait_visible("#restart-services-modal footer .pf-c-alert")
 
+    @skipImage("No security changelog support in packagekit", "arch")
     def testInfoSecurity(self):
         b = self.browser
         m = self.machine
@@ -822,6 +829,7 @@ ExecStart=/usr/local/bin/{packageName}
 
         self.allow_restart_journal_messages()
 
+    @skipImage("No security changelog support in packagekit", "arch")
     def testSecurityOnly(self):
         b = self.browser
         m = self.machine
@@ -858,6 +866,7 @@ ExecStart=/usr/local/bin/{packageName}
             # secnocve should be displayed properly
             self.check_nth_update(2, "secnocve", "1-2", "security", desc_matches=["Fix leak"])
 
+    @skipImage("No changelog support in Arch Linux", "arch")
     def testInfoTruncation(self):
         b = self.browser
         m = self.machine
@@ -925,7 +934,7 @@ ExecStart=/usr/local/bin/{packageName}
         m.execute("pkcon refresh")
 
         # break the upgrade by removing the generated packages from the repo
-        m.execute("rm -f {0}/vapor*.deb {0}/vapor*.rpm".format(self.repo_dir))
+        m.execute("rm -f {0}/vapor*.deb {0}/vapor*.rpm {0}/vapor*.pkg*".format(self.repo_dir))
 
         m.start_cockpit()
         b.login_and_go("/updates")
@@ -938,7 +947,7 @@ ExecStart=/usr/local/bin/{packageName}
         b.wait_visible("#app .pf-c-page .pf-c-empty-state__body")
 
         self.assertRegex(b.text("#app .pf-c-page .pf-c-empty-state__body .pf-c-content div:first-of-type"),
-                         "missing|downloading|not.*available|No such file or directory")
+                         "missing|downloading|not.*available|No such file or directory|download library error")
 
         # not expecting any buttons
         self.assertFalse(b.is_present("#app button"))
@@ -1039,6 +1048,7 @@ ExecStart=/usr/local/bin/{packageName}
         b.wait_not_present("#available-updates")
 
 
+@skipImage("TODO: Arch Linux has no cockpit-ws package, it's in cockpit", "arch")
 @skipImage("Image uses OSTree", "fedora-coreos")
 class TestWsUpdate(NoSubManCase):
     def testBasic(self):
@@ -1135,7 +1145,7 @@ class TestKpatchInstall(NoSubManCase):
 
 @skipImage("Image uses OSTree", "fedora-coreos")
 @skipImage("No subscriptions", "debian-stable", "debian-testing", "centos-8-stream",
-           "fedora-34", "fedora-testing", "ubuntu-2004", "ubuntu-stable")
+           "fedora-34", "fedora-35", "fedora-testing", "ubuntu-2004", "ubuntu-stable", "arch")
 class TestUpdatesSubscriptions(PackageCase):
     provision = {
         "0": {"address": "10.111.112.1/20", "dns": "10.111.112.1"},
@@ -1463,6 +1473,7 @@ class TestAutoUpdates(NoSubManCase):
             # don't allow stomping over unparseable custom settings
             b.wait_not_present("#autoupdates-settings button")
 
+    @skipImage("TODO: Fails with 401 on our test runners", "arch")
     def testWithAvailableUpdates(self):
         b = self.browser
         m = self.machine
@@ -1582,7 +1593,7 @@ class TestAutoUpdatesInstall(NoSubManCase):
             b.wait_not_present("#settings")
             b.wait_not_present("#autoupdates-settings")
 
-    @skipImage("No supported auto update backend", "debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable")
+    @skipImage("No supported auto update backend", "debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-stable", "arch")
     def testInstall(self):
         b = self.browser
         m = self.machine

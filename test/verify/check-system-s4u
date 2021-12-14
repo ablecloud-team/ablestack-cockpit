@@ -23,7 +23,7 @@ from testlib import *
 
 
 @skipImage("No realmd available", "fedora-coreos")
-@skipImage("freeipa not currently available", "debian-stable", "debian-testing", "ubuntu-2004")
+@skipImage("freeipa not currently available", "debian-stable", "debian-testing", "ubuntu-2004", "arch")
 @skipImage("Skip these for now, unsure what's broken", "ubuntu-stable")
 @skipDistroPackage()
 @skipImage("Needs sssd >=2.4.1", "rhel-8-4", "rhel-8-5", "rhel-8-6", "centos-8-stream")
@@ -94,6 +94,11 @@ class TestS4USsh(MachineCase):
         ipa servicedelegationrule-add-target cockpit-delegation --servicedelegationtargets="cockpit-target"
         """
         ipa_machine.execute(f"podman exec freeipa bash -ec '{script}'")
+
+        # tell sssd about our CA for validating certs
+        client_machine.execute("mkdir -p /etc/sssd/pki")
+        with open("src/tls/ca/ca.pem") as f:
+            client_machine.write("/etc/sssd/pki/sssd_auth_ca_db.pem", f.read())
 
         # enable gssapiauth for ssh
         sshd_machine.execute("sed -ri 's/#GSSAPIAuthentication (yes|no)/GSSAPIAuthentication yes/' /etc/ssh/sshd_config")

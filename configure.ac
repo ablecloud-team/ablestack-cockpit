@@ -36,23 +36,12 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([tools])
 AC_CONFIG_MACRO_DIR([tools])
 
-AM_INIT_AUTOMAKE([1.9 foreign dist-xz no-dist-gzip subdir-objects tar-pax])
+AM_INIT_AUTOMAKE([1.11 foreign dist-xz no-dist-gzip subdir-objects tar-pax])
 
 AC_USE_SYSTEM_EXTENSIONS
-
-AM_PROG_AR
-AC_PROG_CC
 AC_PROG_RANLIB
-AC_PROG_LN_S
 
-# HACK - Prevent valgrind false-positives due to GHashTable trickery
-AC_CHECK_SIZEOF([void *])
-AM_CONDITIONAL([VALGRIND_MINADDR_HACK], [test "$ac_cv_sizeof_void_p" -eq 8])
-
-# Unrelated to above: enable more valgrind workarounds for other problems.
-AC_CHECK_HEADERS([valgrind/valgrind.h])
-
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+AM_SILENT_RULES([yes])
 
 AC_MSG_CHECKING([whether to install to prefix only])
 AC_ARG_ENABLE([prefix-only],
@@ -240,29 +229,6 @@ if test "$XGETTEXT" = "no"; then
         AC_MSG_ERROR([Please install gettext tools])
 fi
 
-# usermod
-#
-# usermod might not be world-executable, so AC_PATH_PROG might not
-# find it.  In that case, we fall back to /usr/sbin/usermod.
-
-AC_PATH_PROG([USERMOD], [usermod], [/usr/sbin/usermod], [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
-AC_DEFINE_UNQUOTED([PATH_USERMOD],["$USERMOD"],[Location of usermod binary])
-
-# newusers
-AC_PATH_PROG([NEWUSERS], [newusers], [/usr/sbin/newusers], [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
-AC_DEFINE_UNQUOTED([PATH_NEWUSERS],["$NEWUSERS"],[Location of newusers binary])
-AC_MSG_CHECKING(whether $NEWUSERS understands --crypt-method)
-if newusers --help | grep -q -e --crypt-method; then
-  AC_DEFINE_UNQUOTED([HAVE_NEWUSERS_CRYPT_METHOD],[1],[whether newusers understands --crypt-method])
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-
-# chpasswd
-AC_PATH_PROG([CHPASSWD], [chpasswd], [/usr/sbin/chpasswd], [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
-AC_DEFINE_UNQUOTED([PATH_CHPASSWD],["$CHPASSWD"],[Location of chpasswd binary])
-
 # ssh-add
 AC_PATH_PROG([SSH_ADD], [ssh-add], [/usr/bin/ssh-add], [$PATH:/usr/local/sbin:/usr/sbin:/sbin])
 AC_DEFINE_UNQUOTED([PATH_SSH_ADD], ["$SSH_ADD"], [Location of ssh-add binary])
@@ -270,10 +236,6 @@ AC_DEFINE_UNQUOTED([PATH_SSH_ADD], ["$SSH_ADD"], [Location of ssh-add binary])
 # ssh-agent
 AC_PATH_PROG([SSH_AGENT], [ssh-agent], [/usr/bin/ssh-agent], [$PATH:/usr/local/bin:/usr/bin:/bin])
 AC_DEFINE_UNQUOTED([PATH_SSH_AGENT], ["$SSH_AGENT"], [Location of ssh-agent binary])
-
-# chcon
-AC_PATH_PROG([CHCON], [chcon], [/usr/bin/chcon], [$PATH:/usr/local/bin:/usr/bin:/bin])
-AC_DEFINE_UNQUOTED([PATH_CHCON], ["$CHCON"], [Location of chcon binary])
 
 changequote(,)dnl
 if test "x$GCC" = "xyes"; then
@@ -556,7 +518,5 @@ echo "
 
         ssh-add:                    ${SSH_ADD}
         ssh-agent:                  ${SSH_AGENT}
-        usermod:                    ${USERMOD}
-        chcon:                      ${CHCON}
 
 Now type 'make' to compile cockpit."

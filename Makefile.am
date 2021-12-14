@@ -47,7 +47,7 @@ SUFFIXES = \
 MV = mv -f
 
 SUBST_RULE = \
-	$(AM_V_GEN) $(MKDIR_P) $(dir $@) && sed \
+	$(AM_V_GEN) mkdir -p $(dir $@) && sed \
 	-e 's,[@]PACKAGE[@],$(PACKAGE),g' \
 	-e 's,[@]admin_group[@],$(admin_group),g' \
 	-e 's,[@]datadir[@],$(datadir),g' \
@@ -82,7 +82,7 @@ clean-local::
 	$(AM_V_at)test "$(srcdir)" == "$(builddir)" || rm -rf dist/
 
 install-data-local:: $(WEBPACK_INSTALL) $(MANIFESTS)
-	$(MKDIR_P) $(DESTDIR)$(pkgdatadir)
+	mkdir -p $(DESTDIR)$(pkgdatadir)
 	$(V_TAR) tar --format=posix -cf - $^ | tar --no-same-owner -C $(DESTDIR)$(pkgdatadir) --strip-components=1 -xvf -
 install-data-local:: $(WEBPACK_GZ_INSTALL)
 	@for file in $^; do \
@@ -154,10 +154,6 @@ VALGRIND_SUPPRESSIONS = \
 	tools/valgrind.supp \
 	$(NULL)
 
-if VALGRIND_MINADDR_HACK
-VALGRIND_ARGS += --aspace-minaddr=0x100000000
-endif
-
 valgrind-suppressions: $(VALGRIND_SUPPRESSIONS)
 	$(AM_V_GEN) cat $^ /usr/share/glib-2.0/valgrind/glib.supp > $@
 
@@ -179,7 +175,7 @@ endif
 
 install-data-local:: $(DOCS_INSTALL_DEPS)
 if ENABLE_DOC
-	$(MKDIR_P) $(DESTDIR)$(htmldir)
+	mkdir -p $(DESTDIR)$(htmldir)
 	$(INSTALL_DATA) $(dir $<)/* $(DESTDIR)$(htmldir)
 else
 	@true
