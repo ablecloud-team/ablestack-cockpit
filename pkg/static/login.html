@@ -28,7 +28,7 @@
 
   <span id="badge"></span>
 
-  <div class="container">
+  <div class="container" id="main">
     <h1 id="brand" class="hide-before"></h1>
 
     <div id="error-group" class="pf-c-alert pf-m-danger pf-m-inline dialog-error noscript" aria-label="inline danger alert">
@@ -100,9 +100,9 @@
         </div>
 
         <div id="server-group" class="form-group" hidden>
-          <label title="Log in to another system. Leave blank to log in to the local system." for="server-field" class="control-label" translate>Connect to</label>
+          <label title="Log in to another system. Leave blank to log in to the local system." for="server-field" id="server-field-label" class="control-label" translate>Connect to</label>
           <div class="server-box">
-            <input type="text" class="form-control" id="server-field" placeholder="">
+            <input type="text" class="form-control" id="server-field" placeholder=" ">
             <span class="input-clear" id="server-clear" aria-hidden="true">
               <svg fill="currentColor" viewBox="0 0 352 512"><path d="m242.72 256 100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.29 12.28-32.19 0-44.48z"/></svg>
             </span>
@@ -110,7 +110,7 @@
         </div>
 
         <div class="form-group login-actions">
-          <button class="pc-c-button pf-m-primary login-button" id="login-button" type="submit">
+          <button class="pf-c-button pf-m-primary login-button" id="login-button" type="submit">
             <span class="spinner"></span>
             <span id="login-button-text" translate>Log in</span>
           </button>
@@ -155,6 +155,13 @@
       <label class="control-label"><span translate>Server</span>: <b id="server-name"></b></label>
     </p>
     <p id="login-note" class="login-note"></p>
+  </div>
+
+  <div class="container" id="recent-hosts" hidden>
+    <h1 translate>Recent hosts</h1>
+    <div class="server-box" id="recent-hosts-list">
+      <!-- Here show up recent hosts -->
+    </div>
   </div>
 
   <script type="text/javascript">

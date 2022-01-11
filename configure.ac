@@ -36,10 +36,18 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([tools])
 AC_CONFIG_MACRO_DIR([tools])
 
-AM_INIT_AUTOMAKE([1.11 foreign dist-xz no-dist-gzip subdir-objects tar-pax])
+AM_INIT_AUTOMAKE([1.11 foreign dist-xz no-dist-gzip subdir-objects])
+# we want tar-ustar to avoid introducing extra metadata (ctime, atime) which
+# only adds useless non-determinism to the result.  we also want to sort.
+am__tar='tar --format=ustar --sort=name --owner=root:0 --group=root:0 -chf - "$$tardir"'
 
 AC_USE_SYSTEM_EXTENSIONS
+AC_SYS_LARGEFILE
 AC_PROG_RANLIB
+
+AC_CHECK_FUNCS(
+    closefrom
+)
 
 AM_SILENT_RULES([yes])
 
@@ -340,16 +348,6 @@ AC_ARG_WITH([admin-group],
             ])
 AC_SUBST(admin_group)
 
-
-AC_ARG_WITH(selinux_config_type,
-	    AS_HELP_STRING([--with-selinux-config-type=<type>],
-			   [SELinux context type for cockpit config files]
-                          )
-           )
-
-COCKPIT_SELINUX_CONFIG_TYPE=$with_selinux_config_type
-AC_SUBST(COCKPIT_SELINUX_CONFIG_TYPE)
-
 # Documentation
 
 AC_MSG_CHECKING([whether to build documentation])
@@ -470,6 +468,7 @@ AC_CONFIG_FILES([
 Makefile
 doc/guide/version
 src/tls/cockpit-certificate-helper
+src/ws/cockpit-desktop
 ])
 AC_OUTPUT
 
@@ -501,7 +500,6 @@ echo "
         cockpit-ws instance user:   ${COCKPIT_WSINSTANCE_USER}
         cockpit-ws instance group:  ${COCKPIT_WSINSTANCE_GROUP}
         admin group:                ${admin_group}
-        selinux config type:        ${COCKPIT_SELINUX_CONFIG_TYPE}
 
         Building docs:              ${enable_doc}
         Debug mode:                 ${debug_status}

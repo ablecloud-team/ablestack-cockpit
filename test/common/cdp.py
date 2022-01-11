@@ -130,6 +130,8 @@ class Firefox(Browser):
                 user_pref("browser.download.folderList", 2);
                 user_pref("signon.rememberSignons", false);
                 user_pref("dom.navigation.locationChangeRateLimit.count", 9999);
+                // HACK: https://bugzilla.mozilla.org/show_bug.cgi?id=1746154
+                user_pref("fission.webContentIsolationStrategy", 0);
                 """.format(download_dir))
 
         with open(os.path.join(profile, "handlers.json"), "w") as f:
@@ -157,7 +159,7 @@ def jsquote(str):
 
 
 class CDP:
-    def __init__(self, lang=None, verbose=False, trace=False, inject_helpers=[]):
+    def __init__(self, lang=None, verbose=False, trace=False, fixed_content_size=False, inject_helpers=[]):
         self.lang = lang
         self.timeout = 60
         self.valid = False
@@ -172,12 +174,40 @@ class CDP:
         self._browser = None
         self._browser_home = None
         self._cdp_port_lockfile = None
-        if not self.mobile:
-            self.window_width = "1920"
-            self.window_height = "1200"
+
+        if fixed_content_size:
+
+            # We fix the size of the content iframe and then make the
+            # window large enough to fit the shell around it.  The
+            # content iframe size will be set later with
+            # "adjust_window_for_fixed_content_size" in testlib.py,
+            # after the shell has been loaded and we know how big it
+            # really is.
+            #
+            # The browser window needs to be big enough for the final
+            # adjusted size of shell plus content, but it also needs to be
+            # tight enough to trigger the right layout mode (desktop or
+            # mobile) from the start.
+
+            if not self.mobile:
+                self.content_width = 1680
+                self.content_height = 1130
+                self.window_width = self.content_width + 300
+                self.window_height = self.content_height + 300
+            else:
+                self.content_width = 414
+                self.content_height = 1856
+                self.window_width = self.content_width
+                self.window_height = self.content_height + 300
+
         else:
-            self.window_width = "414"
-            self.window_height = "1920"
+
+            if not self.mobile:
+                self.window_width = 1920
+                self.window_height = 1200
+            else:
+                self.window_width = 414
+                self.window_height = 1920
 
     def invoke(self, fn, **kwargs):
         """Call a particular CDP method such as Runtime.evaluate
@@ -276,7 +306,7 @@ class CDP:
             self._browser_home = tempfile.mkdtemp()
             environ = os.environ.copy()
             environ["HOME"] = self._browser_home
-            environ["LC_ALL"] = "en_US.UTF-8"
+            environ["LC_ALL"] = "C.UTF-8"
             # this might be set for the tests themselves, but we must isolate caching between tests
             try:
                 del environ["XDG_CACHE_HOME"]

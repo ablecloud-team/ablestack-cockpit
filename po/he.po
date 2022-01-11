@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-30 18:03+0000\n"
-"PO-Revision-Date: 2021-11-18 14:16+0000\n"
+"POT-Creation-Date: 2021-12-28 18:03+0000\n"
+"PO-Revision-Date: 2022-01-04 07:16+0000\n"
 "Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
 "Language-Team: Hebrew <https://translate.fedoraproject.org/projects/cockpit/"
 "main/he/>\n"
@@ -35,9 +35,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=(n == 1) ? 0 : ((n == 2) ? 1 : ((n > 10 && "
 "n % 10 == 0) ? 2 : 3));\n"
-"X-Generator: Weblate 4.9\n"
+"X-Generator: Weblate 4.10.1\n"
 
-#: pkg/storaged/content-views.jsx:481
+#: pkg/storaged/content-views.jsx:496
 msgid "$0 (encrypted)"
 msgstr "$0 (מוצפן)"
 
@@ -50,10 +50,8 @@ msgstr[2] "$0 מעבדים"
 msgstr[3] "$0 מעבדים"
 
 #: pkg/lib/machine-info.js:246
-#, fuzzy
-#| msgid "$0 GiB total"
 msgid "$0 GiB"
-msgstr "$0 GiB סך הכול"
+msgstr "$0 GiB"
 
 #: pkg/metrics/metrics.jsx:443 pkg/metrics/metrics.jsx:514
 msgid "$0 GiB available"
@@ -64,11 +62,8 @@ msgid "$0 GiB total"
 msgstr "$0 GiB סך הכול"
 
 #: pkg/storaged/stratis-panel.jsx:58
-#, fuzzy
-#| msgid "$0 Storage pool"
-#| msgid_plural "$0 Storage pools"
 msgid "$0 Stratis pool"
-msgstr "מאגר אחסון $0"
+msgstr "מאגר Stratis‏ $0"
 
 #: pkg/networkmanager/network-main.jsx:167
 msgid "$0 active zone"
@@ -114,8 +109,8 @@ msgstr[1] "יומיים"
 msgstr[2] "$0 ימים"
 msgstr[3] "$0 ימים"
 
-#: pkg/playground/translate.js:26 pkg/playground/translate.js:29
-#: pkg/storaged/mdraid-details.jsx:215
+#: pkg/storaged/mdraid-details.jsx:215 pkg/playground/translate.js:26
+#: pkg/playground/translate.js:29
 msgid "$0 disk is missing"
 msgid_plural "$0 disks are missing"
 msgstr[0] "כונן אחד חסר"
@@ -136,11 +131,11 @@ msgstr[3] "$0 כוננים חסרים"
 msgid "$0 disks"
 msgstr "$0 כוננים"
 
-#: pkg/shell/topnav.jsx:113
+#: pkg/shell/topnav.jsx:118
 msgid "$0 documentation"
 msgstr "התיעוד של $0"
 
-#: pkg/static/login.js:393 pkg/static/login.js:841
+#: pkg/static/login.js:393 pkg/static/login.js:897
 msgid "$0 error"
 msgstr "שגיאת $0"
 
@@ -161,9 +156,6 @@ msgstr[2] "$0 ניסיונות כניסה שנכשלו"
 msgstr[3] "$0 ניסיונות כניסה שנכשלו"
 
 #: pkg/storaged/content-views.jsx:450
-#, fuzzy
-#| msgctxt "storage-id-desc"
-#| msgid "$0 file system"
 msgctxt "storage-id-desc"
 msgid "$0 filesystem"
 msgstr "מערכת קבצים $0"
@@ -200,21 +192,21 @@ msgstr[1] "$0 פגיעות חשובות"
 msgstr[2] "$0 פגיעות חשובות"
 msgstr[3] "$0 פגיעות חשובות"
 
+#: pkg/storaged/format-dialog.jsx:182 pkg/storaged/vgroup-details.jsx:192
 #: pkg/storaged/lvol-tabs.jsx:232 pkg/storaged/lvol-tabs.jsx:298
+#: pkg/storaged/content-views.jsx:365 pkg/storaged/content-views.jsx:655
 #: pkg/storaged/vdo-details.jsx:131 pkg/storaged/vdo-details.jsx:162
-#: pkg/storaged/content-views.jsx:374 pkg/storaged/content-views.jsx:634
-#: pkg/storaged/vgroup-details.jsx:192 pkg/storaged/stratis-details.jsx:250
-#: pkg/storaged/stratis-details.jsx:549 pkg/storaged/mdraid-details.jsx:237
-#: pkg/storaged/mdraid-details.jsx:292 pkg/storaged/format-dialog.jsx:182
+#: pkg/storaged/mdraid-details.jsx:237 pkg/storaged/mdraid-details.jsx:292
+#: pkg/storaged/stratis-details.jsx:250 pkg/storaged/stratis-details.jsx:549
 msgid "$0 is in active use"
 msgstr "$0 בשימוש פעיל"
 
 #: pkg/lib/cockpit-components-install-dialog.jsx:158
-#: pkg/storaged/content-views.jsx:790
+#: pkg/storaged/content-views.jsx:808
 msgid "$0 is not available from any repository."
 msgstr "$0 אינו זמין מאף מאגר."
 
-#: pkg/shell/hosts_dialog.jsx:451 pkg/static/login.js:663
+#: pkg/static/login.js:719 pkg/shell/hosts_dialog.jsx:451
 msgid "$0 key changed"
 msgstr "המפתח $0 השתנה"
 
@@ -253,10 +245,6 @@ msgstr[0] "חודש"
 msgstr[1] "חודשיים"
 msgstr[2] "$0 חודשים"
 msgstr[3] "$0 חודשים"
-
-#: pkg/storaged/fsys-tab.jsx:499
-msgid "$0 of $1"
-msgstr "$0 מתוך $1"
 
 #: pkg/storaged/stratis-details.jsx:208
 #, fuzzy
@@ -368,7 +356,7 @@ msgstr "$0,‏ $1 פנויים"
 msgid "$0: crash at $1"
 msgstr "$0: קריסה ב־$1"
 
-#: pkg/storaged/utils.js:190
+#: pkg/storaged/utils.js:192
 msgid "$name (from $host)"
 msgstr "$name (מ־$host)"
 
@@ -404,7 +392,7 @@ msgstr "שעה"
 msgid "1 min"
 msgstr "דקה"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:156
+#: pkg/lib/cockpit-components-shutdown.jsx:166
 msgid "1 minute"
 msgstr "דקה"
 
@@ -472,7 +460,7 @@ msgstr "אחד"
 msgid "2 MiB"
 msgstr "2 MiB"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:158
+#: pkg/lib/cockpit-components-shutdown.jsx:168
 msgid "20 minutes"
 msgstr "20 דקות"
 
@@ -540,7 +528,7 @@ msgstr "שלושה"
 msgid "4 KiB"
 msgstr "4 KiB"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:159
+#: pkg/lib/cockpit-components-shutdown.jsx:169
 msgid "40 minutes"
 msgstr "40 דקות"
 
@@ -553,7 +541,7 @@ msgid "5 min"
 msgstr "5 דקות"
 
 #: pkg/lib/cockpit-components-plot.jsx:271
-#: pkg/lib/cockpit-components-shutdown.jsx:157
+#: pkg/lib/cockpit-components-shutdown.jsx:167
 msgid "5 minutes"
 msgstr "5 דקות"
 
@@ -569,7 +557,7 @@ msgstr "חמישה"
 msgid "6 hours"
 msgstr "6 שעות"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:160
+#: pkg/lib/cockpit-components-shutdown.jsx:170
 msgid "60 minutes"
 msgstr "60 דקות"
 
@@ -671,7 +659,7 @@ msgstr "מעקב אחר ARP"
 msgid "ARP ping"
 msgstr "פינג ARP"
 
-#: pkg/shell/topnav.jsx:131
+#: pkg/shell/topnav.jsx:136
 msgid "About Web Console"
 msgstr "על המסוף המקוון"
 
@@ -683,11 +671,11 @@ msgstr "חסר"
 msgid "Accept key and connect"
 msgstr "לקבל את המפתח ולהתחבר"
 
-#: pkg/static/login.js:578
+#: pkg/static/login.js:629
 msgid "Accept key and log in"
 msgstr "לקבל את המפתח ולהיכנס"
 
-#: pkg/users/account-create-dialog.js:69 pkg/users/account-details.js:315
+#: pkg/users/account-details.js:315 pkg/users/account-create-dialog.js:69
 msgid "Access"
 msgstr "גישה"
 
@@ -703,13 +691,11 @@ msgstr "החשבון לא זמין או שאין אפשרות לערוך אות�
 msgid "Accounts"
 msgstr "חשבונות"
 
-#: pkg/apps/application-list.jsx:84 pkg/storaged/content-views.jsx:709
-#: pkg/storaged/content-views.jsx:961 pkg/storaged/stratis-details.jsx:647
-#: pkg/storaged/stratis-details.jsx:785
+#: pkg/apps/application-list.jsx:84
 msgid "Actions"
 msgstr "פעולות"
 
-#: pkg/storaged/content-views.jsx:327
+#: pkg/storaged/content-views.jsx:318
 msgid "Activate"
 msgstr "הפעלה"
 
@@ -717,16 +703,16 @@ msgstr "הפעלה"
 msgid "Activating $target"
 msgstr "$target מופעל"
 
-#: pkg/networkmanager/interfaces.js:753 pkg/networkmanager/team.jsx:52
+#: pkg/networkmanager/team.jsx:52 pkg/networkmanager/interfaces.js:753
 msgid "Active"
 msgstr "פעיל"
 
-#: pkg/networkmanager/bond.jsx:45 pkg/networkmanager/team.jsx:43
+#: pkg/networkmanager/team.jsx:43 pkg/networkmanager/bond.jsx:45
 msgid "Active backup"
 msgstr "גיבוי פעיל"
 
 #: pkg/shell/active-pages-modal.jsx:93 pkg/shell/active-pages-modal.jsx:101
-#: pkg/shell/topnav.jsx:150
+#: pkg/shell/topnav.jsx:155
 msgid "Active pages"
 msgstr "עמודים פעילים"
 
@@ -751,20 +737,20 @@ msgstr "איזון עומס מסתגל"
 msgid "Adaptive transmit load balancing"
 msgstr "איזון עומס העברה מסתגל"
 
-#: pkg/shell/credentials.jsx:185 pkg/shell/hosts_dialog.jsx:245
-#: pkg/systemd/services/timer-dialog.jsx:332
-#: pkg/users/authorized-keys-panel.js:63 pkg/storaged/vgroup-details.jsx:78
-#: pkg/storaged/vgroup-details.jsx:130 pkg/storaged/stratis-details.jsx:152
-#: pkg/storaged/mdraid-details.jsx:73 pkg/storaged/mdraid-details.jsx:161
-#: pkg/storaged/nfs-details.jsx:199 pkg/storaged/nfs-panel.jsx:65
-#: pkg/storaged/crypto-keyslots.jsx:310 pkg/storaged/crypto-keyslots.jsx:621
+#: pkg/users/authorized-keys-panel.js:63
+#: pkg/systemd/services/timer-dialog.jsx:332 pkg/shell/hosts_dialog.jsx:245
+#: pkg/shell/credentials.jsx:185 pkg/storaged/vgroup-details.jsx:78
+#: pkg/storaged/vgroup-details.jsx:130 pkg/storaged/nfs-details.jsx:199
+#: pkg/storaged/nfs-panel.jsx:65 pkg/storaged/mdraid-details.jsx:73
+#: pkg/storaged/mdraid-details.jsx:161 pkg/storaged/stratis-details.jsx:152
 #: pkg/storaged/iscsi-panel.jsx:140 pkg/storaged/iscsi-panel.jsx:164
-#: pkg/storaged/iscsi-panel.jsx:259
+#: pkg/storaged/iscsi-panel.jsx:259 pkg/storaged/crypto-keyslots.jsx:310
+#: pkg/storaged/crypto-keyslots.jsx:621
 msgid "Add"
 msgstr "הוספה"
 
-#: pkg/networkmanager/network-interface-members.jsx:176
 #: pkg/lib/cockpit-components-firewalld-request.jsx:149
+#: pkg/networkmanager/network-interface-members.jsx:176
 msgid "Add $0"
 msgstr "הוספת $0"
 
@@ -803,7 +789,7 @@ msgstr "הוספת שער גישה ל־iSCSI"
 msgid "Add item"
 msgstr "הוספת פריט"
 
-#: pkg/shell/credentials.jsx:91 pkg/users/authorized-keys-panel.js:153
+#: pkg/users/authorized-keys-panel.js:153 pkg/shell/credentials.jsx:91
 #: pkg/storaged/crypto-keyslots.jsx:276
 msgid "Add key"
 msgstr "הוספת מפתח"
@@ -812,7 +798,7 @@ msgstr "הוספת מפתח"
 msgid "Add member"
 msgstr "הוספת חבר"
 
-#: pkg/shell/hosts_dialog.jsx:244 pkg/shell/hosts.jsx:208
+#: pkg/shell/hosts_dialog.jsx:244 pkg/shell/hosts.jsx:210
 msgid "Add new host"
 msgstr "הוספת מארח חדש"
 
@@ -895,8 +881,8 @@ msgstr "חבילות נוספות:"
 msgid "Additional ports"
 msgstr "פתחות נוספות"
 
-#: pkg/networkmanager/ip-settings.jsx:170
-#: pkg/networkmanager/ip-settings.jsx:321 pkg/storaged/iscsi-panel.jsx:131
+#: pkg/storaged/iscsi-panel.jsx:131 pkg/networkmanager/ip-settings.jsx:170
+#: pkg/networkmanager/ip-settings.jsx:321
 msgid "Address"
 msgstr "כתובת"
 
@@ -912,7 +898,7 @@ msgstr "הכתובת לא יכולה להיות ריקה"
 msgid "Address is not a valid URL"
 msgstr "הכתובת אינה תקנית"
 
-#: pkg/networkmanager/ip-settings.jsx:144 pkg/networkmanager/firewall.jsx:177
+#: pkg/networkmanager/firewall.jsx:177 pkg/networkmanager/ip-settings.jsx:144
 msgid "Addresses"
 msgstr "כתובות"
 
@@ -994,7 +980,7 @@ msgstr "תיעוד תפקידים של Ansible"
 #: pkg/systemd/logs.jsx:380
 msgid ""
 "Any text string in the logs messages can be filtered. The string can also be "
-"in the form of a regular expressions. Also supports filtering by message log "
+"in the form of a regular expression. Also supports filtering by message log "
 "fields. These are space separated values, in form FIELD=VALUE, where value "
 "can be comma separated list of possible values."
 msgstr ""
@@ -1012,10 +998,10 @@ msgstr "יישומים"
 msgid "Applications list"
 msgstr "רשימת יישומים"
 
-#: pkg/networkmanager/dialogs-common.jsx:149 pkg/packagekit/kpatch.jsx:286
 #: pkg/kdump/kdump-view.jsx:360 pkg/storaged/nfs-details.jsx:199
-#: pkg/storaged/crypto-tab.jsx:158 pkg/storaged/crypto-tab.jsx:202
 #: pkg/storaged/fsys-tab.jsx:365 pkg/storaged/fsys-tab.jsx:471
+#: pkg/storaged/crypto-tab.jsx:158 pkg/storaged/crypto-tab.jsx:202
+#: pkg/networkmanager/dialogs-common.jsx:149 pkg/packagekit/kpatch.jsx:286
 msgid "Apply"
 msgstr "החלה"
 
@@ -1039,7 +1025,7 @@ msgstr "העדכונים חלים"
 msgid "Applying updates failed"
 msgstr "החלת העדכונים נכשלה"
 
-#: pkg/shell/indexes.js:340
+#: pkg/shell/indexes.js:329
 msgid "Apps"
 msgstr "יישומים"
 
@@ -1064,8 +1050,8 @@ msgstr[3] "נדרשים $0 כוננים לפחות."
 msgid "At least one block device is needed."
 msgstr "נדרש התקן בלוק אחד לפחות."
 
-#: pkg/storaged/vgroups-panel.jsx:84 pkg/storaged/vgroup-details.jsx:72
-#: pkg/storaged/stratis-details.jsx:146 pkg/storaged/mdraid-details.jsx:67
+#: pkg/storaged/vgroup-details.jsx:72 pkg/storaged/mdraid-details.jsx:67
+#: pkg/storaged/vgroups-panel.jsx:84 pkg/storaged/stratis-details.jsx:146
 msgid "At least one disk is needed."
 msgstr "נדרש כונן אחד לפחות."
 
@@ -1093,11 +1079,11 @@ msgstr "מתבצע אימות"
 msgid "Authentication"
 msgstr "אימות"
 
-#: pkg/static/login.js:831
+#: pkg/static/login.js:887
 msgid "Authentication failed"
 msgstr "האימות נכשל"
 
-#: pkg/static/login.js:821
+#: pkg/static/login.js:877
 msgid "Authentication failed: Server closed connection"
 msgstr "האימות נכשל: השרת סגר את החיבור"
 
@@ -1119,7 +1105,7 @@ msgstr "אישור מפתח SSH"
 msgid "Authorized public SSH keys"
 msgstr "מפתחות SSH ציבוריים מורשים"
 
-#: pkg/networkmanager/mtu.jsx:80 pkg/networkmanager/network-interface.jsx:387
+#: pkg/networkmanager/network-interface.jsx:387 pkg/networkmanager/mtu.jsx:80
 #: pkg/networkmanager/ip-settings.jsx:51 pkg/networkmanager/ip-settings.jsx:216
 #: pkg/networkmanager/ip-settings.jsx:261
 #: pkg/networkmanager/ip-settings.jsx:306
@@ -1142,8 +1128,8 @@ msgstr "כניסה אוטומטית"
 msgid "Automatic updates"
 msgstr "עדכונים אוטומטיים"
 
-#: pkg/systemd/services/services-list.jsx:76
 #: pkg/systemd/services/service-details.jsx:414
+#: pkg/systemd/services/services-list.jsx:76
 msgid "Automatically starts"
 msgstr "מתחיל אוטומטית"
 
@@ -1228,28 +1214,14 @@ msgstr "אריזת בלייד"
 msgid "Block"
 msgstr "בלוק"
 
-#: pkg/storaged/content-views.jsx:813
+#: pkg/storaged/content-views.jsx:831
 msgid "Block device for filesystems"
 msgstr "התקן בלוק למערכות הפעלה"
 
 #: pkg/storaged/stratis-details.jsx:141 pkg/storaged/stratis-details.jsx:224
-#: pkg/storaged/stratis-details.jsx:746 pkg/storaged/stratis-panel.jsx:158
+#: pkg/storaged/stratis-details.jsx:753 pkg/storaged/stratis-panel.jsx:158
 msgid "Block devices"
 msgstr "התקני בלוק"
-
-#: pkg/storaged/stratis-details.jsx:647 pkg/storaged/stratis-details.jsx:785
-#, fuzzy
-#| msgid "Blocked"
-msgid "Blockdev"
-msgstr "חסום"
-
-#: pkg/storaged/content-views.jsx:460
-msgid "Blockdev of Stratis pool $0"
-msgstr ""
-
-#: pkg/storaged/content-views.jsx:446
-msgid "Blockdev of locked Stratis pool $0"
-msgstr ""
 
 #: pkg/storaged/mdraid-details.jsx:112
 msgid "Blocked"
@@ -1291,7 +1263,7 @@ msgstr "הגדרות פתחת גשר"
 msgid "Bridge settings"
 msgstr "הגדרות גשר"
 
-#: pkg/networkmanager/bond.jsx:47 pkg/networkmanager/team.jsx:45
+#: pkg/networkmanager/team.jsx:45 pkg/networkmanager/bond.jsx:47
 msgid "Broadcast"
 msgstr "שידור"
 
@@ -1318,11 +1290,11 @@ msgid ""
 "$2, the key will be automatically made available and you can log in to $3 "
 "without password in the future."
 msgstr ""
-"החלפת ססמת מפתח ה־SSH‏ $0 לססמת הכניסה של $1 על גבי $2, תוביל לכך שהמפתח "
-"אוטומטית יהיה זמין ותהיה לך אפשרות להיכנס אל $3 ללא ססמה בעתיד."
+"החלפת סיסמת מפתח ה־SSH‏ $0 לסיסמת הכניסה של $1 על גבי $2, תוביל לכך שהמפתח "
+"אוטומטית יהיה זמין ותהיה לך אפשרות להיכנס אל $3 ללא סיסמה בעתיד."
 
-#: pkg/systemd/overview-cards/usageCard.jsx:121 pkg/systemd/hwinfo.jsx:120
 #: pkg/metrics/metrics.jsx:470 pkg/metrics/metrics.jsx:1388
+#: pkg/systemd/overview-cards/usageCard.jsx:121 pkg/systemd/hwinfo.jsx:120
 msgid "CPU"
 msgstr "מעבד"
 
@@ -1359,25 +1331,25 @@ msgid "Can not find any logs using the current combination of filters."
 msgstr "לא ניתן למצוא יומנים עם שילוב המסננים הנוכחי."
 
 #: pkg/static/login.html:117 pkg/playground/translate.html:39
-#: pkg/shell/credentials.jsx:316 pkg/shell/active-pages-modal.jsx:96
-#: pkg/shell/hosts_dialog.jsx:278 pkg/shell/hosts_dialog.jsx:373
-#: pkg/shell/hosts_dialog.jsx:495 pkg/shell/hosts_dialog.jsx:861
-#: pkg/shell/superuser.jsx:86 pkg/shell/superuser.jsx:155
-#: pkg/shell/shell-modals.jsx:141 pkg/networkmanager/firewall.jsx:533
-#: pkg/networkmanager/firewall.jsx:707 pkg/networkmanager/firewall.jsx:799
-#: pkg/networkmanager/dialogs-common.jsx:152 pkg/apps/utils.jsx:66
+#: pkg/tuned/dialog.jsx:309 pkg/metrics/metrics.jsx:1035
+#: pkg/lib/cockpit-components-shutdown.jsx:182
+#: pkg/lib/cockpit-components-dialog.jsx:127
 #: pkg/systemd/services/service-details.jsx:76
 #: pkg/systemd/services/timer-dialog.jsx:136
-#: pkg/systemd/overview-cards/motdCard.jsx:102
 #: pkg/systemd/overview-cards/realmd.jsx:416
 #: pkg/systemd/overview-cards/configurationCard.jsx:303
-#: pkg/systemd/hwinfo.jsx:247 pkg/systemd/reporting.jsx:420
-#: pkg/packagekit/updates.jsx:473 pkg/packagekit/updates.jsx:544
-#: pkg/packagekit/kpatch.jsx:291 pkg/packagekit/autoupdates.jsx:419
-#: pkg/sosreport/index.jsx:157 pkg/metrics/metrics.jsx:1035
-#: pkg/lib/cockpit-components-dialog.jsx:127
-#: pkg/lib/cockpit-components-shutdown.jsx:172 pkg/storaged/jobs-panel.jsx:139
-#: pkg/tuned/dialog.jsx:309
+#: pkg/systemd/overview-cards/motdCard.jsx:102 pkg/systemd/reporting.jsx:420
+#: pkg/systemd/hwinfo.jsx:247 pkg/shell/hosts_dialog.jsx:278
+#: pkg/shell/hosts_dialog.jsx:373 pkg/shell/hosts_dialog.jsx:495
+#: pkg/shell/hosts_dialog.jsx:861 pkg/shell/active-pages-modal.jsx:96
+#: pkg/shell/credentials.jsx:316 pkg/shell/superuser.jsx:86
+#: pkg/shell/superuser.jsx:155 pkg/shell/shell-modals.jsx:128
+#: pkg/apps/utils.jsx:66 pkg/storaged/jobs-panel.jsx:139
+#: pkg/sosreport/index.jsx:157 pkg/networkmanager/firewall.jsx:533
+#: pkg/networkmanager/firewall.jsx:707 pkg/networkmanager/firewall.jsx:799
+#: pkg/networkmanager/dialogs-common.jsx:152 pkg/packagekit/updates.jsx:473
+#: pkg/packagekit/updates.jsx:544 pkg/packagekit/kpatch.jsx:291
+#: pkg/packagekit/autoupdates.jsx:419
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -1385,7 +1357,7 @@ msgstr "ביטול"
 msgid "Cannot be enabled"
 msgstr "לא ניתן להפעיל"
 
-#: pkg/shell/indexes.js:463
+#: pkg/shell/indexes.js:452
 msgid "Cannot connect to an unknown host"
 msgstr "לא ניתן להתחבר למארח לא ידוע"
 
@@ -1397,12 +1369,13 @@ msgstr "לא ניתן להעביר פרטי גישה"
 msgid "Cannot join a domain because realmd is not available on this system"
 msgstr "לא ניתן להצטרף לשם תחום כיוון ש־realmd לא זמין במערכת הזו"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:121
+#: pkg/lib/cockpit-components-shutdown.jsx:124
+#: pkg/lib/cockpit-components-shutdown.jsx:157
 msgid "Cannot schedule event in the past"
 msgstr "לא ניתן לתזמן אירוע לעבר"
 
-#: pkg/storaged/vgroup-details.jsx:240 pkg/storaged/mdraid-details.jsx:344
-#: pkg/storaged/drive-details.jsx:84 pkg/storaged/block-details.jsx:48
+#: pkg/storaged/vgroup-details.jsx:240 pkg/storaged/block-details.jsx:48
+#: pkg/storaged/mdraid-details.jsx:344 pkg/storaged/drive-details.jsx:84
 msgctxt "storage"
 msgid "Capacity"
 msgstr "קיבולת"
@@ -1411,9 +1384,10 @@ msgstr "קיבולת"
 msgid "Carrier"
 msgstr "ספקית"
 
-#: pkg/systemd/overview-cards/configurationCard.jsx:302
 #: pkg/users/expiration-dialogs.js:110 pkg/users/expiration-dialogs.js:214
-#: pkg/lib/serverTime.js:659 pkg/storaged/iscsi-panel.jsx:191
+#: pkg/lib/serverTime.js:659
+#: pkg/systemd/overview-cards/configurationCard.jsx:302
+#: pkg/storaged/iscsi-panel.jsx:191
 msgid "Change"
 msgstr "החלפה"
 
@@ -1431,7 +1405,7 @@ msgstr "החלפת מילת צופן"
 
 #: pkg/shell/credentials.jsx:253
 msgid "Change password"
-msgstr "החלפת ססמה"
+msgstr "החלפת סיסמה"
 
 #: pkg/tuned/dialog.jsx:301
 msgid "Change performance profile"
@@ -1447,7 +1421,7 @@ msgstr "החלפת שעון המערכת"
 
 #: pkg/shell/hosts_dialog.jsx:785
 msgid "Change the password of $0"
-msgstr "החלפת הססמה של $0"
+msgstr "החלפת הסיסמה של $0"
 
 #: pkg/networkmanager/interfaces.js:1590
 msgid "Change the settings"
@@ -1497,7 +1471,7 @@ msgid "Checking for package updates..."
 msgstr "מתבצע איתור של עדכוני חבילות…"
 
 #: pkg/lib/cockpit-components-install-dialog.jsx:150
-#: pkg/storaged/content-views.jsx:786
+#: pkg/storaged/content-views.jsx:804
 msgid "Checking installed software"
 msgstr "התכנה שמותקנת נבדקת"
 
@@ -1505,7 +1479,7 @@ msgstr "התכנה שמותקנת נבדקת"
 msgid "Checking software status"
 msgstr "מצב התכנית בבדיקה"
 
-#: pkg/shell/shell-modals.jsx:145
+#: pkg/shell/shell-modals.jsx:132
 msgid "Choose the language to be used in the application"
 msgstr "נא לבחור את שפת היישום לשימוש"
 
@@ -1529,7 +1503,7 @@ msgstr "לנקות ‚התחלה נכשלה’"
 msgid "Clear all filters"
 msgstr "ניקוי כל המסננים"
 
-#: pkg/shell/nav.jsx:130
+#: pkg/shell/nav.jsx:140
 msgid "Clear search"
 msgstr "ניקוי החיפוש"
 
@@ -1539,20 +1513,21 @@ msgstr "התקן טקסט גלוי"
 
 #: pkg/users/account-create-dialog.js:212 pkg/users/password-dialogs.js:215
 msgid "Click $0 again to use the password anyway."
-msgstr "יש ללחוץ על $0 שוב כדי להשתמש בססמה בכל זאת."
+msgstr "יש ללחוץ על $0 שוב כדי להשתמש בסיסמה בכל זאת."
 
 #: pkg/systemd/overview-cards/realmd.jsx:287
 msgid "Client software"
 msgstr "תכנה מצד לקוח"
 
-#: pkg/shell/credentials.jsx:82 pkg/shell/hosts_dialog.jsx:81
-#: pkg/shell/superuser.jsx:94 pkg/shell/superuser.jsx:102
-#: pkg/shell/shell-modals.jsx:193 pkg/networkmanager/interfaces.js:43
-#: pkg/apps/utils.jsx:84 pkg/systemd/overview-cards/realmd.jsx:261
+#: pkg/users/dialog-utils.js:58 pkg/lib/cockpit-components-modifications.jsx:78
+#: pkg/lib/cockpit-components-terminal.jsx:208
+#: pkg/systemd/overview-cards/realmd.jsx:261
 #: pkg/systemd/overview-cards/configurationCard.jsx:204
-#: pkg/sosreport/index.jsx:160 pkg/users/dialog-utils.js:58
-#: pkg/lib/cockpit-components-modifications.jsx:78
-#: pkg/lib/cockpit-components-terminal.jsx:208 pkg/storaged/dialog.jsx:432
+#: pkg/shell/hosts_dialog.jsx:81 pkg/shell/credentials.jsx:82
+#: pkg/shell/superuser.jsx:94 pkg/shell/superuser.jsx:102
+#: pkg/shell/shell-modals.jsx:180 pkg/apps/utils.jsx:84
+#: pkg/storaged/dialog.jsx:432 pkg/sosreport/index.jsx:160
+#: pkg/networkmanager/interfaces.js:43
 msgid "Close"
 msgstr "סגירה"
 
@@ -1572,7 +1547,7 @@ msgstr "האימות של Cockpit לא מוגדר נכון."
 msgid "Cockpit could not contact the given host."
 msgstr "ל־Cockpit אין אפשרות ליצור קשר עם המארח שסופק."
 
-#: pkg/shell/shell-modals.jsx:195
+#: pkg/shell/shell-modals.jsx:182
 msgid "Cockpit had an unexpected internal error."
 msgstr "ב־Cockpit אירעה שגיאה בלתי צפויה."
 
@@ -1589,7 +1564,7 @@ msgstr ""
 "המסוף. באותו האופן, אם מתרחשת שגיאה במסוף ניתן לצפות בה במנשק היומן של "
 "Cockpit."
 
-#: pkg/shell/shell-modals.jsx:86
+#: pkg/shell/shell-modals.jsx:73
 msgid "Cockpit is an interactive Linux server admin interface."
 msgstr "Cockpit הוא מנשק אינטראקטיבי לניהול שרתי לינוקס."
 
@@ -1646,11 +1621,11 @@ msgstr "התקשורת עם tuned נכשלה"
 msgid "Compact PCI"
 msgstr "PCI חסכוני"
 
-#: pkg/storaged/content-views.jsx:648
+#: pkg/storaged/content-views.jsx:669
 msgid "Compatible with all systems and devices (MBR)"
 msgstr "תואם לכל המערכות וההתקנים (MBR)"
 
-#: pkg/storaged/content-views.jsx:651
+#: pkg/storaged/content-views.jsx:672
 msgid "Compatible with modern system and hard disks > 2TB (GPT)"
 msgstr "תואם למערכות ולכוננים חדישים > 2 ט״ב (GPT)"
 
@@ -1659,7 +1634,7 @@ msgid "Compress crash dumps to save space"
 msgstr "דחיסת היטלי קריסה כדי לחסוך במקום"
 
 #: pkg/kdump/kdump-view.jsx:166 pkg/storaged/lvol-tabs.jsx:562
-#: pkg/storaged/vdo-details.jsx:316 pkg/storaged/content-views.jsx:903
+#: pkg/storaged/content-views.jsx:921 pkg/storaged/vdo-details.jsx:316
 msgid "Compression"
 msgstr "דחיסה"
 
@@ -1698,15 +1673,15 @@ msgstr "אישור"
 
 #: pkg/shell/hosts_dialog.jsx:778
 msgid "Confirm key password"
-msgstr "אישור ססמת מפתח"
+msgstr "אישור סיסמת מפתח"
 
 #: pkg/shell/hosts_dialog.jsx:792
 msgid "Confirm new key password"
-msgstr "אישור ססמה חדשה למפתח"
+msgstr "אישור סיסמה חדשה למפתח"
 
 #: pkg/users/password-dialogs.js:149
 msgid "Confirm new password"
-msgstr "אישור ססמה חדשה"
+msgstr "אישור סיסמה חדשה"
 
 #: pkg/shell/credentials.jsx:269
 msgid "Confirm password"
@@ -1736,11 +1711,15 @@ msgstr "התחברות אוטומטית"
 msgid "Connect to"
 msgstr "התחברות אל"
 
+#: pkg/static/login.js:621
+msgid "Connect to:"
+msgstr "התחברות אל:"
+
 #: pkg/selinux/setroubleshoot-view.jsx:328
 msgid "Connecting to SETroubleshoot daemon..."
 msgstr "מתבצעת התחברות לסוכן SETroubleshoot…"
 
-#: pkg/shell/indexes.js:458
+#: pkg/shell/indexes.js:447
 msgid "Connecting to the machine"
 msgstr "מתבצעת התחברות למכונה"
 
@@ -1748,7 +1727,7 @@ msgstr "מתבצעת התחברות למכונה"
 msgid "Connection error"
 msgstr "שגיאת התחברות"
 
-#: pkg/shell/index.html:74
+#: pkg/shell/failures.jsx:35
 msgid "Connection failed"
 msgstr "ההתחברות נכשלה"
 
@@ -1772,12 +1751,11 @@ msgstr "שם תחום שנוצר אתו קשר"
 msgid "Container administrator"
 msgstr "מנהל המכולה"
 
-#: pkg/shell/nav.jsx:201
+#: pkg/shell/nav.jsx:211
 msgid "Contains:"
 msgstr "מכיל:"
 
-#: pkg/storaged/content-views.jsx:697 pkg/storaged/content-views.jsx:707
-#: pkg/storaged/content-views.jsx:709 pkg/storaged/content-views.jsx:961
+#: pkg/storaged/content-views.jsx:718 pkg/storaged/content-views.jsx:728
 msgid "Content"
 msgstr "תוכן"
 
@@ -1785,7 +1763,7 @@ msgstr "תוכן"
 msgid "Continue"
 msgstr "להמשיך"
 
-#: pkg/shell/shell-modals.jsx:182
+#: pkg/shell/shell-modals.jsx:169
 msgid "Continue session"
 msgstr "להמשיך הפעלה"
 
@@ -1799,25 +1777,23 @@ msgid "Control"
 msgstr "Control"
 
 #: pkg/systemd/abrtLog.jsx:126
-#, fuzzy
-#| msgid "Control"
 msgid "Controller"
-msgstr "בקרה"
+msgstr "בקר"
 
 #: pkg/lib/machine-info.js:88
 msgid "Convertible"
 msgstr "מתהפך"
 
-#: pkg/shell/credentials.jsx:213
+#: pkg/shell/credentials.jsx:213 pkg/shell/failures.jsx:41
 msgid "Copied"
 msgstr "הועתק"
 
-#: pkg/shell/credentials.jsx:213
 #: pkg/lib/cockpit-components-context-menu.jsx:103
+#: pkg/shell/credentials.jsx:213 pkg/shell/failures.jsx:41
 msgid "Copy"
 msgstr "העתקה"
 
-#: pkg/systemd/logs.jsx:415 pkg/lib/cockpit-components-modifications.jsx:75
+#: pkg/lib/cockpit-components-modifications.jsx:75 pkg/systemd/logs.jsx:415
 #: pkg/storaged/crypto-keyslots.jsx:393
 msgid "Copy to clipboard"
 msgstr "העתקה ללוח הגזירים"
@@ -1845,9 +1821,9 @@ msgstr "הקרסת המערכת"
 #: pkg/users/account-create-dialog.js:212
 #: pkg/users/account-create-dialog.js:256
 #: pkg/lib/cockpit-components-file-autocomplete.jsx:185
-#: pkg/storaged/vgroups-panel.jsx:90 pkg/storaged/content-views.jsx:176
-#: pkg/storaged/content-views.jsx:314 pkg/storaged/content-views.jsx:918
-#: pkg/storaged/stratis-details.jsx:397 pkg/storaged/mdraids-panel.jsx:140
+#: pkg/storaged/mdraids-panel.jsx:140 pkg/storaged/content-views.jsx:174
+#: pkg/storaged/content-views.jsx:305 pkg/storaged/content-views.jsx:936
+#: pkg/storaged/vgroups-panel.jsx:90 pkg/storaged/stratis-details.jsx:397
 #: pkg/storaged/stratis-panel.jsx:169
 msgid "Create"
 msgstr "יצירה"
@@ -1856,27 +1832,21 @@ msgstr "יצירה"
 msgid "Create LVM2 volume group"
 msgstr "יצירת קבוצת כרכים מסוג LVM2"
 
-#: pkg/storaged/things-panel.jsx:78 pkg/storaged/mdraids-panel.jsx:73
+#: pkg/storaged/mdraids-panel.jsx:73 pkg/storaged/things-panel.jsx:78
 msgid "Create RAID device"
 msgstr "יצירת התקן RAID"
 
-#: pkg/storaged/things-panel.jsx:80 pkg/storaged/stratis-panel.jsx:127
-#, fuzzy
-#| msgid "Create storage pool"
+#: pkg/storaged/stratis-panel.jsx:127 pkg/storaged/things-panel.jsx:80
 msgid "Create Stratis pool"
-msgstr "יצירת מאגר אחסון"
+msgstr "יצירת מאגר Stratis"
 
 #: pkg/shell/hosts_dialog.jsx:771
-#, fuzzy
-#| msgid "Create a new SSH key and authorize it."
 msgid "Create a new SSH key and authorize it"
-msgstr "ליצור מפתח SSH חדש ולאשר אותו."
+msgstr "ליצור מפתח SSH חדש ולאשר אותו"
 
 #: pkg/storaged/stratis-details.jsx:496
-#, fuzzy
-#| msgid "Creating snapshot of $target"
 msgid "Create a snapshot of filesystem $0"
-msgstr "נוצרת תמונת מצב של $target"
+msgstr "יצירת תמונת מצב של מערכת הקבצים $0"
 
 #: pkg/storaged/things-panel.jsx:77
 msgid "Create devices"
@@ -1887,8 +1857,6 @@ msgid "Create diagnostic report"
 msgstr "דוחות אבחון"
 
 #: pkg/storaged/stratis-details.jsx:367
-#, fuzzy
-#| msgid "Create Filesystem"
 msgid "Create filesystem"
 msgstr "יצירת מערכת קבצים"
 
@@ -1896,7 +1864,7 @@ msgstr "יצירת מערכת קבצים"
 msgid "Create it"
 msgstr "ליצור אותו"
 
-#: pkg/storaged/content-views.jsx:828
+#: pkg/storaged/content-views.jsx:846
 msgid "Create logical volume"
 msgstr "יצירת כרך לוגי"
 
@@ -1904,13 +1872,11 @@ msgstr "יצירת כרך לוגי"
 msgid "Create new account"
 msgstr "יצירת חשבון חדש"
 
-#: pkg/storaged/stratis-details.jsx:641
-#, fuzzy
-#| msgid "Create new volume"
+#: pkg/storaged/stratis-details.jsx:649
 msgid "Create new filesystem"
-msgstr "יצירת כרך חדש"
+msgstr "יצירת מערכת קבצים חדשה"
 
-#: pkg/storaged/content-views.jsx:948
+#: pkg/storaged/content-views.jsx:966
 msgid "Create new logical volume"
 msgstr "יצירת כרך לוגי חדש"
 
@@ -1918,7 +1884,7 @@ msgstr "יצירת כרך לוגי חדש"
 msgid "Create new task file with this content."
 msgstr "יצירת קובץ משימה עם התוכן הזה."
 
-#: pkg/storaged/content-views.jsx:558 pkg/storaged/format-dialog.jsx:315
+#: pkg/storaged/format-dialog.jsx:315 pkg/storaged/content-views.jsx:582
 msgid "Create partition"
 msgstr "יצירת מחיצה"
 
@@ -1926,7 +1892,7 @@ msgstr "יצירת מחיצה"
 msgid "Create partition on $0"
 msgstr "יצירת מחיצה על $0"
 
-#: pkg/storaged/content-views.jsx:689
+#: pkg/storaged/content-views.jsx:710
 msgid "Create partition table"
 msgstr "יצירת טבלת מחיצות"
 
@@ -1934,12 +1900,12 @@ msgstr "יצירת טבלת מחיצות"
 msgid "Create report"
 msgstr "יצירת דוח"
 
-#: pkg/storaged/content-views.jsx:308 pkg/storaged/content-views.jsx:331
+#: pkg/storaged/content-views.jsx:299 pkg/storaged/content-views.jsx:322
 #: pkg/storaged/stratis-details.jsx:527
 msgid "Create snapshot"
 msgstr "יצירת תמונת מצב"
 
-#: pkg/storaged/content-views.jsx:160 pkg/storaged/content-views.jsx:187
+#: pkg/storaged/content-views.jsx:158 pkg/storaged/content-views.jsx:185
 msgid "Create thin volume"
 msgstr "יצירת כרך רזה"
 
@@ -1953,20 +1919,16 @@ msgid "Create volume group"
 msgstr "יצירת קבוצת כרכים"
 
 #: pkg/storaged/jobs-panel.jsx:78
-#, fuzzy
-#| msgid "Creating volume group $target"
 msgid "Creating LVM2 volume group $target"
-msgstr "קבוצת הכרכים $target נוצרת"
+msgstr "קבוצת הכרכים $target מסוג LVM2 נוצרת"
 
 #: pkg/storaged/jobs-panel.jsx:69
 msgid "Creating RAID device $target"
 msgstr "נוצר התקן RAID‏ $target"
 
-#: pkg/storaged/content-views.jsx:927
-#, fuzzy
-#| msgid "Create VDO device"
+#: pkg/storaged/content-views.jsx:945
 msgid "Creating VDO device"
-msgstr "יצירת התקן VDO"
+msgstr "נוצר התקן VDO"
 
 #: pkg/storaged/jobs-panel.jsx:57
 msgid "Creating filesystem on $target"
@@ -1998,7 +1960,7 @@ msgstr "חמור ומעלה"
 msgid "Ctrl+Insert"
 msgstr "Ctrl+Insert"
 
-#: pkg/shell/shell-modals.jsx:199
+#: pkg/shell/shell-modals.jsx:186
 msgid "Ctrl-Shift-J"
 msgstr "Ctrl-Shift-J"
 
@@ -2006,8 +1968,8 @@ msgstr "Ctrl-Shift-J"
 msgid "Current boot"
 msgstr "עלייה נוכחית"
 
+#: pkg/storaged/format-dialog.jsx:262 pkg/storaged/nfs-details.jsx:184
 #: pkg/storaged/stratis-details.jsx:392 pkg/storaged/stratis-details.jsx:522
-#: pkg/storaged/nfs-details.jsx:184 pkg/storaged/format-dialog.jsx:262
 #: pkg/storaged/fsys-tab.jsx:330
 msgid "Custom mount options"
 msgstr "אפשרויות עיגון מותאמות אישית"
@@ -2053,10 +2015,8 @@ msgid "Dark"
 msgstr "כהה"
 
 #: pkg/storaged/stratis-details.jsx:132
-#, fuzzy
-#| msgid "Data used"
 msgid "Data"
-msgstr "נתונים בשימוש"
+msgstr "נתונים"
 
 #: pkg/storaged/lvol-tabs.jsx:499 pkg/storaged/lvol-tabs.jsx:552
 msgid "Data used"
@@ -2070,7 +2030,7 @@ msgid ""
 "prefixed with '-' or '+'"
 msgstr ""
 
-#: pkg/storaged/content-views.jsx:325
+#: pkg/storaged/content-views.jsx:316
 msgid "Deactivate"
 msgstr "השבתה"
 
@@ -2090,14 +2050,14 @@ msgstr "ניפוי שגיאות ומעלה"
 msgid "Decrease by one"
 msgstr "להקטין באחד"
 
-#: pkg/storaged/lvol-tabs.jsx:569 pkg/storaged/vdo-details.jsx:325
-#: pkg/storaged/content-views.jsx:907
+#: pkg/storaged/lvol-tabs.jsx:569 pkg/storaged/content-views.jsx:925
+#: pkg/storaged/vdo-details.jsx:325
 msgid "Deduplication"
 msgstr "הסרת כפילות"
 
+#: pkg/lib/cockpit-components-shutdown.jsx:190
 #: pkg/systemd/services/timer-dialog.jsx:185
 #: pkg/systemd/services/timer-dialog.jsx:196
-#: pkg/lib/cockpit-components-shutdown.jsx:180
 msgid "Delay"
 msgstr "השהיה"
 
@@ -2105,20 +2065,21 @@ msgstr "השהיה"
 msgid "Delay must be a number"
 msgstr "השהיה חייבת להיות מספר"
 
-#: pkg/networkmanager/network-interface.jsx:718
-#: pkg/networkmanager/firewall.jsx:796 pkg/systemd/abrtLog.jsx:285
 #: pkg/users/account-details.js:278 pkg/users/delete-account-dialog.js:60
-#: pkg/storaged/vdo-details.jsx:200 pkg/storaged/vdo-details.jsx:263
-#: pkg/storaged/content-views.jsx:386 pkg/storaged/content-views.jsx:411
-#: pkg/storaged/vgroup-details.jsx:205 pkg/storaged/vgroup-details.jsx:229
-#: pkg/storaged/stratis-details.jsx:263 pkg/storaged/stratis-details.jsx:426
-#: pkg/storaged/stratis-details.jsx:561 pkg/storaged/stratis-details.jsx:623
-#: pkg/storaged/mdraid-details.jsx:303 pkg/storaged/mdraid-details.jsx:328
+#: pkg/systemd/abrtLog.jsx:285 pkg/storaged/vgroup-details.jsx:205
+#: pkg/storaged/vgroup-details.jsx:229 pkg/storaged/content-views.jsx:377
+#: pkg/storaged/content-views.jsx:402 pkg/storaged/vdo-details.jsx:200
+#: pkg/storaged/vdo-details.jsx:263 pkg/storaged/mdraid-details.jsx:303
+#: pkg/storaged/mdraid-details.jsx:328 pkg/storaged/stratis-details.jsx:263
+#: pkg/storaged/stratis-details.jsx:426 pkg/storaged/stratis-details.jsx:561
+#: pkg/storaged/stratis-details.jsx:603
+#: pkg/networkmanager/network-interface.jsx:718
+#: pkg/networkmanager/firewall.jsx:796
 msgid "Delete"
 msgstr "מחיקה"
 
-#: pkg/networkmanager/network-interface.jsx:118
 #: pkg/users/delete-account-dialog.js:53
+#: pkg/networkmanager/network-interface.jsx:118
 msgid "Delete $0"
 msgstr "מחיקת $0"
 
@@ -2137,10 +2098,8 @@ msgid "Deleting $target"
 msgstr "$target נמחק"
 
 #: pkg/storaged/jobs-panel.jsx:79
-#, fuzzy
-#| msgid "Deleting volume group $target"
 msgid "Deleting LVM2 volume group $target"
-msgstr "קבוצת הכרכים $target נמחקת"
+msgstr "קבוצת הכרכים $target מסוג LVM2 נמחקת"
 
 #: pkg/storaged/stratis-details.jsx:261
 #, fuzzy
@@ -2149,16 +2108,14 @@ msgid "Deleting a Stratis pool will erase all data it contains."
 msgstr "מחיקת מכולה תמחק את כל הנתונים שבה."
 
 #: pkg/storaged/stratis-details.jsx:560
-#, fuzzy
-#| msgid "Deleting a partition will delete all data in it."
 msgid "Deleting a filesystem will delete all data in it."
-msgstr "מחיקת מחיצה תמחק את כל הנתונים שבה."
+msgstr "מחיקת מערכת קבצים תמחק את כל הנתונים שבה."
 
-#: pkg/storaged/content-views.jsx:363
+#: pkg/storaged/content-views.jsx:354
 msgid "Deleting a logical volume will delete all data in it."
 msgstr "מחיקת כרך לוגי תמחק את כל הנתונים שבו."
 
-#: pkg/storaged/content-views.jsx:366
+#: pkg/storaged/content-views.jsx:357
 msgid "Deleting a partition will delete all data in it."
 msgstr "מחיקת מחיצה תמחק את כל הנתונים שבה."
 
@@ -2174,8 +2131,8 @@ msgstr "מחיקה תמחק את כל הנתונים של התקן ה־VDO."
 msgid "Deleting erases all data on a volume group."
 msgstr "מחיקה מוחקת את כל הנתונים בקבוצת כרכים."
 
-#: pkg/networkmanager/firewall.jsx:736
 #: pkg/systemd/services/timer-dialog.jsx:150
+#: pkg/networkmanager/firewall.jsx:736
 msgid "Description"
 msgstr "תיאור"
 
@@ -2187,7 +2144,7 @@ msgstr "שולחן עבודה"
 msgid "Detachable"
 msgstr "נתיק"
 
-#: pkg/shell/credentials.jsx:110 pkg/systemd/overview-cards/realmd.jsx:398
+#: pkg/systemd/overview-cards/realmd.jsx:398 pkg/shell/credentials.jsx:110
 #: pkg/packagekit/updates.jsx:383
 msgid "Details"
 msgstr "פרטים"
@@ -2209,12 +2166,12 @@ msgstr "התקן"
 msgid "Device file"
 msgstr "קובץ התקן"
 
-#: pkg/storaged/drive-details.jsx:86 pkg/storaged/block-details.jsx:52
+#: pkg/storaged/block-details.jsx:52 pkg/storaged/drive-details.jsx:86
 msgctxt "storage"
 msgid "Device file"
 msgstr "קובץ התקן"
 
-#: pkg/storaged/content-views.jsx:688
+#: pkg/storaged/content-views.jsx:709
 msgid "Device is read-only"
 msgstr "ההתקן הוא לקריאה בלבד"
 
@@ -2251,10 +2208,10 @@ msgstr "השבתת חומת האש"
 msgid "Disable tuned"
 msgstr "השבתת tuned"
 
-#: pkg/networkmanager/ip-settings.jsx:46 pkg/networkmanager/ip-settings.jsx:57
+#: pkg/systemd/services/service-details.jsx:347
 #: pkg/systemd/services/services.jsx:200 pkg/systemd/services/services.jsx:748
-#: pkg/systemd/services/service-details.jsx:347 pkg/packagekit/kpatch.jsx:231
-#: pkg/packagekit/autoupdates.jsx:332
+#: pkg/networkmanager/ip-settings.jsx:46 pkg/networkmanager/ip-settings.jsx:57
+#: pkg/packagekit/kpatch.jsx:231 pkg/packagekit/autoupdates.jsx:332
 msgid "Disabled"
 msgstr "מושבת"
 
@@ -2262,7 +2219,7 @@ msgstr "מושבת"
 msgid "Disallow running (mask)"
 msgstr "לא לאפשר הרצה (מיסוך)"
 
-#: pkg/shell/indexes.js:161
+#: pkg/shell/indexes.js:148
 msgid "Disconnected"
 msgstr "מנותק"
 
@@ -2282,9 +2239,9 @@ msgstr "הכונן תקין"
 msgid "Disk passphrase"
 msgstr "מילת צופן לכונן"
 
-#: pkg/metrics/metrics.jsx:534 pkg/storaged/vgroups-panel.jsx:79
-#: pkg/storaged/vgroup-details.jsx:67 pkg/storaged/mdraid-details.jsx:62
-#: pkg/storaged/mdraid-details.jsx:166 pkg/storaged/mdraids-panel.jsx:127
+#: pkg/metrics/metrics.jsx:534 pkg/storaged/vgroup-details.jsx:67
+#: pkg/storaged/mdraids-panel.jsx:127 pkg/storaged/mdraid-details.jsx:62
+#: pkg/storaged/mdraid-details.jsx:166 pkg/storaged/vgroups-panel.jsx:79
 msgid "Disks"
 msgstr "כוננים"
 
@@ -2300,11 +2257,11 @@ msgstr[3] "התעלמות מ־$0 אזעקות"
 msgid "Dismiss selected alerts"
 msgstr "התעלמות מההתראות הנבחרות"
 
-#: pkg/shell/topnav.jsx:145 pkg/shell/shell-modals.jsx:138
+#: pkg/shell/topnav.jsx:150 pkg/shell/shell-modals.jsx:125
 msgid "Display language"
 msgstr "שפת התצוגה"
 
-#: pkg/storaged/fsys-tab.jsx:649 pkg/storaged/fsys-tab.jsx:661
+#: pkg/storaged/fsys-tab.jsx:631 pkg/storaged/fsys-tab.jsx:643
 msgid "Do not mount automatically on boot"
 msgstr "לא לעגן אוטומטית עם העלייה"
 
@@ -2336,7 +2293,7 @@ msgstr "שם מנהל שם תחום"
 
 #: pkg/systemd/overview-cards/realmd.jsx:433
 msgid "Domain administrator password"
-msgstr "ססמת מנהל שם תחום"
+msgstr "סיסמת מנהל שם תחום"
 
 #: pkg/systemd/overview-cards/realmd.jsx:310
 msgid "Domain could not be contacted"
@@ -2386,10 +2343,10 @@ msgstr "כוננים"
 msgid "Dual rank"
 msgstr "דו־צדדי"
 
-#: pkg/shell/hosts.jsx:173 pkg/shell/indexes.js:352
-#: pkg/packagekit/kpatch.jsx:223 pkg/packagekit/autoupdates.jsx:399
-#: pkg/storaged/nfs-details.jsx:318 pkg/storaged/crypto-keyslots.jsx:571
-#: pkg/storaged/iscsi-panel.jsx:255
+#: pkg/shell/indexes.js:341 pkg/shell/hosts.jsx:173
+#: pkg/storaged/nfs-details.jsx:318 pkg/storaged/iscsi-panel.jsx:255
+#: pkg/storaged/crypto-keyslots.jsx:571 pkg/packagekit/kpatch.jsx:223
+#: pkg/packagekit/autoupdates.jsx:399
 msgid "Edit"
 msgstr "עריכה"
 
@@ -2405,7 +2362,7 @@ msgstr "עריכת שרת מפתחות Tang"
 msgid "Edit host"
 msgstr "עריכת מארח"
 
-#: pkg/shell/hosts.jsx:207
+#: pkg/shell/hosts.jsx:209
 msgid "Edit hosts"
 msgstr "עריכת מארחים"
 
@@ -2468,7 +2425,7 @@ msgstr "מופעל"
 msgid "Encrypt data"
 msgstr "הצפנת נתונים"
 
-#: pkg/storaged/utils.js:282
+#: pkg/storaged/utils.js:284
 msgid "Encrypted $0"
 msgstr "$0 מוצפן"
 
@@ -2478,11 +2435,11 @@ msgstr "$0 מוצפן"
 msgid "Encrypted Stratis pool $0"
 msgstr "מחיצה מוצפנת בגודל $0"
 
-#: pkg/storaged/utils.js:274
+#: pkg/storaged/utils.js:276
 msgid "Encrypted logical volume of $0"
 msgstr "כרך לוגי מוצפן בגודל $0"
 
-#: pkg/storaged/utils.js:276
+#: pkg/storaged/utils.js:278
 msgid "Encrypted partition of $0"
 msgstr "מחיצה מוצפנת בגודל $0"
 
@@ -2494,7 +2451,7 @@ msgstr "לא ניתן לשנות גודל של כרכים מוצפנים מכא�
 msgid "Encrypted volumes need to be unlocked before they can be resized."
 msgstr "יש לשחרר כרכים מוצפנים לפני שניתן יהיה לשנות את גודלם."
 
-#: pkg/storaged/content-views.jsx:225 pkg/storaged/format-dialog.jsx:265
+#: pkg/storaged/format-dialog.jsx:265 pkg/storaged/content-views.jsx:216
 msgid "Encryption"
 msgstr "הצפנה"
 
@@ -2538,11 +2495,11 @@ msgstr "$target נמחק"
 msgid "Errata"
 msgstr "טעויות ידועות"
 
-#: pkg/apps/utils.jsx:78 pkg/systemd/services/services.jsx:178
 #: pkg/systemd/services/service-details.jsx:498
+#: pkg/systemd/services/services.jsx:178 pkg/apps/utils.jsx:78
 #: pkg/storaged/storage-controls.jsx:91 pkg/storaged/storage-controls.jsx:167
-#: pkg/storaged/things-panel.jsx:57 pkg/storaged/stratis-details.jsx:671
-#: pkg/storaged/fsys-tab.jsx:383 pkg/storaged/multipath.jsx:61
+#: pkg/storaged/multipath.jsx:61 pkg/storaged/stratis-details.jsx:678
+#: pkg/storaged/fsys-tab.jsx:383 pkg/storaged/things-panel.jsx:57
 msgid "Error"
 msgstr "שגיאה"
 
@@ -2554,8 +2511,8 @@ msgstr "שגיאה ומעלה"
 msgid "Error has occurred"
 msgstr "אירעה שגיאה"
 
-#: pkg/selinux/setroubleshoot-view.jsx:410
 #: pkg/systemd/overview-cards/configurationCard.jsx:182
+#: pkg/selinux/setroubleshoot-view.jsx:410
 msgid "Error message"
 msgstr "הודעת שגיאה"
 
@@ -2605,7 +2562,7 @@ msgstr "לדוגמה: 88,2019,nfs,rsync"
 
 #: pkg/lib/cockpit-components-password.jsx:37
 msgid "Excellent password"
-msgstr "ססמה מצוינת"
+msgstr "סיסמה מצוינת"
 
 #: pkg/lib/machine-info.js:75
 msgid "Expansion chassis"
@@ -2627,11 +2584,11 @@ msgstr "ייצוא לרשת"
 msgid "Extended information"
 msgstr "פירוט מורחב"
 
-#: pkg/storaged/content-views.jsx:582 pkg/storaged/format-dialog.jsx:149
+#: pkg/storaged/format-dialog.jsx:149 pkg/storaged/content-views.jsx:603
 msgid "Extended partition"
 msgstr "מחיצה מורחבת"
 
-#: pkg/networkmanager/interfaces.js:757 pkg/storaged/mdraid-details.jsx:108
+#: pkg/storaged/mdraid-details.jsx:108 pkg/networkmanager/interfaces.js:757
 msgid "Failed"
 msgstr "נכשל"
 
@@ -2658,7 +2615,7 @@ msgstr "החלת ההגדרות נכשלה"
 #: pkg/users/password-dialogs.js:101 pkg/users/password-dialogs.js:123
 #: pkg/lib/credentials.js:232
 msgid "Failed to change password"
-msgstr "החלפת הססמה נכשלה"
+msgstr "החלפת הסיסמה נכשלה"
 
 #: pkg/metrics/metrics.jsx:1029
 msgid "Failed to configure PCP"
@@ -2703,6 +2660,8 @@ msgid ""
 "Failed to parse unit files for dnf-automatic.timer or dnf-automatic-install."
 "timer. Please remove custom overrides to configure automatic updates."
 msgstr ""
+"פענוח קובצי היחידה של dnf-automatic.timer או dnf-automatic-install.timer. נא "
+"להסיר את המעקפים שהוקמו כדי להגדיר עדכונים אוטומטיים."
 
 #: pkg/packagekit/updates.jsx:430
 msgid "Failed to restart service"
@@ -2712,8 +2671,8 @@ msgstr "הפעלת השירות מחדש נכשלה"
 msgid "Failed to save changes in /etc/motd"
 msgstr "שמירת השינויים ב־‎/etc/motd נכשלה"
 
-#: pkg/systemd/services/services.jsx:189
 #: pkg/systemd/services/service-details.jsx:356
+#: pkg/systemd/services/services.jsx:189
 msgid "Failed to start"
 msgstr "ההפעלה נכשלה"
 
@@ -2726,17 +2685,17 @@ msgstr "החלפת פרופיל נכשלה"
 msgid "File state"
 msgstr "מצב הקובץ"
 
-#: pkg/storaged/content-views.jsx:203 pkg/storaged/content-views.jsx:224
+#: pkg/storaged/content-views.jsx:201 pkg/storaged/content-views.jsx:215
 #: pkg/storaged/stratis-details.jsx:573
 msgid "Filesystem"
 msgstr "מערכת קבצים"
 
-#: pkg/storaged/content-views.jsx:444
+#: pkg/storaged/content-views.jsx:439
 msgctxt "storage-id-desc"
 msgid "Filesystem (encrypted)"
 msgstr "מערכת קבצים (מוצפנת)"
 
-#: pkg/storaged/fsys-tab.jsx:691
+#: pkg/storaged/fsys-tab.jsx:673
 msgid "Filesystem is locked"
 msgstr "מערכת הקבצים נעולה"
 
@@ -2744,9 +2703,9 @@ msgstr "מערכת הקבצים נעולה"
 msgid "Filesystem name"
 msgstr "שם מערכת קבצים"
 
-#: pkg/storaged/stratis-details.jsx:639 pkg/storaged/stratis-details.jsx:646
-#: pkg/storaged/stratis-details.jsx:780 pkg/storaged/stratis-details.jsx:784
-#: pkg/storaged/fsys-panel.jsx:178 pkg/storaged/fsys-panel.jsx:181
+#: pkg/storaged/fsys-panel.jsx:164 pkg/storaged/fsys-panel.jsx:167
+#: pkg/storaged/stratis-details.jsx:647 pkg/storaged/stratis-details.jsx:654
+#: pkg/storaged/stratis-details.jsx:787 pkg/storaged/stratis-details.jsx:791
 msgid "Filesystems"
 msgstr "מערכות קבצים"
 
@@ -2754,7 +2713,7 @@ msgstr "מערכות קבצים"
 msgid "Filter by name or description"
 msgstr "סינון לפי שם או תיאור"
 
-#: pkg/shell/shell-modals.jsx:154
+#: pkg/shell/shell-modals.jsx:141
 msgid "Filter menu items"
 msgstr "סינון פריטי תפריט"
 
@@ -2770,8 +2729,8 @@ msgstr "מסננים"
 msgid "Fingerprint"
 msgstr "טביעת אצבע"
 
-#: pkg/networkmanager/firewall.html:22 pkg/networkmanager/firewall.jsx:932
-#: pkg/networkmanager/firewall.jsx:939 pkg/networkmanager/network-main.jsx:151
+#: pkg/networkmanager/firewall.html:22 pkg/networkmanager/network-main.jsx:151
+#: pkg/networkmanager/firewall.jsx:932 pkg/networkmanager/firewall.jsx:939
 msgid "Firewall"
 msgstr "חומת אש"
 
@@ -2788,8 +2747,8 @@ msgstr "גרסת קושחה"
 msgid "Font size"
 msgstr "גודל גופן"
 
-#: pkg/systemd/services/services-list.jsx:80
 #: pkg/systemd/services/service-details.jsx:338
+#: pkg/systemd/services/services-list.jsx:80
 msgid "Forbidden from running"
 msgstr "נאסר עליו לפעול"
 
@@ -2799,10 +2758,10 @@ msgstr "לאלץ החלפה"
 
 #: pkg/users/password-dialogs.js:271
 msgid "Force password change"
-msgstr "לאלץ החלפת ססמה"
+msgstr "לאלץ החלפת סיסמה"
 
-#: pkg/storaged/content-views.jsx:405 pkg/storaged/content-views.jsx:407
-#: pkg/storaged/format-dialog.jsx:88
+#: pkg/storaged/format-dialog.jsx:88 pkg/storaged/content-views.jsx:396
+#: pkg/storaged/content-views.jsx:398
 msgid "Format"
 msgstr "פרמוט"
 
@@ -2826,7 +2785,7 @@ msgstr "מספר מסגרת"
 msgid "Free"
 msgstr "פנוי"
 
-#: pkg/storaged/content-views.jsx:565
+#: pkg/storaged/content-views.jsx:587
 msgid "Free space"
 msgstr "מקום פנוי"
 
@@ -2850,7 +2809,7 @@ msgstr "ימי שישי"
 msgid "From"
 msgstr "התחלה"
 
-#: pkg/users/account-create-dialog.js:40 pkg/users/account-details.js:285
+#: pkg/users/account-details.js:285 pkg/users/account-create-dialog.js:40
 msgid "Full name"
 msgstr "שם מלא"
 
@@ -2859,15 +2818,13 @@ msgstr "שם מלא"
 msgid "Gateway"
 msgstr "שער גישה"
 
-#: pkg/networkmanager/network-interface.jsx:326 pkg/systemd/abrtLog.jsx:291
+#: pkg/systemd/abrtLog.jsx:291 pkg/networkmanager/network-interface.jsx:326
 msgid "General"
 msgstr "כללי"
 
 #: pkg/systemd/services/services.jsx:209
-#, fuzzy
-#| msgid "General"
 msgid "Generated"
-msgstr "כללי"
+msgstr "נוצר"
 
 #: pkg/sosreport/index.jsx:172
 msgid "Generating report"
@@ -2935,19 +2892,19 @@ msgstr "בריאות"
 msgid "Hello time $hello_time"
 msgstr "זמן Hello‏ $hello_time"
 
-#: pkg/shell/topnav.jsx:186 pkg/tuned/dialog.jsx:290
+#: pkg/tuned/dialog.jsx:290 pkg/shell/topnav.jsx:196
 msgid "Help"
 msgstr "עזרה"
 
 #: pkg/systemd/abrtLog.jsx:126
 msgid "Hierarchy ID"
-msgstr ""
+msgstr "מזהה היררכיה"
 
 #: pkg/packagekit/history.jsx:107
 msgid "History package count"
 msgstr "ספירת חבילות היסטורית"
 
-#: pkg/shell/hosts_dialog.jsx:248 pkg/shell/hosts.jsx:195
+#: pkg/shell/hosts_dialog.jsx:248 pkg/shell/hosts.jsx:196
 msgid "Host"
 msgstr "מארח"
 
@@ -2971,7 +2928,7 @@ msgstr "שעתי"
 msgid "Hours"
 msgstr "שעות"
 
-#: pkg/networkmanager/firewall.jsx:611 pkg/systemd/hwinfo.jsx:313
+#: pkg/systemd/hwinfo.jsx:313 pkg/networkmanager/firewall.jsx:611
 msgid "ID"
 msgstr "מזהה"
 
@@ -3021,15 +2978,11 @@ msgstr ""
 "וליצור קשר עם הנהלת המערכת."
 
 #: pkg/shell/hosts_dialog.jsx:466 pkg/shell/hosts_dialog.jsx:477
-#, fuzzy
-#| msgid ""
-#| "If the fingerprint matches, click \"Accept key and connect\". Otherwise, "
-#| "do not connect and contact your administrator."
 msgid ""
 "If the fingerprint matches, click 'Accept key and connect'. Otherwise, do "
 "not connect and contact your administrator."
 msgstr ""
-"אם טביעת האצבע תואמת, יש ללחוץ על „לקבל את המפתח ולהתחבר”. אחרת, לא להתחבר "
+"אם טביעת האצבע תואמת, יש ללחוץ על ‚לקבל את המפתח ולהתחבר’. אחרת, לא להתחבר "
 "וליצור קשר עם הנהלת המערכת."
 
 #: pkg/storaged/format-dialog.jsx:93
@@ -3039,6 +2992,9 @@ msgid ""
 "during boot is not possible, such as when a passphrase is required to unlock "
 "the filesystem but booting is unattended."
 msgstr ""
+"אם האפשרות הזאת מסומנת, מערכת הקבצים לא תעוגן במהלך הטעינה הבעיה אפילו אם "
+"עוגנה לפני כן. שימושי אם עיגון במהלך הטעינה אינו אפשרי, למשל כאשר נדרשת מילת "
+"צופן כדי לשחרר את נעילת מערכת הקבצים אך תהליך הטעינה מונע את זה."
 
 #: pkg/networkmanager/ip-settings.jsx:55 pkg/packagekit/updates.jsx:637
 #: pkg/packagekit/updates.jsx:712
@@ -3054,18 +3010,13 @@ msgid "In"
 msgstr "נכנס"
 
 #: pkg/shell/hosts_dialog.jsx:782 pkg/shell/hosts_dialog.jsx:796
-#, fuzzy
-#| msgid ""
-#| "In order to allow log in to ${rhost} as ${ruser} without password in the "
-#| "future, use the login password of ${luser} on ${lhost} as the key "
-#| "password, or leave the key password blank."
 msgid ""
 "In order to allow log in to $0 as $1 without password in the future, use the "
 "login password of $2 on $3 as the key password, or leave the key password "
 "blank."
 msgstr ""
-"כדי לאפשר כניסה אל ${rhost} בתור ${ruser} ללא ססמה בעתיד, עליך להשתמש בססמת "
-"הכניסה של ${luser} על גבי ${lhost} כססמת המפתח או להשאיר את ססמת המפתח ריקה."
+"כדי לאפשר כניסה אל $0 בתור $1 ללא סיסמה בעתיד, עליך להשתמש בסיסמת הכניסה של $"
+"2 על גבי $3 כסיסמת המפתח או להשאיר את סיסמת המפתח ריקה."
 
 #: pkg/storaged/mdraid-details.jsx:109
 msgid "In sync"
@@ -3077,7 +3028,7 @@ msgstr "בסנכרון"
 msgid "Inactive"
 msgstr "לא פעיל"
 
-#: pkg/storaged/content-views.jsx:764
+#: pkg/storaged/content-views.jsx:782
 msgid "Inactive volume"
 msgstr "כרך לא פעיל"
 
@@ -3085,7 +3036,7 @@ msgstr "כרך לא פעיל"
 msgid "Included services"
 msgstr "שירותים כלולים"
 
-#: pkg/storaged/fsys-tab.jsx:670
+#: pkg/storaged/fsys-tab.jsx:652
 msgid "Inconsistent filesystem mount"
 msgstr "עיגון בלתי אחיד של מערכת קבצים"
 
@@ -3109,15 +3060,15 @@ msgstr "מידע"
 msgid "Info and above"
 msgstr "מידע ומעלה"
 
-#: pkg/storaged/content-views.jsx:665
+#: pkg/storaged/content-views.jsx:686
 msgid "Initialize"
 msgstr "אתחול"
 
-#: pkg/storaged/content-views.jsx:641
+#: pkg/storaged/content-views.jsx:662
 msgid "Initialize disk $0"
 msgstr "אתחול הכונן $0"
 
-#: pkg/storaged/content-views.jsx:668
+#: pkg/storaged/content-views.jsx:689
 msgid "Initializing erases all data on a disk."
 msgstr "אתחול מוחק את כל הנתונים בכונן."
 
@@ -3129,8 +3080,8 @@ msgstr "מופעל…"
 msgid "Insights: "
 msgstr "תובנות: "
 
-#: pkg/apps/application.jsx:53 pkg/packagekit/kpatch.jsx:228
 #: pkg/lib/cockpit-components-install-dialog.jsx:123
+#: pkg/apps/application.jsx:53 pkg/packagekit/kpatch.jsx:228
 msgid "Install"
 msgstr "התקנה"
 
@@ -3176,13 +3127,13 @@ msgstr "בהתקנה"
 msgid "Installing $0"
 msgstr "$0 בהתקנה"
 
-#: pkg/storaged/content-views.jsx:794
+#: pkg/storaged/content-views.jsx:812
 #, fuzzy
 #| msgid "Installing $0"
 msgid "Installing $0 would remove $1."
 msgstr "$0 בהתקנה"
 
-#: pkg/storaged/content-views.jsx:796
+#: pkg/storaged/content-views.jsx:814
 #, fuzzy
 #| msgid "Installing"
 msgid "Installing packages"
@@ -3197,9 +3148,9 @@ msgstr "מנשק"
 msgid "Interface members"
 msgstr "חברים במנשק"
 
+#: pkg/networkmanager/network-main.jsx:173 pkg/networkmanager/firewall.jsx:176
+#: pkg/networkmanager/firewall.jsx:749 pkg/networkmanager/bond.jsx:165
 #: pkg/networkmanager/network-interface-members.jsx:215
-#: pkg/networkmanager/bond.jsx:165 pkg/networkmanager/firewall.jsx:176
-#: pkg/networkmanager/firewall.jsx:749 pkg/networkmanager/network-main.jsx:173
 msgid "Interfaces"
 msgstr "מנשקים"
 
@@ -3207,7 +3158,7 @@ msgstr "מנשקים"
 msgid "Internal error"
 msgstr "שגיאה פנימה"
 
-#: pkg/static/login.js:811
+#: pkg/static/login.js:867
 msgid "Internal error: Invalid challenge header"
 msgstr "שגיאה פנימית: כותרת אתגר שגויה"
 
@@ -3219,11 +3170,11 @@ msgstr "שגוי"
 msgid "Invalid address $0"
 msgstr "כתובת שגויה $0"
 
-#: pkg/lib/serverTime.js:613 pkg/lib/cockpit-components-shutdown.jsx:106
+#: pkg/lib/serverTime.js:613 pkg/lib/cockpit-components-shutdown.jsx:109
 msgid "Invalid date format"
 msgstr "מבנה התאריך שגוי"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:100
+#: pkg/lib/cockpit-components-shutdown.jsx:103
 msgid "Invalid date format and invalid time format"
 msgstr "מבנה תאריך שגוי ומבנה שעה שגוי"
 
@@ -3263,8 +3214,8 @@ msgstr "קידומת או מסכת רשת שגויה $0"
 msgid "Invalid range"
 msgstr "טווח שגוי"
 
-#: pkg/packagekit/autoupdates.jsx:320 pkg/lib/serverTime.js:616
-#: pkg/lib/cockpit-components-shutdown.jsx:103
+#: pkg/lib/serverTime.js:616 pkg/lib/cockpit-components-shutdown.jsx:106
+#: pkg/packagekit/autoupdates.jsx:320
 msgid "Invalid time format"
 msgstr "מבנה השעה שגוי"
 
@@ -3274,7 +3225,7 @@ msgstr "אזור זמן שגוי"
 
 #: pkg/storaged/iscsi-panel.jsx:83 pkg/storaged/iscsi-panel.jsx:172
 msgid "Invalid username or password"
-msgstr "שם משתמש או ססמה שגויים"
+msgstr "שם משתמש או סיסמה שגויים"
 
 #: pkg/lib/machine-info.js:90
 msgid "IoT gateway"
@@ -3376,7 +3327,7 @@ msgstr "הטלאת ליבה"
 
 #: pkg/shell/hosts_dialog.jsx:774 pkg/shell/hosts_dialog.jsx:833
 msgid "Key password"
-msgstr "ססמת מפתח"
+msgstr "סיסמת מפתח"
 
 #: pkg/storaged/crypto-keyslots.jsx:605
 msgid "Key slots with unknown types can not be edited here"
@@ -3406,17 +3357,11 @@ msgstr "הסרת שרת מפתחות עלולה למנוע את שחרור $0."
 msgid "LACP key"
 msgstr "מפתח LACP"
 
-#: pkg/storaged/content-views.jsx:206 pkg/storaged/content-views.jsx:462
+#: pkg/storaged/content-views.jsx:457 pkg/storaged/content-views.jsx:474
 #, fuzzy
-#| msgid "Physical volume"
-msgid "LVM2 physical volume"
-msgstr "כרך פיזי"
-
-#: pkg/storaged/content-views.jsx:454
-#, fuzzy
-#| msgid "Physical volume of $0"
-msgid "LVM2 physical volume of $0"
-msgstr "כרך פיזי בגודל $0"
+#| msgid "Add member"
+msgid "LVM2 member"
+msgstr "הוספת חבר"
 
 #: pkg/storaged/vgroups-panel.jsx:40
 #, fuzzy
@@ -3424,7 +3369,7 @@ msgstr "כרך פיזי בגודל $0"
 msgid "LVM2 volume group"
 msgstr "קבוצת כרכים LVM"
 
-#: pkg/storaged/vgroup-details.jsx:225 pkg/storaged/utils.js:256
+#: pkg/storaged/vgroup-details.jsx:225 pkg/storaged/utils.js:258
 #, fuzzy
 #| msgid "LVM volume group"
 msgid "LVM2 volume group $0"
@@ -3458,8 +3403,8 @@ msgstr "שינוי אחרון: $0"
 msgid "Last successful login:"
 msgstr "כניסה אחרונה שהצליחה:"
 
-#: pkg/networkmanager/bond.jsx:153 pkg/lib/cockpit-components-dialog.jsx:224
-#: pkg/lib/cockpit-components-dialog.jsx:231 pkg/tuned/dialog.jsx:286
+#: pkg/tuned/dialog.jsx:286 pkg/lib/cockpit-components-dialog.jsx:224
+#: pkg/lib/cockpit-components-dialog.jsx:231 pkg/networkmanager/bond.jsx:153
 msgid "Learn more"
 msgstr "מידע נוסף"
 
@@ -3473,7 +3418,7 @@ msgstr "לעזוב את $0"
 msgid "Leave domain"
 msgstr "עזיבת שם התחום"
 
-#: pkg/shell/shell-modals.jsx:80
+#: pkg/shell/shell-modals.jsx:67
 msgid "Licensed under GNU LGPL version 2.1"
 msgstr "בכפוף לרישיון LGPL מבית GNU בגרסה 2.1"
 
@@ -3503,7 +3448,7 @@ msgstr ""
 msgid "Limits"
 msgstr "הגבלת גישה"
 
-#: pkg/networkmanager/bond.jsx:201 pkg/networkmanager/team.jsx:195
+#: pkg/networkmanager/team.jsx:195 pkg/networkmanager/bond.jsx:201
 msgid "Link down delay"
 msgstr "השהיית קטיעת קישור"
 
@@ -3515,7 +3460,7 @@ msgstr "קישור מקומי"
 msgid "Link monitoring"
 msgstr "מעקב אחר קישורים"
 
-#: pkg/networkmanager/bond.jsx:198 pkg/networkmanager/team.jsx:192
+#: pkg/networkmanager/team.jsx:192 pkg/networkmanager/bond.jsx:198
 msgid "Link up delay"
 msgstr "השהיית חיבור קישור"
 
@@ -3572,7 +3517,7 @@ msgstr "המפתחות נטענים…"
 msgid "Loading of SSH keys failed"
 msgstr "טעינת מפתחות ה־SSH נכשלה"
 
-#: pkg/shell/shell-modals.jsx:90
+#: pkg/shell/shell-modals.jsx:77
 msgid "Loading packages..."
 msgstr "החבילות נטענות…"
 
@@ -3580,9 +3525,9 @@ msgstr "החבילות נטענות…"
 msgid "Loading system modifications..."
 msgstr "השינויים למערכת נטענים…"
 
-#: pkg/systemd/logDetails.jsx:152 pkg/systemd/services/services.jsx:723
-#: pkg/systemd/logsJournal.jsx:269 pkg/metrics/metrics.jsx:745
-#: pkg/metrics/metrics.jsx:1406 pkg/kdump/kdump-view.jsx:375
+#: pkg/kdump/kdump-view.jsx:375 pkg/metrics/metrics.jsx:745
+#: pkg/metrics/metrics.jsx:1406 pkg/systemd/services/services.jsx:723
+#: pkg/systemd/logsJournal.jsx:269 pkg/systemd/logDetails.jsx:152
 #: pkg/storaged/devices.jsx:69
 msgid "Loading..."
 msgstr "בטעינה…"
@@ -3603,11 +3548,11 @@ msgstr "נקודת עגינה מקומית"
 msgid "Location"
 msgstr "מיקום"
 
-#: pkg/storaged/content-views.jsx:287
+#: pkg/storaged/content-views.jsx:278
 msgid "Lock"
 msgstr "נעילה"
 
-#: pkg/users/account-create-dialog.js:71 pkg/users/account-details.js:321
+#: pkg/users/account-details.js:321 pkg/users/account-create-dialog.js:71
 msgid "Lock account"
 msgstr "נעילת חשבון"
 
@@ -3615,14 +3560,14 @@ msgstr "נעילת חשבון"
 msgid "Locked devices"
 msgstr "התקנים נעולים"
 
-#: pkg/storaged/stratis-details.jsx:761 pkg/storaged/stratis-panel.jsx:71
+#: pkg/storaged/stratis-details.jsx:768 pkg/storaged/stratis-panel.jsx:71
 #, fuzzy
 #| msgctxt "storage-id-desc"
 #| msgid "Locked encrypted data"
 msgid "Locked encrypted Stratis pool"
 msgstr "נתונים מוצפנים נעולים"
 
-#: pkg/storaged/content-views.jsx:448
+#: pkg/storaged/content-views.jsx:447
 msgctxt "storage-id-desc"
 msgid "Locked encrypted data"
 msgstr "נתונים מוצפנים נעולים"
@@ -3631,8 +3576,8 @@ msgstr "נתונים מוצפנים נעולים"
 msgid "Locking $target"
 msgstr "$target ננעל"
 
-#: pkg/shell/index.html:64 pkg/static/login.html:115
-#: pkg/shell/hosts_dialog.jsx:742 pkg/static/login.js:578
+#: pkg/static/login.html:115 pkg/static/login.js:629
+#: pkg/shell/hosts_dialog.jsx:742 pkg/shell/failures.jsx:72
 msgid "Log in"
 msgstr "כניסה"
 
@@ -3642,7 +3587,7 @@ msgstr "כניסה"
 msgid "Log in to $0"
 msgstr "לעבור אל $0"
 
-#: pkg/static/login.js:608
+#: pkg/static/login.js:664
 msgid "Log in with your server user account."
 msgstr "כניסה עם חשבון המשתמש שלך בשרת."
 
@@ -3650,7 +3595,7 @@ msgstr "כניסה עם חשבון המשתמש שלך בשרת."
 msgid "Log messages"
 msgstr "הודעות יומן"
 
-#: pkg/shell/topnav.jsx:159 pkg/metrics/metrics.jsx:1298
+#: pkg/metrics/metrics.jsx:1298 pkg/shell/topnav.jsx:164
 msgid "Log out"
 msgstr "יציאה"
 
@@ -3662,7 +3607,7 @@ msgstr "נכנסת"
 msgid "Logical"
 msgstr "לוגי"
 
-#: pkg/storaged/content-views.jsx:888
+#: pkg/storaged/content-views.jsx:906
 #, fuzzy
 #| msgid "Logical size"
 msgid "Logical Size"
@@ -3672,19 +3617,19 @@ msgstr "גודל לוגי"
 msgid "Logical size"
 msgstr "גודל לוגי"
 
-#: pkg/storaged/utils.js:206
+#: pkg/storaged/utils.js:208
 msgid "Logical volume"
 msgstr "כרך לוגי"
 
-#: pkg/storaged/utils.js:204
+#: pkg/storaged/utils.js:206
 msgid "Logical volume (snapshot)"
 msgstr "כרך לוגי (תמונת מצב)"
 
-#: pkg/storaged/utils.js:278
+#: pkg/storaged/utils.js:280
 msgid "Logical volume of $0"
 msgstr "כרך לוגי בגודל $0"
 
-#: pkg/storaged/content-views.jsx:955 pkg/storaged/content-views.jsx:960
+#: pkg/storaged/content-views.jsx:973 pkg/storaged/content-views.jsx:978
 msgid "Logical volumes"
 msgstr "כרכים לוגיים"
 
@@ -3759,7 +3704,9 @@ msgid "Main server chassis"
 msgstr "שלדת שרת ראשית"
 
 #: pkg/systemd/services/services.jsx:192
-msgid "Maintanance"
+#, fuzzy
+#| msgid "Maintanance"
+msgid "Maintenance"
 msgstr "תחזוקה"
 
 #: pkg/storaged/crypto-keyslots.jsx:383
@@ -3848,8 +3795,8 @@ msgstr "$target מסומן כתקול"
 msgid "Mask service"
 msgstr "מיסוך שירות"
 
-#: pkg/systemd/services/services.jsx:204 pkg/systemd/services/services.jsx:205
 #: pkg/systemd/services/service-details.jsx:337
+#: pkg/systemd/services/services.jsx:204 pkg/systemd/services/services.jsx:205
 msgid "Masked"
 msgstr "ממוסך"
 
@@ -3866,24 +3813,10 @@ msgstr ""
 msgid "Maximum message age $max_age"
 msgstr "גיל הודעה מרבי $max_age"
 
-#: pkg/storaged/content-views.jsx:466
-msgid "Member of RAID device"
-msgstr "חבר בהתקן RAID"
-
-#: pkg/storaged/content-views.jsx:457
-msgid "Member of RAID device $0"
-msgstr "חבר בהתקן ה־RAID‏ $0"
-
-#: pkg/storaged/content-views.jsx:464
-#, fuzzy
-#| msgid "Create storage pool"
-msgid "Member of Stratis pool"
-msgstr "יצירת מאגר אחסון"
-
+#: pkg/metrics/metrics.jsx:501 pkg/metrics/metrics.jsx:1389
 #: pkg/systemd/services/service-details.jsx:539
 #: pkg/systemd/overview-cards/usageCard.jsx:133 pkg/systemd/hwinfo.jsx:312
-#: pkg/systemd/hwinfo.jsx:356 pkg/metrics/metrics.jsx:501
-#: pkg/metrics/metrics.jsx:1389
+#: pkg/systemd/hwinfo.jsx:356
 msgid "Memory"
 msgstr "זיכרון"
 
@@ -3899,20 +3832,15 @@ msgstr "טכנולוגיית זיכרון"
 msgid "Memory usage"
 msgstr "שימוש בזיכרון"
 
-#: pkg/storaged/content-views.jsx:709 pkg/storaged/content-views.jsx:961
-#: pkg/storaged/stratis-details.jsx:647 pkg/storaged/stratis-details.jsx:785
-msgid "Menu"
-msgstr "תפריט"
-
 #: pkg/systemd/services/services.jsx:179
 msgid "Merged"
 msgstr ""
 
-#: pkg/lib/cockpit-components-shutdown.jsx:177
+#: pkg/lib/cockpit-components-shutdown.jsx:187
 msgid "Message to logged in users"
 msgstr "הודעה למשתמשים שנמצאים במערכת"
 
-#: pkg/shell/index.html:77
+#: pkg/shell/failures.jsx:40
 msgid "Messages related to the failure might be found in the journal:"
 msgstr "ניתן למצוא הודעות שקשורות בכשל בז׳ורנל:"
 
@@ -3991,13 +3919,14 @@ msgstr "חודשי"
 msgid "More info..."
 msgstr "מידע נוסף…"
 
-#: pkg/kdump/kdump-view.jsx:98 pkg/storaged/content-views.jsx:292
-#: pkg/storaged/content-views.jsx:418 pkg/storaged/stratis-details.jsx:609
-#: pkg/storaged/nfs-details.jsx:313 pkg/storaged/fsys-tab.jsx:363
+#: pkg/kdump/kdump-view.jsx:98 pkg/storaged/fsys-panel.jsx:173
+#: pkg/storaged/nfs-details.jsx:313 pkg/storaged/content-views.jsx:283
+#: pkg/storaged/content-views.jsx:409 pkg/storaged/stratis-details.jsx:596
+#: pkg/storaged/fsys-tab.jsx:363
 msgid "Mount"
 msgstr "עיגון"
 
-#: pkg/storaged/fsys-tab.jsx:653
+#: pkg/storaged/fsys-tab.jsx:635
 msgid "Mount also automatically on boot"
 msgstr "לעגן אוטומטית גם עם העלייה"
 
@@ -4005,7 +3934,7 @@ msgstr "לעגן אוטומטית גם עם העלייה"
 msgid "Mount at boot"
 msgstr "לעגן בעלייה"
 
-#: pkg/storaged/fsys-tab.jsx:645 pkg/storaged/fsys-tab.jsx:657
+#: pkg/storaged/fsys-tab.jsx:627 pkg/storaged/fsys-tab.jsx:639
 msgid "Mount automatically on $0 on boot"
 msgstr "לעגן אוטומטית אל $0 בזמן העלייה"
 
@@ -4017,25 +3946,25 @@ msgstr "הגדרות עיגון"
 msgid "Mount filesystem"
 msgstr "עיגון מערכת קבצים"
 
-#: pkg/storaged/stratis-details.jsx:386 pkg/storaged/stratis-details.jsx:516
-#: pkg/storaged/format-dialog.jsx:256 pkg/storaged/fsys-tab.jsx:650
+#: pkg/storaged/format-dialog.jsx:256 pkg/storaged/stratis-details.jsx:386
+#: pkg/storaged/stratis-details.jsx:516 pkg/storaged/fsys-tab.jsx:632
 msgid "Mount now"
 msgstr "לעגן כעת"
 
-#: pkg/storaged/fsys-tab.jsx:646
+#: pkg/storaged/fsys-tab.jsx:628
 msgid "Mount on $0 now"
 msgstr "לעגן אל $0 כעת"
 
+#: pkg/storaged/format-dialog.jsx:246 pkg/storaged/nfs-details.jsx:179
 #: pkg/storaged/stratis-details.jsx:377 pkg/storaged/stratis-details.jsx:507
-#: pkg/storaged/nfs-details.jsx:179 pkg/storaged/format-dialog.jsx:246
 #: pkg/storaged/fsys-tab.jsx:317
 msgid "Mount options"
 msgstr "אפשרויות עיגון"
 
-#: pkg/storaged/stratis-details.jsx:373 pkg/storaged/stratis-details.jsx:503
-#: pkg/storaged/fsys-panel.jsx:186 pkg/storaged/nfs-details.jsx:334
-#: pkg/storaged/nfs-panel.jsx:103 pkg/storaged/format-dialog.jsx:240
-#: pkg/storaged/fsys-tab.jsx:312 pkg/storaged/fsys-tab.jsx:699
+#: pkg/storaged/format-dialog.jsx:240 pkg/storaged/nfs-details.jsx:334
+#: pkg/storaged/nfs-panel.jsx:103 pkg/storaged/stratis-details.jsx:373
+#: pkg/storaged/stratis-details.jsx:503 pkg/storaged/fsys-tab.jsx:312
+#: pkg/storaged/fsys-tab.jsx:681
 msgid "Mount point"
 msgstr "נקודת עיגון"
 
@@ -4055,8 +3984,8 @@ msgstr "נקודת העיגון כבר משמשת לטובת $0"
 msgid "Mount point must start with \"/\"."
 msgstr "נקודת העיגון חייבת להתחיל ב־„/”."
 
+#: pkg/storaged/format-dialog.jsx:257 pkg/storaged/nfs-details.jsx:183
 #: pkg/storaged/stratis-details.jsx:387 pkg/storaged/stratis-details.jsx:517
-#: pkg/storaged/nfs-details.jsx:183 pkg/storaged/format-dialog.jsx:257
 #: pkg/storaged/fsys-tab.jsx:325
 msgid "Mount read only"
 msgstr "עיגון לקריאה בלבד"
@@ -4094,24 +4023,23 @@ msgstr "פינג מסוג NSNA"
 msgid "NTP server"
 msgstr "שרת NTP"
 
-#: pkg/shell/credentials.jsx:102 pkg/networkmanager/dialogs-common.jsx:133
-#: pkg/networkmanager/network-main.jsx:184
-#: pkg/networkmanager/network-main.jsx:199
 #: pkg/systemd/services/timer-dialog.jsx:141 pkg/systemd/hwinfo.jsx:92
-#: pkg/packagekit/updates.jsx:380 pkg/storaged/lvol-tabs.jsx:48
+#: pkg/shell/credentials.jsx:102 pkg/storaged/format-dialog.jsx:219
+#: pkg/storaged/vgroup-details.jsx:168 pkg/storaged/lvol-tabs.jsx:48
 #: pkg/storaged/lvol-tabs.jsx:418 pkg/storaged/lvol-tabs.jsx:479
-#: pkg/storaged/lvol-tabs.jsx:537 pkg/storaged/vgroups-panel.jsx:74
-#: pkg/storaged/content-views.jsx:162 pkg/storaged/content-views.jsx:310
-#: pkg/storaged/content-views.jsx:709 pkg/storaged/content-views.jsx:830
-#: pkg/storaged/content-views.jsx:961 pkg/storaged/vgroup-details.jsx:168
-#: pkg/storaged/crypto-panel.jsx:84 pkg/storaged/stratis-details.jsx:281
+#: pkg/storaged/lvol-tabs.jsx:537 pkg/storaged/mdraids-panel.jsx:75
+#: pkg/storaged/part-tab.jsx:40 pkg/storaged/content-views.jsx:160
+#: pkg/storaged/content-views.jsx:301 pkg/storaged/content-views.jsx:729
+#: pkg/storaged/content-views.jsx:848 pkg/storaged/content-views.jsx:979
+#: pkg/storaged/vgroups-panel.jsx:74 pkg/storaged/stratis-details.jsx:281
 #: pkg/storaged/stratis-details.jsx:369 pkg/storaged/stratis-details.jsx:475
-#: pkg/storaged/stratis-details.jsx:498 pkg/storaged/stratis-details.jsx:647
-#: pkg/storaged/stratis-details.jsx:785 pkg/storaged/fsys-panel.jsx:185
-#: pkg/storaged/iscsi-panel.jsx:131 pkg/storaged/iscsi-panel.jsx:188
-#: pkg/storaged/format-dialog.jsx:219 pkg/storaged/mdraids-panel.jsx:75
-#: pkg/storaged/part-tab.jsx:40 pkg/storaged/fsys-tab.jsx:464
-#: pkg/storaged/fsys-tab.jsx:685 pkg/storaged/stratis-panel.jsx:129
+#: pkg/storaged/stratis-details.jsx:498 pkg/storaged/stratis-details.jsx:655
+#: pkg/storaged/stratis-details.jsx:792 pkg/storaged/iscsi-panel.jsx:131
+#: pkg/storaged/iscsi-panel.jsx:188 pkg/storaged/fsys-tab.jsx:464
+#: pkg/storaged/fsys-tab.jsx:667 pkg/storaged/stratis-panel.jsx:129
+#: pkg/storaged/crypto-panel.jsx:84 pkg/networkmanager/network-main.jsx:184
+#: pkg/networkmanager/network-main.jsx:199
+#: pkg/networkmanager/dialogs-common.jsx:133 pkg/packagekit/updates.jsx:380
 msgid "Name"
 msgstr "שם"
 
@@ -4119,27 +4047,27 @@ msgstr "שם"
 msgid "Name can not be empty."
 msgstr "השם לא יכול להיות ריק."
 
-#: pkg/storaged/utils.js:133
+#: pkg/storaged/utils.js:135
 msgid "Name cannot be empty."
 msgstr "השם לא יכול להיות ריק."
 
-#: pkg/storaged/utils.js:161
+#: pkg/storaged/utils.js:163
 msgid "Name cannot be longer than $0 bytes"
 msgstr "השם לא יכול להיות יותר מ־$0 בתים"
 
-#: pkg/storaged/utils.js:159
+#: pkg/storaged/utils.js:161
 msgid "Name cannot be longer than $0 characters"
 msgstr "השם לא יכול להיות ארוך מ־$0 תווים"
 
-#: pkg/storaged/utils.js:135
+#: pkg/storaged/utils.js:137
 msgid "Name cannot be longer than 127 characters."
 msgstr "השם לא יכול להיות ארוך מ־127 תווים."
 
-#: pkg/storaged/utils.js:139
+#: pkg/storaged/utils.js:141
 msgid "Name cannot contain the character '$0'."
 msgstr "השם לא יכול להכיל את התו ‚$0’."
 
-#: pkg/storaged/utils.js:141
+#: pkg/storaged/utils.js:143
 msgid "Name cannot contain whitespace."
 msgstr "השם לא יכול להכיל רווח."
 
@@ -4193,16 +4121,16 @@ msgstr "תקשורת"
 msgid "Never"
 msgstr "אף פעם"
 
-#: pkg/users/account-details.js:109 pkg/users/expiration-dialogs.js:37
+#: pkg/users/expiration-dialogs.js:37 pkg/users/account-details.js:109
 msgid "Never expire account"
 msgstr "חשבון שתוקפו לא פג"
 
-#: pkg/users/account-details.js:101 pkg/users/expiration-dialogs.js:149
+#: pkg/users/expiration-dialogs.js:149 pkg/users/account-details.js:101
 msgid "Never expire password"
-msgstr "הססמה לא תפוג לעולם"
+msgstr "הסיסמה לא תפוג לעולם"
 
-#: pkg/storaged/stratis-details.jsx:389 pkg/storaged/stratis-details.jsx:519
-#: pkg/storaged/format-dialog.jsx:259 pkg/storaged/fsys-tab.jsx:327
+#: pkg/storaged/format-dialog.jsx:259 pkg/storaged/stratis-details.jsx:389
+#: pkg/storaged/stratis-details.jsx:519 pkg/storaged/fsys-tab.jsx:327
 msgid "Never mount at boot"
 msgstr "לעולם לא לעגן בעלייה"
 
@@ -4210,31 +4138,31 @@ msgstr "לעולם לא לעגן בעלייה"
 msgid "New NFS mount"
 msgstr "עיגון NFS חדש"
 
-#: pkg/shell/hosts_dialog.jsx:451 pkg/static/login.js:667
+#: pkg/static/login.js:723 pkg/shell/hosts_dialog.jsx:451
 msgid "New host"
 msgstr "מארח חדש"
 
 #: pkg/shell/hosts_dialog.jsx:788
 msgid "New key password"
-msgstr "ססמה חדשה למפתח"
+msgstr "סיסמה חדשה למפתח"
 
 #: pkg/storaged/crypto-keyslots.jsx:289 pkg/storaged/crypto-keyslots.jsx:335
 msgid "New passphrase"
 msgstr "מילת צופן חדשה"
 
-#: pkg/shell/credentials.jsx:266 pkg/users/password-dialogs.js:148
+#: pkg/users/password-dialogs.js:148 pkg/shell/credentials.jsx:266
 msgid "New password"
-msgstr "ססמה חדשה"
+msgstr "סיסמה חדשה"
 
 #: pkg/users/password-dialogs.js:84 pkg/lib/credentials.js:241
 msgid "New password was not accepted"
-msgstr "הססמה החדשה לא התקבלה"
+msgstr "הסיסמה החדשה לא התקבלה"
 
 #: pkg/storaged/iscsi-panel.jsx:53
 msgid "Next"
 msgstr "הבא"
 
-#: pkg/networkmanager/network-interface.jsx:240 pkg/systemd/reporting.jsx:273
+#: pkg/systemd/reporting.jsx:273 pkg/networkmanager/network-interface.jsx:240
 msgid "No"
 msgstr "לא"
 
@@ -4282,7 +4210,7 @@ msgstr "אין נתונים זמינים"
 msgid "No data available between $0 and $1"
 msgstr "אין נתונים זמינים בין $0 ל־$1"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:154
+#: pkg/lib/cockpit-components-shutdown.jsx:164
 msgid "No delay"
 msgstr "אין השהיה"
 
@@ -4298,9 +4226,9 @@ msgstr "לא סופק תיאור."
 msgid "No devices"
 msgstr "אין התקנים"
 
-#: pkg/storaged/vgroups-panel.jsx:81 pkg/storaged/vgroup-details.jsx:69
-#: pkg/storaged/stratis-details.jsx:143 pkg/storaged/mdraid-details.jsx:64
-#: pkg/storaged/mdraids-panel.jsx:129
+#: pkg/storaged/vgroup-details.jsx:69 pkg/storaged/mdraids-panel.jsx:129
+#: pkg/storaged/mdraid-details.jsx:64 pkg/storaged/vgroups-panel.jsx:81
+#: pkg/storaged/stratis-details.jsx:143
 msgid "No disks are available."
 msgstr "אין כוננים זמינים."
 
@@ -4316,7 +4244,7 @@ msgstr "אין הצפנה"
 msgid "No filesystem"
 msgstr "אין מערכת קבצים"
 
-#: pkg/storaged/stratis-details.jsx:645
+#: pkg/storaged/stratis-details.jsx:653
 #, fuzzy
 #| msgid "No filesystem"
 msgid "No filesystems"
@@ -4326,7 +4254,7 @@ msgstr "אין מערכת קבצים"
 msgid "No free key slots"
 msgstr "אין משבצות מפתח פנויות"
 
-#: pkg/storaged/content-views.jsx:943
+#: pkg/storaged/content-views.jsx:961
 msgid "No free space"
 msgstr "אין מקום פנוי"
 
@@ -4350,12 +4278,12 @@ msgstr "לא נוספו מפתחות"
 msgid "No log entries"
 msgstr "אין רשומות ביומן"
 
-#: pkg/storaged/content-views.jsx:959
+#: pkg/storaged/content-views.jsx:977
 msgid "No logical volumes"
 msgstr "אין כרכים לוגיים"
 
-#: pkg/systemd/logsJournal.jsx:282 pkg/systemd/logsJournal.jsx:325
-#: pkg/metrics/metrics.jsx:745
+#: pkg/metrics/metrics.jsx:745 pkg/systemd/logsJournal.jsx:282
+#: pkg/systemd/logsJournal.jsx:325
 msgid "No logs found"
 msgstr "לא נמצאו יומנים"
 
@@ -4377,7 +4305,7 @@ msgstr ""
 "(כלומר תחת ‎/etc/default/grub) כדי לשמור זיכרון בזמן העלייה. למשל: "
 "crashkernel=512M"
 
-#: pkg/storaged/content-views.jsx:653
+#: pkg/storaged/content-views.jsx:674
 msgid "No partitioning"
 msgstr "אין חלוקה למחיצות"
 
@@ -4385,7 +4313,7 @@ msgstr "אין חלוקה למחיצות"
 msgid "No real name specified"
 msgstr "לא צוין שם אמתי"
 
-#: pkg/shell/nav.jsx:129 pkg/systemd/logs.jsx:314
+#: pkg/systemd/logs.jsx:314 pkg/shell/nav.jsx:139
 msgid "No results found"
 msgstr "לא נמצאו תוצאות"
 
@@ -4398,8 +4326,8 @@ msgstr "לא נמצאו תוצאות לתנאי המסנן. יש לנקות את
 msgid "No rule hits"
 msgstr "אין פגיעות בכללים"
 
-#: pkg/lib/cockpit-components-file-autocomplete.jsx:174
 #: pkg/lib/credentials.js:191
+#: pkg/lib/cockpit-components-file-autocomplete.jsx:174
 msgid "No such file or directory"
 msgstr "אין קובץ או תיקייה בשם הזה"
 
@@ -4415,8 +4343,8 @@ msgstr "אין עדכונים"
 msgid "No user name specified"
 msgstr "לא צוין שם משתמש"
 
-#: pkg/networkmanager/firewall.jsx:744 pkg/kdump/kdump-view.jsx:424
-#: pkg/tuned/dialog.jsx:227
+#: pkg/tuned/dialog.jsx:227 pkg/kdump/kdump-view.jsx:424
+#: pkg/networkmanager/firewall.jsx:744
 msgid "None"
 msgstr "אין"
 
@@ -4448,7 +4376,7 @@ msgstr "לא מחובר"
 msgid "Not connected to Insights"
 msgstr "לא מחובר לתובנות"
 
-#: pkg/shell/indexes.js:461
+#: pkg/shell/indexes.js:450
 msgid "Not connected to host"
 msgstr "לא מחובר למארח"
 
@@ -4456,7 +4384,7 @@ msgstr "לא מחובר למארח"
 msgid "Not enough space to grow."
 msgstr "אין מספיק מקום כדי לגדול."
 
-#: pkg/systemd/services/services.jsx:176 pkg/storaged/details.jsx:133
+#: pkg/systemd/services/services.jsx:176 pkg/storaged/details.jsx:138
 msgid "Not found"
 msgstr "לא נמצא"
 
@@ -4486,10 +4414,9 @@ msgstr "לא מוכן"
 msgid "Not registered"
 msgstr "לא רשום"
 
-#: pkg/systemd/services/services.jsx:188 pkg/systemd/services/services.jsx:191
-#: pkg/systemd/services/services.jsx:758
 #: pkg/systemd/services/service-details.jsx:377
-#: pkg/storaged/mdraid-details.jsx:357
+#: pkg/systemd/services/services.jsx:188 pkg/systemd/services/services.jsx:191
+#: pkg/systemd/services/services.jsx:758 pkg/storaged/mdraid-details.jsx:357
 msgid "Not running"
 msgstr "לא פועל"
 
@@ -4513,10 +4440,6 @@ msgstr "מחברת"
 msgid "Notice and above"
 msgstr "הודעה ומעלה"
 
-#: pkg/selinux/setroubleshoot-view.jsx:410
-msgid "Occurances"
-msgstr "מופעים"
-
 #: pkg/selinux/setroubleshoot-view.jsx:345
 msgid "Occurred $0"
 msgstr "התרחש ב־$0"
@@ -4524,6 +4447,12 @@ msgstr "התרחש ב־$0"
 #: pkg/selinux/setroubleshoot-view.jsx:340
 msgid "Occurred between $0 and $1"
 msgstr "התרחש בין $0 ל־$1"
+
+#: pkg/selinux/setroubleshoot-view.jsx:410
+#, fuzzy
+#| msgid "Occurances"
+msgid "Occurrences"
+msgstr "מופעים"
 
 #: pkg/lib/cockpit-components-dialog.jsx:156
 msgid "Ok"
@@ -4535,11 +4464,11 @@ msgstr "מילת צופן ישנה"
 
 #: pkg/users/password-dialogs.js:139
 msgid "Old password"
-msgstr "ססמה ישנה"
+msgstr "סיסמה ישנה"
 
 #: pkg/users/password-dialogs.js:53 pkg/lib/credentials.js:221
 msgid "Old password not accepted"
-msgstr "הססמה הישנה לא התקבלה"
+msgstr "הסיסמה הישנה לא התקבלה"
 
 #: pkg/kdump/kdump-view.jsx:400
 msgid "On a mounted device"
@@ -4569,7 +4498,7 @@ msgstr "מותר רק אותיות באנגלית, מספרים, : , _ , . , @ ,
 msgid "Only emergency"
 msgstr "חירום בלבד"
 
-#: pkg/shell/topnav.jsx:177
+#: pkg/shell/topnav.jsx:185
 msgid "Ooops!"
 msgstr "אופס!"
 
@@ -4586,8 +4515,8 @@ msgctxt "storage"
 msgid "Optical drive"
 msgstr "כונן אופטי"
 
-#: pkg/networkmanager/bridge.jsx:104 pkg/storaged/content-views.jsx:898
-#: pkg/storaged/crypto-tab.jsx:253
+#: pkg/storaged/content-views.jsx:916 pkg/storaged/crypto-tab.jsx:253
+#: pkg/networkmanager/bridge.jsx:104
 msgid "Options"
 msgstr "אפשרויות"
 
@@ -4599,7 +4528,7 @@ msgstr "או להשתמש בדפדפן מובנה"
 msgid "Other"
 msgstr "אחר"
 
-#: pkg/storaged/content-views.jsx:472
+#: pkg/storaged/content-views.jsx:485
 msgctxt "storage-id-desc"
 msgid "Other data"
 msgstr "נתונים אחרים"
@@ -4616,16 +4545,16 @@ msgstr "אפשרויות אחרות"
 msgid "Out"
 msgstr "יוצא"
 
-#: pkg/systemd/hwinfo.jsx:326 pkg/metrics/metrics.jsx:1424
+#: pkg/metrics/metrics.jsx:1424 pkg/systemd/hwinfo.jsx:326
 #: pkg/systemd/manifest.json:0
 msgid "Overview"
 msgstr "סקירה"
 
-#: pkg/storaged/content-views.jsx:656 pkg/storaged/format-dialog.jsx:234
+#: pkg/storaged/format-dialog.jsx:234 pkg/storaged/content-views.jsx:677
 msgid "Overwrite"
 msgstr "שכתוב"
 
-#: pkg/storaged/content-views.jsx:659 pkg/storaged/format-dialog.jsx:237
+#: pkg/storaged/format-dialog.jsx:237 pkg/storaged/content-views.jsx:680
 msgid "Overwrite existing data with zeros (slower)"
 msgstr "שכתוב על נתונים קיימים באפסים (אטי יותר)"
 
@@ -4677,19 +4606,25 @@ msgstr "חלק מתוך"
 msgid "Part of $0"
 msgstr "חלק מתוך $0"
 
-#: pkg/storaged/content-views.jsx:197
+#: pkg/storaged/content-views.jsx:195
 msgid "Partition"
 msgstr "מחיצה"
 
-#: pkg/storaged/utils.js:280
+#: pkg/storaged/utils.js:282
 msgid "Partition of $0"
 msgstr "מחיצה של $0"
 
-#: pkg/storaged/content-views.jsx:644
+#: pkg/storaged/content-views.jsx:748
+#, fuzzy
+#| msgid "Add block devices"
+msgid "Partitioned block device"
+msgstr "הוספת התקני בלוק"
+
+#: pkg/storaged/content-views.jsx:665
 msgid "Partitioning"
 msgstr "חלוקה למחיצות"
 
-#: pkg/storaged/content-views.jsx:695
+#: pkg/storaged/content-views.jsx:716
 msgid "Partitions"
 msgstr "מחיצות"
 
@@ -4697,11 +4632,11 @@ msgstr "מחיצות"
 msgid "Passive"
 msgstr "סביל"
 
-#: pkg/storaged/content-views.jsx:272 pkg/storaged/stratis-details.jsx:136
-#: pkg/storaged/stratis-details.jsx:697 pkg/storaged/crypto-keyslots.jsx:284
-#: pkg/storaged/crypto-keyslots.jsx:594 pkg/storaged/format-dialog.jsx:271
-#: pkg/storaged/format-dialog.jsx:297 pkg/storaged/fsys-tab.jsx:337
-#: pkg/storaged/stratis-panel.jsx:140
+#: pkg/storaged/format-dialog.jsx:271 pkg/storaged/format-dialog.jsx:297
+#: pkg/storaged/content-views.jsx:263 pkg/storaged/stratis-details.jsx:136
+#: pkg/storaged/stratis-details.jsx:704 pkg/storaged/fsys-tab.jsx:337
+#: pkg/storaged/stratis-panel.jsx:140 pkg/storaged/crypto-keyslots.jsx:284
+#: pkg/storaged/crypto-keyslots.jsx:594
 msgid "Passphrase"
 msgstr "מילת צופן"
 
@@ -4709,11 +4644,11 @@ msgstr "מילת צופן"
 msgid "Passphrase can not be empty"
 msgstr "מילת הצופן לא יכולה להיות ריקה"
 
-#: pkg/storaged/stratis-details.jsx:139 pkg/storaged/crypto-keyslots.jsx:200
+#: pkg/storaged/format-dialog.jsx:275 pkg/storaged/format-dialog.jsx:301
+#: pkg/storaged/stratis-details.jsx:139 pkg/storaged/fsys-tab.jsx:340
+#: pkg/storaged/stratis-panel.jsx:144 pkg/storaged/crypto-keyslots.jsx:200
 #: pkg/storaged/crypto-keyslots.jsx:292 pkg/storaged/crypto-keyslots.jsx:333
-#: pkg/storaged/crypto-keyslots.jsx:336 pkg/storaged/format-dialog.jsx:275
-#: pkg/storaged/format-dialog.jsx:301 pkg/storaged/fsys-tab.jsx:340
-#: pkg/storaged/stratis-panel.jsx:144
+#: pkg/storaged/crypto-keyslots.jsx:336
 msgid "Passphrase cannot be empty"
 msgstr "מילת הצופן לא יכולה להיות ריקה"
 
@@ -4727,19 +4662,19 @@ msgstr "מילת הצופן לא יכולה להיות ריקה"
 msgid "Passphrase removal may prevent unlocking $0."
 msgstr "הסרת מילת הצופן עשויה למנוע את השחרור של $0."
 
-#: pkg/storaged/crypto-keyslots.jsx:300 pkg/storaged/crypto-keyslots.jsx:338
 #: pkg/storaged/format-dialog.jsx:283 pkg/storaged/stratis-panel.jsx:152
+#: pkg/storaged/crypto-keyslots.jsx:300 pkg/storaged/crypto-keyslots.jsx:338
 msgid "Passphrases do not match"
 msgstr "מילות הצופן אינן תואמות"
 
-#: pkg/static/login.html:81 pkg/shell/credentials.jsx:120
+#: pkg/static/login.html:81 pkg/users/account-details.js:339
+#: pkg/users/account-create-dialog.js:60 pkg/shell/hosts_dialog.jsx:818
+#: pkg/shell/hosts_dialog.jsx:827 pkg/shell/credentials.jsx:120
 #: pkg/shell/credentials.jsx:263 pkg/shell/credentials.jsx:322
-#: pkg/shell/hosts_dialog.jsx:818 pkg/shell/hosts_dialog.jsx:827
-#: pkg/shell/superuser.jsx:52 pkg/users/account-create-dialog.js:60
-#: pkg/users/account-details.js:339 pkg/storaged/iscsi-panel.jsx:50
+#: pkg/shell/superuser.jsx:52 pkg/storaged/iscsi-panel.jsx:50
 #: pkg/storaged/iscsi-panel.jsx:160
 msgid "Password"
-msgstr "ססמה"
+msgstr "סיסמה"
 
 #: pkg/shell/credentials.jsx:260
 #, fuzzy
@@ -4749,7 +4684,7 @@ msgstr "הפתרון חל בהצלחה"
 
 #: pkg/users/expiration-dialogs.js:206
 msgid "Password expiration"
-msgstr "תפוגת ססמה"
+msgstr "תפוגת סיסמה"
 
 #: pkg/users/account-create-dialog.js:205 pkg/users/password-dialogs.js:210
 msgid "Password is longer than 256 characters"
@@ -4757,25 +4692,25 @@ msgstr "הסיסמה ארוכה מ־256 תווים"
 
 #: pkg/lib/cockpit-components-password.jsx:41
 msgid "Password is not acceptable"
-msgstr "הססמה לא מקובלת"
+msgstr "הסיסמה לא מקובלת"
 
 #: pkg/lib/cockpit-components-password.jsx:35
 msgid "Password is too weak"
-msgstr "הססמה חלשה מדי"
+msgstr "הסיסמה חלשה מדי"
 
 #: pkg/users/account-details.js:103
 msgid "Password must be changed"
-msgstr "חובה לשנות את הססמה"
+msgstr "חובה לשנות את הסיסמה"
 
 #: pkg/lib/credentials.js:298
 msgid "Password not accepted"
-msgstr "הססמה לא התקבלה"
+msgstr "הסיסמה לא התקבלה"
 
 #: pkg/shell/credentials.jsx:275
 #, fuzzy
 #| msgid "Password"
 msgid "Password tip"
-msgstr "ססמה"
+msgstr "סיסמה"
 
 #: pkg/lib/cockpit-components-context-menu.jsx:107
 msgid "Paste"
@@ -4815,8 +4750,8 @@ msgstr "הנתיב בשרת לא יכול להיות ריק."
 msgid "Path on server must start with \"/\"."
 msgstr "הנתיב בשרת חייב להתחיל ב־„/”."
 
-#: pkg/shell/credentials.jsx:173
 #: pkg/lib/cockpit-components-file-autocomplete.jsx:161
+#: pkg/shell/credentials.jsx:173
 msgid "Path to file"
 msgstr "הנתיב לקובץ"
 
@@ -4850,25 +4785,19 @@ msgstr "שלדת התקנים חיצוניים"
 msgid "Permanent"
 msgstr "קבוע"
 
-#: pkg/storaged/vdo-details.jsx:197 pkg/storaged/content-views.jsx:381
-#: pkg/storaged/vgroup-details.jsx:200 pkg/storaged/stratis-details.jsx:258
-#: pkg/storaged/mdraid-details.jsx:299
+#: pkg/storaged/vgroup-details.jsx:200 pkg/storaged/content-views.jsx:372
+#: pkg/storaged/vdo-details.jsx:197 pkg/storaged/mdraid-details.jsx:299
+#: pkg/storaged/stratis-details.jsx:258
 msgid "Permanently delete $0?"
 msgstr ""
 
-#: pkg/static/login.js:837
+#: pkg/static/login.js:893
 msgid "Permission denied"
 msgstr "ההרשאה נדחתה"
 
 #: pkg/selinux/setroubleshoot-view.jsx:261
 msgid "Permissive"
 msgstr "מתירני"
-
-#: pkg/networkmanager/dialogs-common.jsx:69
-#, fuzzy
-#| msgid "Preserve"
-msgid "Perserve"
-msgstr "שימור"
 
 #: pkg/storaged/vdo-details.jsx:283
 msgid "Physical"
@@ -4882,8 +4811,9 @@ msgstr "כרכים פיזיים"
 msgid "Physical volumes can not be resized here."
 msgstr "כאן ניתן לשנות גודל של כרכים פיזיים."
 
-#: pkg/systemd/services/timer-dialog.jsx:313 pkg/users/expiration-dialogs.js:43
-#: pkg/lib/serverTime.js:525 pkg/lib/cockpit-components-shutdown.jsx:192
+#: pkg/users/expiration-dialogs.js:43 pkg/lib/serverTime.js:525
+#: pkg/lib/cockpit-components-shutdown.jsx:202
+#: pkg/systemd/services/timer-dialog.jsx:313
 msgid "Pick date"
 msgstr "בחירת תאריך"
 
@@ -4927,23 +4857,23 @@ msgstr "נא לרענן את העמוד לאחר פתרון התקלה."
 msgid "Please specify an expiration date"
 msgstr "נא לציין מועד תפוגת תוקף"
 
-#: pkg/static/login.js:526
+#: pkg/static/login.js:537
 msgid "Please specify the host to connect to"
 msgstr "נא לציין את המארח לחיבור"
 
-#: pkg/storaged/content-views.jsx:186
+#: pkg/storaged/content-views.jsx:184
 msgid "Pool"
 msgstr "מאגר"
 
-#: pkg/storaged/utils.js:200
+#: pkg/storaged/utils.js:202
 msgid "Pool for thin logical volumes"
 msgstr "מאגר לכרכים לוגיים רזים"
 
-#: pkg/storaged/content-views.jsx:745
+#: pkg/storaged/content-views.jsx:763
 msgid "Pool for thin volumes"
 msgstr "מאגר לכרכים רזים"
 
-#: pkg/storaged/content-views.jsx:815
+#: pkg/storaged/content-views.jsx:833
 msgid "Pool for thinly provisioned volumes"
 msgstr "מאגר לכרכים באפסנה צרה"
 
@@ -4959,8 +4889,8 @@ msgstr "מספר הפתחה והסוג אינם תואמים"
 msgid "Portable"
 msgstr "נייד"
 
-#: pkg/networkmanager/network-interface-members.jsx:215
 #: pkg/networkmanager/bridge.jsx:101 pkg/networkmanager/team.jsx:159
+#: pkg/networkmanager/network-interface-members.jsx:215
 msgid "Ports"
 msgstr "פתחות"
 
@@ -4981,6 +4911,12 @@ msgstr "בהכנה"
 msgid "Present"
 msgstr "נוכחי"
 
+#: pkg/networkmanager/dialogs-common.jsx:69
+#, fuzzy
+#| msgid "Preserve"
+msgid "Preserve"
+msgstr "שימור"
+
 #: pkg/systemd/overview-cards/configurationCard.jsx:307
 msgid "Pretty host name"
 msgstr "שם מארח יפה"
@@ -4989,12 +4925,12 @@ msgstr "שם מארח יפה"
 msgid "Previous boot"
 msgstr "עלייה קודמת"
 
-#: pkg/networkmanager/bond.jsx:177 pkg/networkmanager/team.jsx:174
+#: pkg/networkmanager/team.jsx:174 pkg/networkmanager/bond.jsx:177
 msgid "Primary"
 msgstr "עיקרי"
 
-#: pkg/networkmanager/teamport.jsx:85 pkg/networkmanager/bridgeport.jsx:81
-#: pkg/systemd/logs.jsx:207
+#: pkg/systemd/logs.jsx:207 pkg/networkmanager/bridgeport.jsx:81
+#: pkg/networkmanager/teamport.jsx:85
 msgid "Priority"
 msgstr "עדיפות"
 
@@ -5021,7 +4957,7 @@ msgstr "מידע על הבעיה"
 msgid "Process"
 msgstr "תהליך"
 
-#: pkg/shell/shell-modals.jsx:87
+#: pkg/shell/shell-modals.jsx:74
 msgid "Project website"
 msgstr "אתר המיזם"
 
@@ -5041,7 +4977,7 @@ msgstr "משך הצגת הבקשה דרך ssh-keygen תם"
 msgid "Propagates reload to"
 msgstr "מפיץ רענון אל"
 
-#: pkg/storaged/stratis-details.jsx:692
+#: pkg/storaged/stratis-details.jsx:699
 msgid "Provide the passphrase for the pool on these block devices:"
 msgstr ""
 
@@ -5049,7 +4985,7 @@ msgstr ""
 msgid "Public key"
 msgstr "מפתח ציבורי"
 
-#: pkg/storaged/content-views.jsx:835
+#: pkg/storaged/content-views.jsx:853
 msgid "Purpose"
 msgstr "תכלית"
 
@@ -5113,7 +5049,7 @@ msgstr "שלדת RAID"
 msgid "RAID device"
 msgstr "התקן RAID"
 
-#: pkg/storaged/mdraid-details.jsx:321 pkg/storaged/utils.js:250
+#: pkg/storaged/utils.js:252 pkg/storaged/mdraid-details.jsx:321
 msgid "RAID device $0"
 msgstr "התקן RAID‏ $0"
 
@@ -5126,7 +5062,7 @@ msgctxt "storage"
 msgid "RAID level"
 msgstr "רמת RAID"
 
-#: pkg/storaged/content-views.jsx:211
+#: pkg/storaged/content-views.jsx:464 pkg/storaged/content-views.jsx:479
 msgid "RAID member"
 msgstr "חבר ב־RAID"
 
@@ -5162,7 +5098,7 @@ msgstr "גולמי להתקן"
 msgid "Read"
 msgstr "קריאה"
 
-#: pkg/systemd/hwinfo.jsx:223 pkg/metrics/metrics.jsx:1024
+#: pkg/metrics/metrics.jsx:1024 pkg/systemd/hwinfo.jsx:223
 msgid "Read more..."
 msgstr "מידע נוסף…"
 
@@ -5199,10 +5135,10 @@ msgstr ""
 msgid "Real host name must be 64 characters or less"
 msgstr "אורך שם התחום האמתי חייב להיות קצר מ־64 תווים"
 
-#: pkg/systemd/overview.jsx:102 pkg/systemd/overview.jsx:119
-#: pkg/lib/cockpit-components-logs-panel.jsx:103
-#: pkg/lib/cockpit-components-shutdown.jsx:169
-#: pkg/lib/cockpit-components-shutdown.jsx:171
+#: pkg/lib/cockpit-components-shutdown.jsx:179
+#: pkg/lib/cockpit-components-shutdown.jsx:181
+#: pkg/lib/cockpit-components-logs-panel.jsx:103 pkg/systemd/overview.jsx:102
+#: pkg/systemd/overview.jsx:119
 msgid "Reboot"
 msgstr "הפעלה מחדש"
 
@@ -5215,13 +5151,20 @@ msgstr "מומלץ להפעיל מחדש"
 msgid "Reboot system..."
 msgstr "הפעלת המערכת מחדש…"
 
-#: pkg/networkmanager/network-interface-members.jsx:217
-#: pkg/networkmanager/plots.js:43 pkg/networkmanager/network-main.jsx:187
+#: pkg/networkmanager/network-main.jsx:187
 #: pkg/networkmanager/network-main.jsx:202
+#: pkg/networkmanager/network-interface-members.jsx:217
+#: pkg/networkmanager/plots.js:43
 msgid "Receiving"
 msgstr "קבלה"
 
-#: pkg/shell/index.html:61
+#: pkg/static/login.html:161
+#, fuzzy
+#| msgid "Recent"
+msgid "Recent hosts"
+msgstr "אחרונים"
+
+#: pkg/shell/failures.jsx:71
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
@@ -5237,15 +5180,15 @@ msgstr "התקן ה־RAID‏ $target עובר שיקום"
 msgid "Refreshing package information"
 msgstr "פרטי החבילה מתרעננים"
 
-#: pkg/static/login.js:827
+#: pkg/static/login.js:883
 msgid "Refusing to connect. Host is unknown"
 msgstr "החיבור מסורב. המארח אינו מוכר"
 
-#: pkg/static/login.js:829
+#: pkg/static/login.js:885
 msgid "Refusing to connect. Hostkey does not match"
 msgstr "החיבור מסורב. מפתח המארח לא תואם"
 
-#: pkg/static/login.js:825
+#: pkg/static/login.js:881
 msgid "Refusing to connect. Hostkey is unknown"
 msgstr "החיבור מסורב. מפתח המארח אינו מוכר"
 
@@ -5288,10 +5231,10 @@ msgstr "כונן נתיק"
 msgid "Removals:"
 msgstr "הסרות:"
 
-#: pkg/shell/hosts.jsx:176 pkg/apps/application.jsx:51
-#: pkg/systemd/services/timer-dialog.jsx:326
-#: pkg/users/authorized-keys-panel.js:137 pkg/storaged/vgroup-details.jsx:122
-#: pkg/storaged/mdraid-details.jsx:142 pkg/storaged/nfs-details.jsx:320
+#: pkg/users/authorized-keys-panel.js:137
+#: pkg/systemd/services/timer-dialog.jsx:326 pkg/shell/hosts.jsx:176
+#: pkg/apps/application.jsx:51 pkg/storaged/vgroup-details.jsx:122
+#: pkg/storaged/nfs-details.jsx:320 pkg/storaged/mdraid-details.jsx:142
 #: pkg/storaged/crypto-keyslots.jsx:463 pkg/storaged/crypto-keyslots.jsx:498
 #: pkg/storaged/crypto-keyslots.jsx:579
 msgid "Remove"
@@ -5313,8 +5256,8 @@ msgstr "להסיר את $0?"
 msgid "Remove Tang keyserver?"
 msgstr "להסיר את שרת המפתחות Tang?"
 
-#: pkg/storaged/content-views.jsx:388 pkg/storaged/vgroup-details.jsx:207
-#: pkg/storaged/stratis-details.jsx:265 pkg/storaged/mdraid-details.jsx:305
+#: pkg/storaged/vgroup-details.jsx:207 pkg/storaged/content-views.jsx:379
+#: pkg/storaged/mdraid-details.jsx:305 pkg/storaged/stratis-details.jsx:265
 #, fuzzy
 #| msgid "Stop and delete"
 msgid "Remove and delete"
@@ -5332,7 +5275,7 @@ msgstr "תצורת כניסה"
 msgid "Remove and grow"
 msgstr "תצורת כניסה"
 
-#: pkg/storaged/content-views.jsx:667
+#: pkg/storaged/content-views.jsx:688
 #, fuzzy
 #| msgid "Login format"
 msgid "Remove and initialize"
@@ -5352,6 +5295,12 @@ msgstr "הסרת התקן"
 
 #: pkg/storaged/vdo-details.jsx:107
 msgid "Remove device"
+msgstr "הסרת התקן"
+
+#: pkg/static/login.js:595
+#, fuzzy
+#| msgid "Remove device"
+msgid "Remove host"
 msgstr "הסרת התקן"
 
 #: pkg/networkmanager/ip-settings.jsx:198
@@ -5422,10 +5371,10 @@ msgstr ""
 msgid "Removing the zone will remove all services within it."
 msgstr "הסרת האזור תסיר את כל השירותים שבו."
 
-#: pkg/storaged/lvol-tabs.jsx:52 pkg/storaged/vgroup-details.jsx:175
-#: pkg/storaged/vgroup-details.jsx:227 pkg/storaged/stratis-details.jsx:288
+#: pkg/storaged/vgroup-details.jsx:175 pkg/storaged/vgroup-details.jsx:227
+#: pkg/storaged/lvol-tabs.jsx:52 pkg/storaged/stratis-details.jsx:288
 #: pkg/storaged/stratis-details.jsx:425 pkg/storaged/stratis-details.jsx:482
-#: pkg/storaged/stratis-details.jsx:621
+#: pkg/storaged/stratis-details.jsx:601
 msgid "Rename"
 msgstr "שינוי שם"
 
@@ -5501,11 +5450,11 @@ msgstr "דיווחים:"
 
 #: pkg/users/expiration-dialogs.js:172
 msgid "Require password change every $0 days"
-msgstr "לדרוש החלפת ססמה כל $0 ימים"
+msgstr "לדרוש החלפת סיסמה כל $0 ימים"
 
 #: pkg/users/account-details.js:105
 msgid "Require password change on $0"
-msgstr "לדרוש החלפת ססמה ב־$0"
+msgstr "לדרוש החלפת סיסמה ב־$0"
 
 #: pkg/systemd/services/service-details.jsx:454
 msgid "Required by"
@@ -5535,13 +5484,13 @@ msgstr "הכרח של"
 msgid "Reserved memory"
 msgstr "זיכרון שמור"
 
-#: pkg/systemd/logs.jsx:404 pkg/systemd/terminal.jsx:159
+#: pkg/systemd/terminal.jsx:159 pkg/systemd/logs.jsx:404
 msgid "Reset"
 msgstr "איפוס"
 
 #: pkg/users/password-dialogs.js:278
 msgid "Reset password"
-msgstr "איפוס ססמה"
+msgstr "איפוס סיסמה"
 
 #: pkg/storaged/jobs-panel.jsx:47 pkg/storaged/jobs-panel.jsx:53
 #: pkg/storaged/jobs-panel.jsx:85
@@ -5598,7 +5547,7 @@ msgstr "היומנים נסקרים"
 msgid "Roles"
 msgstr "תפקידים"
 
-#: pkg/networkmanager/bond.jsx:44 pkg/networkmanager/team.jsx:42
+#: pkg/networkmanager/team.jsx:42 pkg/networkmanager/bond.jsx:44
 msgid "Round robin"
 msgstr "ראונד-רובין"
 
@@ -5621,10 +5570,9 @@ msgstr ""
 msgid "Runner"
 msgstr "שליח"
 
-#: pkg/systemd/services/services.jsx:186 pkg/systemd/services/services.jsx:190
-#: pkg/systemd/services/services.jsx:757
 #: pkg/systemd/services/service-details.jsx:369
-#: pkg/storaged/mdraid-details.jsx:357
+#: pkg/systemd/services/services.jsx:186 pkg/systemd/services/services.jsx:190
+#: pkg/systemd/services/services.jsx:757 pkg/storaged/mdraid-details.jsx:357
 msgid "Running"
 msgstr "פועל"
 
@@ -5673,7 +5621,7 @@ msgid "SSH key"
 msgstr "מפתח SSH"
 
 #: pkg/shell/credentials.jsx:80 pkg/shell/credentials.jsx:96
-#: pkg/shell/topnav.jsx:155
+#: pkg/shell/topnav.jsx:160
 msgid "SSH keys"
 msgstr "מפתחות SSH"
 
@@ -5693,7 +5641,7 @@ msgstr "גיל ההודעה המרבי של STP"
 msgid "STP priority"
 msgstr "עדיפות STP"
 
-#: pkg/shell/index.html:81
+#: pkg/shell/failures.jsx:43
 msgid ""
 "Safari users need to import and trust the certificate of the self-signing CA:"
 msgstr ""
@@ -5703,7 +5651,7 @@ msgstr ""
 msgid "Saturdays"
 msgstr "שבתות"
 
-#: pkg/systemd/services/timer-dialog.jsx:133 pkg/metrics/metrics.jsx:1032
+#: pkg/metrics/metrics.jsx:1032 pkg/systemd/services/timer-dialog.jsx:133
 #: pkg/storaged/crypto-keyslots.jsx:341 pkg/storaged/crypto-keyslots.jsx:360
 msgid "Save"
 msgstr "שמירה"
@@ -5717,11 +5665,11 @@ msgstr "שמירה והפעלה מחדש"
 msgid "Save changes"
 msgstr "שמירת השינויים"
 
-#: pkg/storaged/content-views.jsx:904
+#: pkg/storaged/content-views.jsx:922
 msgid "Save space by compressing individual blocks with LZ4"
 msgstr "ניתן לחסוך במקום על ידי דחיסת בלוקים עם LZ4 באופן פרטני"
 
-#: pkg/storaged/content-views.jsx:908
+#: pkg/storaged/content-views.jsx:926
 msgid "Save space by storing identical data blocks just once"
 msgstr "ניתן לחסוך במקום על ידי אחסון בלוקים עם נתונים זהים פעם אחת בלבד"
 
@@ -5738,7 +5686,7 @@ msgstr ""
 msgid "Sealed-case PC"
 msgstr "מחשב במארז אטום"
 
-#: pkg/shell/nav.jsx:109 pkg/systemd/logs.jsx:405
+#: pkg/systemd/logs.jsx:405 pkg/shell/nav.jsx:121
 msgid "Search"
 msgstr "חיפוש"
 
@@ -5772,7 +5720,7 @@ msgstr "יש עדכוני אבטחה"
 msgid "Security updates only"
 msgstr "עדכוני אבטחה בלבד"
 
-#: pkg/shell/shell-modals.jsx:140
+#: pkg/shell/shell-modals.jsx:127
 msgid "Select"
 msgstr "בחירה"
 
@@ -5792,9 +5740,9 @@ msgstr "בחירה"
 msgid "Send"
 msgstr "שליחה"
 
-#: pkg/networkmanager/network-interface-members.jsx:216
 #: pkg/networkmanager/network-main.jsx:186
 #: pkg/networkmanager/network-main.jsx:201
+#: pkg/networkmanager/network-interface-members.jsx:216
 msgid "Sending"
 msgstr "שליחה"
 
@@ -5803,9 +5751,9 @@ msgctxt "storage"
 msgid "Serial number"
 msgstr "מספר סידורי"
 
-#: pkg/static/login.html:155 pkg/networkmanager/ip-settings.jsx:231
-#: pkg/kdump/kdump-view.jsx:120 pkg/storaged/nfs-details.jsx:329
-#: pkg/storaged/nfs-panel.jsx:102
+#: pkg/static/login.html:155 pkg/kdump/kdump-view.jsx:120
+#: pkg/storaged/nfs-details.jsx:329 pkg/storaged/nfs-panel.jsx:102
+#: pkg/networkmanager/ip-settings.jsx:231
 msgid "Server"
 msgstr "שרת"
 
@@ -5833,8 +5781,8 @@ msgstr "השרת סגר את החיבור."
 msgid "Server software"
 msgstr "התכנה בשרת"
 
-#: pkg/networkmanager/firewall.jsx:184 pkg/metrics/metrics.jsx:492
-#: pkg/metrics/metrics.jsx:525 pkg/storaged/dialog.jsx:1110
+#: pkg/metrics/metrics.jsx:492 pkg/metrics/metrics.jsx:525
+#: pkg/storaged/dialog.jsx:1110 pkg/networkmanager/firewall.jsx:184
 msgid "Service"
 msgstr "שירות"
 
@@ -5862,17 +5810,17 @@ msgstr "השירות בהליכי עצירה"
 msgid "Service logs"
 msgstr "יומני שירות"
 
-#: pkg/systemd/services.html:4 pkg/networkmanager/firewall.jsx:544
-#: pkg/systemd/services/service.jsx:80 pkg/systemd/services/service-tabs.jsx:39
+#: pkg/systemd/services.html:4 pkg/systemd/services/service-tabs.jsx:39
+#: pkg/systemd/services/service.jsx:80 pkg/networkmanager/firewall.jsx:544
 #: pkg/systemd/manifest.json:0
 msgid "Services"
 msgstr "שירותים"
 
-#: pkg/shell/topnav.jsx:201 pkg/storaged/dialog.jsx:1106
+#: pkg/shell/topnav.jsx:213 pkg/storaged/dialog.jsx:1106
 msgid "Session"
 msgstr "הפעלה"
 
-#: pkg/shell/shell-modals.jsx:180
+#: pkg/shell/shell-modals.jsx:167
 msgid "Session is about to expire"
 msgstr "תוקף ההפעלה עומד לפוג"
 
@@ -5887,7 +5835,7 @@ msgstr "הגדרת שם מארח"
 #: pkg/users/account-details.js:345 pkg/users/password-dialogs.js:215
 #: pkg/users/password-dialogs.js:225 pkg/users/password-dialogs.js:232
 msgid "Set password"
-msgstr "הגדרת ססמה"
+msgstr "הגדרת סיסמה"
 
 #: pkg/lib/serverTime.js:512
 msgid "Set time"
@@ -5996,8 +5944,8 @@ msgstr "כיווץ הכרך הלוגי"
 msgid "Shrink volume"
 msgstr "כיווץ כרך"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:169
-#: pkg/lib/cockpit-components-shutdown.jsx:171
+#: pkg/lib/cockpit-components-shutdown.jsx:179
+#: pkg/lib/cockpit-components-shutdown.jsx:181
 msgid "Shut down"
 msgstr "כיבוי"
 
@@ -6013,13 +5961,15 @@ msgstr ""
 msgid "Single rank"
 msgstr "שורה אחת"
 
-#: pkg/systemd/hwinfo.jsx:313 pkg/storaged/lvol-tabs.jsx:242
+#: pkg/systemd/hwinfo.jsx:313 pkg/storaged/format-dialog.jsx:226
+#: pkg/storaged/fsys-panel.jsx:174 pkg/storaged/lvol-tabs.jsx:242
 #: pkg/storaged/lvol-tabs.jsx:308 pkg/storaged/lvol-tabs.jsx:428
 #: pkg/storaged/lvol-tabs.jsx:489 pkg/storaged/lvol-tabs.jsx:542
-#: pkg/storaged/content-views.jsx:167 pkg/storaged/content-views.jsx:873
-#: pkg/storaged/content-views.jsx:881 pkg/storaged/fsys-panel.jsx:187
 #: pkg/storaged/nfs-details.jsx:339 pkg/storaged/nfs-panel.jsx:104
-#: pkg/storaged/format-dialog.jsx:226 pkg/storaged/part-tab.jsx:45
+#: pkg/storaged/part-tab.jsx:45 pkg/storaged/content-views.jsx:165
+#: pkg/storaged/content-views.jsx:729 pkg/storaged/content-views.jsx:891
+#: pkg/storaged/content-views.jsx:899 pkg/storaged/content-views.jsx:979
+#: pkg/storaged/stratis-details.jsx:655 pkg/storaged/stratis-details.jsx:792
 msgid "Size"
 msgstr "גודל"
 
@@ -6059,7 +6009,7 @@ msgstr "משבצת"
 msgid "Slot $0"
 msgstr "משבצת $0"
 
-#: pkg/storaged/stratis-details.jsx:622
+#: pkg/storaged/stratis-details.jsx:602
 #, fuzzy
 #| msgid "Snapshots"
 msgid "Snapshot"
@@ -6112,6 +6062,10 @@ msgstr "יש להפעיל חלק מהתכניות מחדש"
 msgid "Sorted from least to most trusted"
 msgstr "מסודר מהכי מהימן להכי פחות"
 
+#: pkg/storaged/fsys-panel.jsx:171
+msgid "Source"
+msgstr "מקור"
+
 #: pkg/lib/machine-info.js:72
 msgid "Space-saving computer"
 msgstr "מחשב חסכוני במקום"
@@ -6128,7 +6082,7 @@ msgstr "פרוטוקול העץ הפורש (STP)"
 msgid "Spare"
 msgstr "עודף"
 
-#: pkg/lib/cockpit-components-shutdown.jsx:162
+#: pkg/lib/cockpit-components-shutdown.jsx:172
 msgid "Specific time"
 msgstr "זמן מסוים"
 
@@ -6141,7 +6095,7 @@ msgid "Stable"
 msgstr "יציב"
 
 #: pkg/systemd/services/service-details.jsx:142
-#: pkg/storaged/vdo-details.jsx:260 pkg/storaged/content-views.jsx:347
+#: pkg/storaged/content-views.jsx:338 pkg/storaged/vdo-details.jsx:260
 #: pkg/storaged/mdraid-details.jsx:325
 msgid "Start"
 msgstr "התחלה"
@@ -6154,7 +6108,7 @@ msgstr "התחלה והפעלה"
 msgid "Start multipath"
 msgstr "הפעלת רב נתיבי"
 
-#: pkg/networkmanager/app.jsx:76 pkg/systemd/services/service-details.jsx:358
+#: pkg/systemd/services/service-details.jsx:358 pkg/networkmanager/app.jsx:76
 msgid "Start service"
 msgstr "התחלת שירות"
 
@@ -6190,14 +6144,13 @@ msgctxt "storage"
 msgid "State"
 msgstr "מצב"
 
-#: pkg/systemd/services/services.jsx:206 pkg/systemd/services/services.jsx:749
 #: pkg/systemd/services/service-details.jsx:387
+#: pkg/systemd/services/services.jsx:206 pkg/systemd/services/services.jsx:749
 msgid "Static"
 msgstr "סטטי"
 
-#: pkg/networkmanager/network-interface.jsx:264
-#: pkg/systemd/services/service-details.jsx:529 pkg/packagekit/updates.jsx:856
-#: pkg/kdump/kdump-view.jsx:516
+#: pkg/kdump/kdump-view.jsx:516 pkg/systemd/services/service-details.jsx:529
+#: pkg/networkmanager/network-interface.jsx:264 pkg/packagekit/updates.jsx:856
 msgid "Status"
 msgstr "מצב"
 
@@ -6210,8 +6163,8 @@ msgid "Sticky"
 msgstr "דביק"
 
 #: pkg/systemd/services/service-details.jsx:138
-#: pkg/storaged/vdo-details.jsx:143 pkg/storaged/vdo-details.jsx:259
-#: pkg/storaged/content-views.jsx:345 pkg/storaged/mdraid-details.jsx:324
+#: pkg/storaged/content-views.jsx:336 pkg/storaged/vdo-details.jsx:143
+#: pkg/storaged/vdo-details.jsx:259 pkg/storaged/mdraid-details.jsx:324
 msgid "Stop"
 msgstr "עצירה"
 
@@ -6231,7 +6184,7 @@ msgstr "עצירה וניתוק"
 msgid "Stop device"
 msgstr "עצירת התקן"
 
-#: pkg/shell/hosts.jsx:207
+#: pkg/shell/hosts.jsx:209
 msgid "Stop editing hosts"
 msgstr "הפסקת עריכת מארחים"
 
@@ -6243,7 +6196,7 @@ msgstr "התקן ה־RAID‏ $target נעצר"
 msgid "Stopping swapspace $target"
 msgstr "שטח ההחלפה $target נעצר"
 
-#: pkg/storaged/index.html:23 pkg/storaged/details.jsx:141
+#: pkg/storaged/index.html:23 pkg/storaged/details.jsx:146
 #: pkg/storaged/manifest.json:0
 msgid "Storage"
 msgstr "אחסון"
@@ -6265,7 +6218,14 @@ msgstr "אחסון מילת צופן"
 msgid "Stored passphrase"
 msgstr "מילת צופן מאוחסנת"
 
-#: pkg/storaged/content-views.jsx:208 pkg/storaged/pvol-tabs.jsx:112
+#: pkg/storaged/content-views.jsx:442 pkg/storaged/content-views.jsx:469
+#: pkg/storaged/content-views.jsx:476
+#, fuzzy
+#| msgid "Interface members"
+msgid "Stratis member"
+msgstr "חברים במנשק"
+
+#: pkg/storaged/pvol-tabs.jsx:112
 #, fuzzy
 #| msgid "Storage pools"
 msgid "Stratis pool"
@@ -6308,7 +6268,7 @@ msgid "Support is installed."
 msgstr "התמיכה מותקנת."
 
 #: pkg/metrics/metrics.jsx:118 pkg/metrics/metrics.jsx:438
-#: pkg/metrics/metrics.jsx:1389 pkg/storaged/content-views.jsx:215
+#: pkg/metrics/metrics.jsx:1389 pkg/storaged/content-views.jsx:206
 msgid "Swap"
 msgstr "החלפה"
 
@@ -6316,7 +6276,7 @@ msgstr "החלפה"
 msgid "Swap out"
 msgstr "יציאה מההחלפה"
 
-#: pkg/storaged/content-views.jsx:470
+#: pkg/storaged/content-views.jsx:483
 msgctxt "storage-id-desc"
 msgid "Swap space"
 msgstr "שטח החלפה"
@@ -6325,13 +6285,13 @@ msgstr "שטח החלפה"
 msgid "Switch of $0"
 msgstr "כיבוי $0"
 
-#: pkg/networkmanager/network-interface-members.jsx:96
 #: pkg/networkmanager/network-interface.jsx:166
+#: pkg/networkmanager/network-interface-members.jsx:96
 msgid "Switch off $0"
 msgstr "כיבוי $0"
 
-#: pkg/networkmanager/network-interface-members.jsx:84
 #: pkg/networkmanager/network-interface.jsx:145
+#: pkg/networkmanager/network-interface-members.jsx:84
 msgid "Switch on $0"
 msgstr "הדלקת $0"
 
@@ -6345,8 +6305,8 @@ msgstr "הפעלת גישה ניהולית"
 msgid "Switch to limited access"
 msgstr "העברה לגישה מוגבלת"
 
-#: pkg/networkmanager/network-interface-members.jsx:95
 #: pkg/networkmanager/network-interface.jsx:165
+#: pkg/networkmanager/network-interface-members.jsx:95
 #, fuzzy
 #| msgid ""
 #| "Switching off <b>$0</b> will break the connection to the server, and will "
@@ -6357,8 +6317,8 @@ msgid ""
 msgstr ""
 "כיבוי <b>$0</b> יקטע את החיבור לשרת ותגרום לכך שמנשק הניהול לא יהיה זמין."
 
-#: pkg/networkmanager/network-interface-members.jsx:83
 #: pkg/networkmanager/network-interface.jsx:144
+#: pkg/networkmanager/network-interface-members.jsx:83
 #, fuzzy
 #| msgid ""
 #| "Switching on <b>$0</b> will break the connection to the server, and will "
@@ -6385,8 +6345,8 @@ msgstr "מתבצע סנכרון"
 msgid "Synchronizing RAID device $target"
 msgstr "התקן ה־RAID‏ $target מסונכרן"
 
-#: pkg/shell/index.html:21 pkg/shell/indexes.js:343
-#: pkg/systemd/services/services.jsx:995
+#: pkg/systemd/services/services.jsx:995 pkg/shell/indexes.js:332
+#: pkg/shell/nav.jsx:28
 msgid "System"
 msgstr "מערכת"
 
@@ -6475,7 +6435,7 @@ msgstr "החיבור נבדק"
 msgid "The $0 package must be installed to create Stratis pools."
 msgstr "החבילה $0 חייבת להיות מותקנת כדי ליצור התקני VDO."
 
-#: pkg/storaged/content-views.jsx:840
+#: pkg/storaged/content-views.jsx:858
 #, fuzzy
 #| msgid "The $0 package must be installed to create VDO devices."
 msgid "The $0 package will be installed to create VDO devices."
@@ -6532,8 +6492,8 @@ msgid ""
 "the key at $1."
 msgstr ""
 "מפתח ה־SSH לכניסה אל {{#strong}}{{full_address}}{{/strong}} מוגן. יש לך "
-"אפשרות להיכנס עם שם המשתמש והססמה שלך או על ידי אספקת הססמה למפתח שב־"
-"{{#strong}}{{key}}{{/strong}}."
+"אפשרות להיכנס עם שם המשתמש והסיסמה שלך או על ידי אספקת הסיסמה למפתח "
+"שב־{{#strong}}{{key}}{{/strong}}."
 
 #: pkg/shell/hosts_dialog.jsx:756
 #, fuzzy
@@ -6546,12 +6506,12 @@ msgid ""
 "your login password or by providing the password of the key at $1."
 msgstr ""
 "מפתח ה־SSH לכניסה אל {{#strong}}{{full_address}}{{/strong}} מוגן. יש לך "
-"אפשרות להיכנס עם שם המשתמש והססמה שלך או על ידי אספקת הססמה למפתח שב־"
-"{{#strong}}{{key}}{{/strong}}."
+"אפשרות להיכנס עם שם המשתמש והסיסמה שלך או על ידי אספקת הסיסמה למפתח "
+"שב־{{#strong}}{{key}}{{/strong}}."
 
 #: pkg/users/password-dialogs.js:266
 msgid "The account '$0' will be forced to change their password on next login"
-msgstr "החשבון ‚$0’ יאולץ להחליף את הססמה שלו עם כניסתו הבאה למערכת"
+msgstr "החשבון ‚$0’ יאולץ להחליף את הסיסמה שלו עם כניסתו הבאה למערכת"
 
 #: pkg/networkmanager/firewall.jsx:746
 msgid "The cockpit service is automatically included"
@@ -6581,7 +6541,7 @@ msgid ""
 "passphrase."
 msgstr ""
 
-#: pkg/storaged/fsys-tab.jsx:528
+#: pkg/storaged/fsys-tab.jsx:510
 msgid "The filesystem has no permanent mount point."
 msgstr "למערכת הקבצים אין נקודת עגינה קבועה."
 
@@ -6589,7 +6549,7 @@ msgstr "למערכת הקבצים אין נקודת עגינה קבועה."
 msgid "The filesystem is already mounted at $0. Proceeding will unmount it."
 msgstr "מערכת הקבצים כבר מעוגנת תחת $0. המשך הפעולה ינתק את העיגון."
 
-#: pkg/storaged/fsys-tab.jsx:660
+#: pkg/storaged/fsys-tab.jsx:642
 msgid ""
 "The filesystem is configured to be automatically mounted on boot but its "
 "encryption container will not be unlocked at that time."
@@ -6597,26 +6557,26 @@ msgstr ""
 "מערכת הקבצים מוגדרת להתעגן אוטומטית עם הפעלת המערכת אבל מכולת ההצפנה שלה לא "
 "תשוחרר באותו הזמן."
 
-#: pkg/storaged/fsys-tab.jsx:652
+#: pkg/storaged/fsys-tab.jsx:634
 msgid ""
 "The filesystem is currently mounted but will not be mounted after the next "
 "boot."
 msgstr "מערכת הקבצים מעוגנת כעת אך העיגון ינותק לאחר העלייה הבאה של המערכת."
 
-#: pkg/storaged/fsys-tab.jsx:644
+#: pkg/storaged/fsys-tab.jsx:626
 msgid ""
 "The filesystem is currently mounted on $0 but will be mounted on $1 on the "
 "next boot."
 msgstr ""
 "מערכת הקבצים מעוגנת למיקום $0 אך תעוגן למיקום $1 עם העלייה הבאה של המערכת."
 
-#: pkg/storaged/fsys-tab.jsx:656
+#: pkg/storaged/fsys-tab.jsx:638
 msgid ""
 "The filesystem is currently mounted on $0 but will not be mounted after the "
 "next boot."
 msgstr "מערכת הקבצים מעוגנת למיקום $0 אך לא תעוגן עם העלייה הבאה של המערכת."
 
-#: pkg/storaged/fsys-tab.jsx:648
+#: pkg/storaged/fsys-tab.jsx:630
 msgid ""
 "The filesystem is currently not mounted but will be mounted on the next boot."
 msgstr "מערכת הקבצים אינה מעוגנת כעת אך היא תעוגן עם ההפעלה הבאה של המערכת."
@@ -6638,11 +6598,11 @@ msgid ""
 "The filesystem is in use by system services. Proceeding will stop these."
 msgstr "מערכת הקבצים בשימוש על ידי שירותי מערכת. המשך הפעילות תעצור אותם."
 
-#: pkg/storaged/fsys-tab.jsx:530
+#: pkg/storaged/fsys-tab.jsx:512
 msgid "The filesystem is not mounted."
 msgstr "מערכת הקבצים אינה מעוגנת."
 
-#: pkg/storaged/fsys-tab.jsx:533
+#: pkg/storaged/fsys-tab.jsx:515
 msgid ""
 "The filesystem will be unlocked and mounted on the next boot. This might "
 "require inputting a passphrase."
@@ -6667,11 +6627,11 @@ msgstr ""
 
 #: pkg/shell/hosts_dialog.jsx:673
 msgid "The key password can not be empty"
-msgstr "ססמת המפתח לא יכולה להישאר ריקה"
+msgstr "סיסמת המפתח לא יכולה להישאר ריקה"
 
 #: pkg/shell/hosts_dialog.jsx:676 pkg/shell/hosts_dialog.jsx:682
 msgid "The key passwords do not match"
-msgstr "ססמאות המפתח אינן תואמות"
+msgstr "סיסמאות המפתח אינן תואמות"
 
 #: pkg/users/authorized-keys.js:123
 msgid "The key you provided was not valid."
@@ -6693,27 +6653,27 @@ msgstr "לא ניתן להסיר את הכרך הפיזי האחרון של קב
 msgid "The logged in user is not permitted to view system modifications"
 msgstr "המשתמש הנוכחי שנכנס למערכת אינו מורשה לצפות בשינויים שבוצעו במערכת"
 
-#: pkg/shell/indexes.js:455
+#: pkg/shell/indexes.js:444
 msgid "The machine is rebooting"
 msgstr "המכונה מופעלת מחדש"
 
 #: pkg/shell/hosts_dialog.jsx:679
 msgid "The new key password can not be empty"
-msgstr "ססמת המפתח החדשה לא יכולה להישאר ריקה"
+msgstr "סיסמת המפתח החדשה לא יכולה להישאר ריקה"
 
 #: pkg/shell/hosts_dialog.jsx:657
 #, fuzzy
 #| msgid "The key password can not be empty"
 msgid "The password can not be empty"
-msgstr "ססמת המפתח לא יכולה להישאר ריקה"
+msgstr "סיסמת המפתח לא יכולה להישאר ריקה"
 
 #: pkg/users/account-create-dialog.js:202 pkg/users/password-dialogs.js:207
 msgid "The passwords do not match"
-msgstr "הססמאות אינן תואמות"
+msgstr "הסיסמאות אינן תואמות"
 
 #: pkg/lib/credentials.js:194
 msgid "The passwords do not match."
-msgstr "הססמאות אינן תואמות."
+msgstr "הסיסמאות אינן תואמות."
 
 #: pkg/static/login.html:71 pkg/shell/hosts_dialog.jsx:465
 #: pkg/shell/hosts_dialog.jsx:476
@@ -6722,11 +6682,11 @@ msgid ""
 "email."
 msgstr "זה בסדר לשתף את טביעת האצבע באופן ציבורי, לרבות בדוא״ל."
 
-#: pkg/static/login.js:819
+#: pkg/static/login.js:875
 msgid ""
 "The server refused to authenticate '$0' using password authentication, and "
 "no other supported authentication methods are available."
-msgstr "השרת סירב לאמת את ‚$0’ עם אימות בססמה ואין שיטות אימות אחרות נתמכות."
+msgstr "השרת סירב לאמת את ‚$0’ עם אימות בסיסמה ואין שיטות אימות אחרות נתמכות."
 
 #: pkg/base1/cockpit.js:3948
 msgid "The server refused to authenticate using any supported methods."
@@ -6779,11 +6739,11 @@ msgstr ""
 "אין מספיק מקום פנוי היכנשהו כדי להסיר את הכרך הפיזי הזה. נדרשים לפחות עוד $0 "
 "של מקום פנוי."
 
-#: pkg/shell/index.html:76
+#: pkg/shell/failures.jsx:39
 msgid "There was an unexpected error while connecting to the machine."
 msgstr "הייתה שגיאה בלתי צפויה בעת ההתחברות למכונה."
 
-#: pkg/storaged/utils.js:202
+#: pkg/storaged/utils.js:204
 msgid "Thin logical volume"
 msgstr "כרך לוגי צר"
 
@@ -6881,7 +6841,7 @@ msgstr "חבילה זו אינה נתמכת בגרסה זו של Cockpit"
 msgid "This package requires Cockpit version %s or later"
 msgstr "חבילה זו דורשת Cockpit בגרסה %s ומעלה"
 
-#: pkg/storaged/stratis-details.jsx:672
+#: pkg/storaged/stratis-details.jsx:679
 msgid ""
 "This pool can not be unlocked here because its key description is not in the "
 "expected format."
@@ -6943,7 +6903,7 @@ msgstr ""
 
 #: pkg/shell/hosts_dialog.jsx:802
 msgid "This will allow you to log in without password in the future."
-msgstr "הגדרה זו תאפשר לך להיכנס ללא ססמה בעתיד."
+msgstr "הגדרה זו תאפשר לך להיכנס ללא סיסמה בעתיד."
 
 #: pkg/kdump/kdump-view.jsx:302
 msgid ""
@@ -6995,7 +6955,7 @@ msgid ""
 "Tip: Make your key password match your login password to automatically "
 "authenticate against other systems."
 msgstr ""
-"עצה: אפשר להגדיר את ססמת המפתח שלך כמו ססמת הכניסה שלך כדי להתאמת אוטומטית "
+"עצה: אפשר להגדיר את סיסמת המפתח שלך כמו סיסמת הכניסה שלך כדי להתאמת אוטומטית "
 "מול מערכות אחרות."
 
 #: pkg/static/login.html:66 pkg/shell/hosts_dialog.jsx:460
@@ -7015,8 +6975,8 @@ msgstr ""
 "כדי לקבל עדכוני תכנה, יש לרשום את המערכת הזאת ב־Red Hat, או דרך פורטל "
 "הלקוחות של Red Hat או דרך שרת מינוי מקומי."
 
-#: pkg/shell/hosts_dialog.jsx:463 pkg/shell/hosts_dialog.jsx:474
-#: pkg/static/login.js:672
+#: pkg/static/login.js:728 pkg/shell/hosts_dialog.jsx:463
+#: pkg/shell/hosts_dialog.jsx:474
 msgid ""
 "To verify a fingerprint, run the following on $0 while physically sitting at "
 "the machine or through a trusted network:"
@@ -7036,12 +6996,13 @@ msgstr "בורר"
 msgid "Toggle bitmap"
 msgstr "החלפת מצב מפת סיביות"
 
-#: pkg/systemd/services/timer-dialog.jsx:314 pkg/users/expiration-dialogs.js:44
-#: pkg/lib/serverTime.js:526 pkg/lib/cockpit-components-shutdown.jsx:193
+#: pkg/users/expiration-dialogs.js:44 pkg/lib/serverTime.js:526
+#: pkg/lib/cockpit-components-shutdown.jsx:203
+#: pkg/systemd/services/timer-dialog.jsx:314
 msgid "Toggle date picker"
 msgstr ""
 
-#: pkg/systemd/logs.jsx:189 pkg/systemd/services/services.jsx:902
+#: pkg/systemd/services/services.jsx:902 pkg/systemd/logs.jsx:189
 #, fuzzy
 #| msgid "Hide filters"
 msgid "Toggle filters"
@@ -7051,7 +7012,7 @@ msgstr "הסתרת מסננים"
 msgid "Too much data"
 msgstr "יותר מדי נתונים"
 
-#: pkg/shell/indexes.js:346
+#: pkg/shell/indexes.js:335
 msgid "Tools"
 msgstr "כלים"
 
@@ -7081,8 +7042,8 @@ msgstr ""
 msgid "Transmitting"
 msgstr "הגדרות ציוות"
 
-#: pkg/systemd/services/services-list.jsx:44
 #: pkg/systemd/services/timer-dialog.jsx:168
+#: pkg/systemd/services/services-list.jsx:44
 #, fuzzy
 #| msgid "Triggers"
 msgid "Trigger"
@@ -7153,10 +7114,11 @@ msgstr "Tuned כבוי"
 msgid "Turn on administrative access"
 msgstr "הפעלת גישה ניהולית"
 
-#: pkg/shell/credentials.jsx:200 pkg/systemd/hwinfo.jsx:87
-#: pkg/systemd/hwinfo.jsx:313 pkg/packagekit/autoupdates.jsx:279
-#: pkg/storaged/unrecognized-tab.jsx:41 pkg/storaged/format-dialog.jsx:224
-#: pkg/storaged/part-tab.jsx:55
+#: pkg/systemd/hwinfo.jsx:87 pkg/systemd/hwinfo.jsx:313
+#: pkg/shell/credentials.jsx:200 pkg/storaged/format-dialog.jsx:224
+#: pkg/storaged/fsys-panel.jsx:172 pkg/storaged/part-tab.jsx:55
+#: pkg/storaged/content-views.jsx:729 pkg/storaged/content-views.jsx:979
+#: pkg/storaged/unrecognized-tab.jsx:41 pkg/packagekit/autoupdates.jsx:279
 msgid "Type"
 msgstr "סוג"
 
@@ -7172,8 +7134,8 @@ msgstr "UDP"
 msgid "UUID"
 msgstr "מזהה ייחודי"
 
-#: pkg/storaged/vgroup-details.jsx:235 pkg/storaged/stratis-details.jsx:432
-#: pkg/storaged/stratis-details.jsx:769 pkg/storaged/mdraid-details.jsx:339
+#: pkg/storaged/vgroup-details.jsx:235 pkg/storaged/mdraid-details.jsx:339
+#: pkg/storaged/stratis-details.jsx:432 pkg/storaged/stratis-details.jsx:776
 msgctxt "storage"
 msgid "UUID"
 msgstr "מזהה ייחודי"
@@ -7186,7 +7148,7 @@ msgstr "לא ניתן להחיל את ההגדרות: $0"
 msgid "Unable to apply this solution automatically"
 msgstr "לא ניתן להחיל את הפתרון הזה אוטומטית"
 
-#: pkg/static/login.js:823
+#: pkg/static/login.js:879
 msgid "Unable to connect to that address"
 msgstr "לא ניתן להתחבר לכתובת הזו"
 
@@ -7224,8 +7186,8 @@ msgid ""
 "password. You may want to set up your SSH keys for automatic login."
 msgstr ""
 "לא ניתן להיכנס אל {{#strong}}{{full_address}}{{/strong}} באמצעות אימות עם "
-"מפתח SSH. נא לספק את הססמה. ייתכן שעידף לך להגדיר את מפתחות ה־SSH שלך לכניסה "
-"אוטומטית."
+"מפתח SSH. נא לספק את הסיסמה. ייתכן שעידף לך להגדיר את מפתחות ה־SSH שלך "
+"לכניסה אוטומטית."
 
 #: pkg/shell/hosts_dialog.jsx:746
 #, fuzzy
@@ -7237,7 +7199,7 @@ msgid ""
 "your SSH keys."
 msgstr ""
 "לא ניתן להיכנס אל {{#strong}}{{full_address}}{{/strong}}. המארח לא מקבל "
-"כניסה עם ססמה או אף אחד ממפתחות ה־SSH האחרים שלך."
+"כניסה עם סיסמה או אף אחד ממפתחות ה־SSH האחרים שלך."
 
 #: pkg/storaged/iscsi-panel.jsx:91
 msgid "Unable to reach server"
@@ -7263,13 +7225,14 @@ msgstr "לא ניתן לנתק את מערכת הקבצים"
 msgid "Unavailable"
 msgstr "לא זמין"
 
-#: pkg/shell/shell-modals.jsx:192 pkg/networkmanager/interfaces.js:50
-#: pkg/users/dialog-utils.js:65
+#: pkg/users/dialog-utils.js:65 pkg/shell/shell-modals.jsx:179
+#: pkg/networkmanager/interfaces.js:50
 msgid "Unexpected error"
 msgstr "שגיאה בלתי צפויה"
 
-#: pkg/systemd/logs.jsx:366 pkg/systemd/services/services-list.jsx:38
-#: pkg/systemd/services/services-list.jsx:43 pkg/storaged/dialog.jsx:1110
+#: pkg/systemd/services/services-list.jsx:38
+#: pkg/systemd/services/services-list.jsx:43 pkg/systemd/logs.jsx:366
+#: pkg/storaged/dialog.jsx:1110
 msgid "Unit"
 msgstr "יחידה"
 
@@ -7281,14 +7244,13 @@ msgstr "היחידה לא נמצאה"
 msgid "Unix group: $0"
 msgstr "קבוצת יוניקס: $0"
 
-#: pkg/networkmanager/network-interface.jsx:198
-#: pkg/networkmanager/network-interface.jsx:200
-#: pkg/networkmanager/interfaces.js:506 pkg/networkmanager/interfaces.js:978
 #: pkg/lib/machine-info.js:59 pkg/lib/machine-info.js:243
 #: pkg/lib/machine-info.js:251 pkg/lib/machine-info.js:253
 #: pkg/lib/machine-info.js:260 pkg/lib/machine-info.js:262
 #: pkg/lib/machine-info.js:266 pkg/storaged/swap-tab.jsx:62
-#: pkg/storaged/fsys-tab.jsx:503
+#: pkg/networkmanager/network-interface.jsx:198
+#: pkg/networkmanager/network-interface.jsx:200
+#: pkg/networkmanager/interfaces.js:506 pkg/networkmanager/interfaces.js:978
 msgid "Unknown"
 msgstr "לא ידוע"
 
@@ -7321,19 +7283,19 @@ msgstr "שם השירות לא ידוע"
 msgid "Unknown type"
 msgstr "סוג לא ידוע"
 
-#: pkg/shell/credentials.jsx:315 pkg/storaged/content-views.jsx:270
-#: pkg/storaged/content-views.jsx:275 pkg/storaged/content-views.jsx:294
-#: pkg/storaged/stratis-details.jsx:700 pkg/storaged/stratis-details.jsx:763
+#: pkg/shell/credentials.jsx:315 pkg/storaged/content-views.jsx:261
+#: pkg/storaged/content-views.jsx:266 pkg/storaged/content-views.jsx:285
+#: pkg/storaged/stratis-details.jsx:707 pkg/storaged/stratis-details.jsx:770
 msgid "Unlock"
 msgstr "שחרור"
 
-#: pkg/storaged/fsys-tab.jsx:662
+#: pkg/storaged/fsys-tab.jsx:644
 #, fuzzy
 #| msgid "Mount also automatically on boot"
 msgid "Unlock automatically on boot"
 msgstr "לעגן אוטומטית גם עם העלייה"
 
-#: pkg/storaged/stratis-details.jsx:689
+#: pkg/storaged/stratis-details.jsx:696
 #, fuzzy
 #| msgctxt "storage-id-desc"
 #| msgid "Locked encrypted data"
@@ -7346,7 +7308,7 @@ msgstr "נתונים מוצפנים נעולים"
 msgid "Unlock key $0"
 msgstr "שחרור מפתח"
 
-#: pkg/storaged/stratis-details.jsx:783
+#: pkg/storaged/stratis-details.jsx:790
 #, fuzzy
 #| msgid "Block device for filesystems"
 msgid "Unlock pool to see filesystems."
@@ -7365,13 +7327,13 @@ msgstr "הכונן משוחרר…"
 msgid "Unmanaged interfaces"
 msgstr "מנשקים לא מנוהלים"
 
-#: pkg/storaged/content-views.jsx:416 pkg/storaged/stratis-details.jsx:619
-#: pkg/storaged/nfs-details.jsx:312 pkg/storaged/fsys-tab.jsx:364
+#: pkg/storaged/nfs-details.jsx:312 pkg/storaged/content-views.jsx:407
+#: pkg/storaged/stratis-details.jsx:600 pkg/storaged/fsys-tab.jsx:364
 msgid "Unmount"
 msgstr "ניתוק"
 
-#: pkg/storaged/content-views.jsx:387 pkg/storaged/vgroup-details.jsx:206
-#: pkg/storaged/stratis-details.jsx:264 pkg/storaged/mdraid-details.jsx:304
+#: pkg/storaged/vgroup-details.jsx:206 pkg/storaged/content-views.jsx:378
+#: pkg/storaged/mdraid-details.jsx:304 pkg/storaged/stratis-details.jsx:264
 #, fuzzy
 #| msgid "Stop and delete"
 msgid "Unmount and delete"
@@ -7389,7 +7351,7 @@ msgstr "לנתק כעת"
 msgid "Unmount and grow"
 msgstr "לנתק כעת"
 
-#: pkg/storaged/content-views.jsx:666
+#: pkg/storaged/content-views.jsx:687
 #, fuzzy
 #| msgid "Unmount now"
 msgid "Unmount and initialize"
@@ -7411,7 +7373,7 @@ msgstr "על התקן מעוגן"
 msgid "Unmount filesystem"
 msgstr "ניתוק מערכת קבצים"
 
-#: pkg/storaged/fsys-tab.jsx:654 pkg/storaged/fsys-tab.jsx:658
+#: pkg/storaged/fsys-tab.jsx:636 pkg/storaged/fsys-tab.jsx:640
 msgid "Unmount now"
 msgstr "לנתק כעת"
 
@@ -7423,11 +7385,11 @@ msgstr "$target מנותק"
 msgid "Unnamed"
 msgstr "ללא שם"
 
-#: pkg/storaged/content-views.jsx:218
+#: pkg/storaged/content-views.jsx:209
 msgid "Unrecognized data"
 msgstr "נתונים לא מזוהים"
 
-#: pkg/storaged/content-views.jsx:477
+#: pkg/storaged/content-views.jsx:492
 msgctxt "storage-id-desc"
 msgid "Unrecognized data"
 msgstr "נתונים לא מזוהים"
@@ -7436,7 +7398,7 @@ msgstr "נתונים לא מזוהים"
 msgid "Unrecognized data can not be made smaller here."
 msgstr "לא ניתן להקטין כאן נתונים בלתי מזוהים."
 
-#: pkg/storaged/content-views.jsx:764
+#: pkg/storaged/content-views.jsx:782
 msgid "Unsupported volume"
 msgstr "כרך לא נתמך"
 
@@ -7504,9 +7466,10 @@ msgstr "המצב מתעדכן…"
 msgid "Uptime"
 msgstr "זמן פעילות"
 
-#: pkg/systemd/overview-cards/usageCard.jsx:116 pkg/metrics/metrics.jsx:1388
-#: pkg/metrics/metrics.jsx:1389 pkg/metrics/metrics.jsx:1390
-#: pkg/metrics/metrics.jsx:1391 pkg/storaged/unrecognized-tab.jsx:37
+#: pkg/metrics/metrics.jsx:1388 pkg/metrics/metrics.jsx:1389
+#: pkg/metrics/metrics.jsx:1390 pkg/metrics/metrics.jsx:1391
+#: pkg/systemd/overview-cards/usageCard.jsx:116
+#: pkg/storaged/unrecognized-tab.jsx:37
 msgid "Usage"
 msgstr "שימוש"
 
@@ -7524,7 +7487,7 @@ msgstr "שימוש"
 msgid "Usage of $0"
 msgstr "שימוש מתוך ליבת מעבד אחת"
 
-#: pkg/networkmanager/dialogs-common.jsx:94 pkg/storaged/dialog.jsx:540
+#: pkg/storaged/dialog.jsx:540 pkg/networkmanager/dialogs-common.jsx:94
 #, fuzzy
 #| msgid "Used"
 msgid "Use"
@@ -7547,20 +7510,26 @@ msgid "Use the following keys to authenticate against other systems"
 msgstr "להשתמש במפתחות הבאים כדי להתאמת מול שרתים אחרים"
 
 #: pkg/metrics/metrics.jsx:525 pkg/storaged/swap-tab.jsx:70
-#: pkg/storaged/fsys-tab.jsx:716
 msgid "Used"
 msgstr "בשימוש"
+
+#: pkg/storaged/content-views.jsx:729 pkg/storaged/content-views.jsx:979
+#: pkg/storaged/stratis-details.jsx:655 pkg/storaged/stratis-details.jsx:792
+#, fuzzy
+#| msgid "Used by"
+msgid "Used for"
+msgstr "בשימוש על ידי"
 
 #: pkg/systemd/services/services.jsx:999
 msgid "User"
 msgstr "משתמש"
 
-#: pkg/static/login.html:76 pkg/shell/hosts_dialog.jsx:257
-#: pkg/users/account-create-dialog.js:49 pkg/users/account-details.js:299
+#: pkg/static/login.html:76 pkg/users/account-details.js:299
+#: pkg/users/account-create-dialog.js:49 pkg/shell/hosts_dialog.jsx:257
 msgid "User name"
 msgstr "שם משתמש"
 
-#: pkg/static/login.js:524
+#: pkg/static/login.js:535
 msgid "User name cannot be empty"
 msgstr "שם המשתמש לא יכול להיות ריק"
 
@@ -7576,17 +7545,13 @@ msgstr "באמצעות הצפנת LUKS"
 msgid "Using Tang server"
 msgstr "באמצעות שרת Tang"
 
-#: pkg/storaged/content-views.jsx:192
+#: pkg/storaged/content-views.jsx:190
 #, fuzzy
 #| msgid "Pool"
 msgid "VDO Pool"
 msgstr "מאגר"
 
-#: pkg/storaged/content-views.jsx:213
-msgid "VDO backing"
-msgstr "גיבוי VDO"
-
-#: pkg/storaged/content-views.jsx:475
+#: pkg/storaged/content-views.jsx:488
 msgctxt "storage-id-desc"
 msgid "VDO backing"
 msgstr "גיבוי VDO"
@@ -7599,11 +7564,11 @@ msgstr "אין אפשרות להקטין התקני גיבוי VDO"
 msgid "VDO device"
 msgstr "התקן VDO"
 
-#: pkg/storaged/vdo-details.jsx:256 pkg/storaged/utils.js:261
+#: pkg/storaged/utils.js:263 pkg/storaged/vdo-details.jsx:256
 msgid "VDO device $0"
 msgstr "התקן VDO‏ $0"
 
-#: pkg/storaged/content-views.jsx:825
+#: pkg/storaged/content-views.jsx:843
 msgid "VDO filesystem volume (compression/deduplication)"
 msgstr ""
 
@@ -7696,7 +7661,7 @@ msgstr "הצגת דוח"
 msgid "Visit Firewall"
 msgstr "חומת אש"
 
-#: pkg/storaged/content-views.jsx:189
+#: pkg/storaged/content-views.jsx:187
 msgid "Volume"
 msgstr "כרך"
 
@@ -7746,7 +7711,7 @@ msgstr "דורש"
 msgid "Warning and above"
 msgstr "אזהרה ומעלה"
 
-#: pkg/shell/topnav.jsx:117 pkg/shell/shell-modals.jsx:81
+#: pkg/shell/topnav.jsx:122 pkg/shell/shell-modals.jsx:68
 msgid "Web Console"
 msgstr "מסוף מקוון"
 
@@ -7762,7 +7727,7 @@ msgstr "המסוף המקוון יופעל מחדש"
 msgid "Web console is running in limited access mode."
 msgstr "המסוף המקוון מופעל במצב גישה מוגבלת."
 
-#: pkg/shell/shell-modals.jsx:83
+#: pkg/shell/shell-modals.jsx:70
 #, fuzzy
 #| msgid "Web Console"
 msgid "Web console logo"
@@ -7814,9 +7779,9 @@ msgstr "כתיבה"
 msgid "Write-mostly"
 msgstr "בעיקר כתיבה"
 
-#: pkg/static/login.js:833
+#: pkg/static/login.js:889
 msgid "Wrong user name or password"
-msgstr "שם משתמש או ססמה שגויים"
+msgstr "שם משתמש או סיסמה שגויים"
 
 #: pkg/networkmanager/bond.jsx:46
 msgid "XOR"
@@ -7826,11 +7791,11 @@ msgstr "XOR (קסור)"
 msgid "Yearly"
 msgstr "שנתי"
 
-#: pkg/networkmanager/network-interface.jsx:240 pkg/systemd/reporting.jsx:264
+#: pkg/systemd/reporting.jsx:264 pkg/networkmanager/network-interface.jsx:240
 msgid "Yes"
 msgstr "כן"
 
-#: pkg/shell/hosts_dialog.jsx:470 pkg/static/login.js:669
+#: pkg/static/login.js:725 pkg/shell/hosts_dialog.jsx:470
 msgid "You are connecting to $0 for the first time."
 msgstr "זאת ההתחברות הראשונה שלך אל $0."
 
@@ -7855,11 +7820,11 @@ msgstr "כדאי לך לנסות לטעון רשומות ישנות יותר."
 
 #: pkg/shell/hosts_dialog.jsx:752 pkg/shell/hosts_dialog.jsx:757
 msgid "You may want to change the password of the key for automatic login."
-msgstr "יתכן שעדיף לך להחליף את הססמה של המפתח לטובת כניסה אוטומטית."
+msgstr "יתכן שעדיף לך להחליף את הסיסמה של המפתח לטובת כניסה אוטומטית."
 
 #: pkg/users/password-dialogs.js:77
 msgid "You must wait longer to change your password"
-msgstr "עליך להמתין זמן רב יותר כדי להחליף את הססמה שלך"
+msgstr "עליך להמתין זמן רב יותר כדי להחליף את הסיסמה שלך"
 
 #: pkg/metrics/metrics.jsx:1297
 #, fuzzy
@@ -7934,7 +7899,7 @@ msgstr "abrt"
 msgid "access"
 msgstr "גישה"
 
-#: pkg/shell/active-pages-modal.jsx:75 pkg/tuned/change-profile.jsx:60
+#: pkg/tuned/change-profile.jsx:60 pkg/shell/active-pages-modal.jsx:75
 msgid "active"
 msgstr "פעיל"
 
@@ -8015,7 +7980,7 @@ msgstr "היטל ליבה"
 msgid "cpu"
 msgstr "מעבד"
 
-#: pkg/systemd/manifest.json:0 pkg/kdump/manifest.json:0
+#: pkg/kdump/manifest.json:0 pkg/systemd/manifest.json:0
 msgid "crash"
 msgstr "קריסה"
 
@@ -8055,13 +8020,13 @@ msgstr "שם תחום"
 msgid "drive"
 msgstr "כונן"
 
+#: pkg/users/account-details.js:333 pkg/users/account-details.js:365
+#: pkg/systemd/overview-cards/configurationCard.jsx:50
+#: pkg/storaged/lvol-tabs.jsx:422 pkg/storaged/lvol-tabs.jsx:483
+#: pkg/storaged/fsys-tab.jsx:674 pkg/storaged/fsys-tab.jsx:689
+#: pkg/storaged/crypto-tab.jsx:248 pkg/storaged/crypto-tab.jsx:257
 #: pkg/networkmanager/network-interface.jsx:359
 #: pkg/networkmanager/dialogs-common.jsx:223
-#: pkg/systemd/overview-cards/configurationCard.jsx:50
-#: pkg/users/account-details.js:333 pkg/users/account-details.js:365
-#: pkg/storaged/lvol-tabs.jsx:422 pkg/storaged/lvol-tabs.jsx:483
-#: pkg/storaged/crypto-tab.jsx:248 pkg/storaged/crypto-tab.jsx:257
-#: pkg/storaged/fsys-tab.jsx:692 pkg/storaged/fsys-tab.jsx:707
 msgid "edit"
 msgstr "עריכה"
 
@@ -8201,7 +8166,7 @@ msgstr "מארח"
 msgid "iSCSI targets"
 msgstr "יעדי iSCSI"
 
-#: pkg/shell/shell-modals.jsx:200
+#: pkg/shell/shell-modals.jsx:187
 msgid "in most browsers"
 msgstr "ברוב הדפדפנים"
 
@@ -8307,11 +8272,11 @@ msgstr "עיגון"
 msgid "nbde"
 msgstr "nbde"
 
-#: pkg/networkmanager/manifest.json:0 pkg/systemd/manifest.json:0
+#: pkg/systemd/manifest.json:0 pkg/networkmanager/manifest.json:0
 msgid "network"
 msgstr "רשת"
 
-#: pkg/storaged/fsys-tab.jsx:515
+#: pkg/storaged/fsys-tab.jsx:497
 #, fuzzy
 #| msgid "Mount at boot"
 msgid "never mounted at boot"
@@ -8329,8 +8294,8 @@ msgstr "יעד היטל ה־nfs אינו כתוב בצורה server:path"
 msgid "nice"
 msgstr "nice"
 
-#: pkg/storaged/crypto-tab.jsx:247 pkg/storaged/crypto-tab.jsx:256
-#: pkg/tuned/dialog.jsx:85
+#: pkg/tuned/dialog.jsx:85 pkg/storaged/crypto-tab.jsx:247
+#: pkg/storaged/crypto-tab.jsx:256
 msgid "none"
 msgstr "אין"
 
@@ -8376,11 +8341,11 @@ msgstr "passwd"
 
 #: pkg/users/manifest.json:0
 msgid "password"
-msgstr "ססמה"
+msgstr "סיסמה"
 
 #: pkg/lib/cockpit-components-password.jsx:85
 msgid "password quality"
-msgstr "איכות הססמה"
+msgstr "איכות הסיסמה"
 
 #: pkg/packagekit/updates.jsx:287
 msgid "patches"
@@ -8439,7 +8404,7 @@ msgstr "raid"
 msgid "ram"
 msgstr "זיכרון"
 
-#: pkg/storaged/fsys-tab.jsx:513
+#: pkg/storaged/fsys-tab.jsx:495
 msgid "read only"
 msgstr "קריאה בלבד"
 
@@ -8513,7 +8478,7 @@ msgstr "פרטי הפתרון"
 msgid "sos"
 msgstr "חירום"
 
-#: pkg/systemd/manifest.json:0 pkg/users/manifest.json:0
+#: pkg/users/manifest.json:0 pkg/systemd/manifest.json:0
 msgid "ssh"
 msgstr "ssh"
 
@@ -8594,7 +8559,7 @@ msgstr "הסרת מיסוך"
 msgid "unmount"
 msgstr "ניתוק"
 
-#: pkg/storaged/utils.js:439
+#: pkg/storaged/utils.js:441
 msgid "unpartitioned space on $0"
 msgstr "מקום שאינו מחיצה ב־$0"
 
@@ -8645,6 +8610,41 @@ msgstr "yum"
 #: pkg/networkmanager/manifest.json:0
 msgid "zone"
 msgstr "אזור"
+
+#~ msgid "$0 of $1"
+#~ msgstr "$0 מתוך $1"
+
+#, fuzzy
+#~| msgid "Blocked"
+#~ msgid "Blockdev"
+#~ msgstr "חסום"
+
+#, fuzzy
+#~| msgid "Physical volume"
+#~ msgid "LVM2 physical volume"
+#~ msgstr "כרך פיזי"
+
+#, fuzzy
+#~| msgid "Physical volume of $0"
+#~ msgid "LVM2 physical volume of $0"
+#~ msgstr "כרך פיזי בגודל $0"
+
+#~ msgid "Member of RAID device"
+#~ msgstr "חבר בהתקן RAID"
+
+#~ msgid "Member of RAID device $0"
+#~ msgstr "חבר בהתקן ה־RAID‏ $0"
+
+#, fuzzy
+#~| msgid "Create storage pool"
+#~ msgid "Member of Stratis pool"
+#~ msgstr "יצירת מאגר אחסון"
+
+#~ msgid "Menu"
+#~ msgstr "תפריט"
+
+#~ msgid "VDO backing"
+#~ msgstr "גיבוי VDO"
 
 #, fuzzy
 #~| msgid "Create storage pool"
@@ -9715,9 +9715,6 @@ msgstr "אזור"
 #~ msgid "Snapshot failed to be created"
 #~ msgstr "יצירת תמונת המצב נכשלה"
 
-#~ msgid "Source"
-#~ msgstr "מקור"
-
 #~ msgid "Source format"
 #~ msgstr "תצורת מקור"
 
@@ -9857,9 +9854,6 @@ msgstr "אזור"
 
 #~ msgid "Use existing"
 #~ msgstr "להשתמש בקיים"
-
-#~ msgid "Used by"
-#~ msgstr "בשימוש על ידי"
 
 #~ msgid "User login"
 #~ msgstr "שם המשתמש"
@@ -10905,9 +10899,6 @@ msgstr "אזור"
 
 #~ msgid "Password for $0"
 #~ msgstr "ססמה עבור $0"
-
-#~ msgid "Recent"
-#~ msgstr "אחרונים"
 
 #~ msgid "The user <b>$0</b> is not permitted to manage servers"
 #~ msgstr "המשתמש <b>$0</b> אינו מורשה לנהל שרתים"

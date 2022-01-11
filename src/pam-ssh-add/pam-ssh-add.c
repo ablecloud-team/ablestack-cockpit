@@ -22,7 +22,6 @@
  *   Stef Walter <stef@memberwebs.com>
  */
 
-#define _GNU_SOURCE 1
 
 #include "config.h"
 
@@ -46,7 +45,8 @@
 
 #include "pam-ssh-add.h"
 
-#include "../common/cockpitcloserange.h"
+#include "../common/cockpithacks.h"
+#include "../common/cockpitmemory.h"
 
 /* programs that can be overwidden in tests */
 const char *pam_ssh_agent_program = PATH_SSH_AGENT;
@@ -343,11 +343,7 @@ setup_child (const char **args,
       exit (EXIT_FAILURE);
     }
 
-  if (cockpit_close_range (STDERR + 1, INT_MAX, 0) < 0)
-    {
-      error ("couldn't close all file descirptors");
-      exit (EXIT_FAILURE);
-    }
+  closefrom (STDERR + 1);
 
   /* Close unnecessary file descriptors */
   close (inp[READ_END]);
@@ -810,9 +806,11 @@ static int
 stash_password_for_session (pam_handle_t *pamh,
                             const char *password)
 {
-  if (pam_set_data (pamh, STORED_AUTHTOK, strdup (password),
+  char *password_copy = strdupx (password);
+  if (pam_set_data (pamh, STORED_AUTHTOK, password_copy,
                     cleanup_free_password) != PAM_SUCCESS)
     {
+      free_password (password_copy);
       message ("error stashing password for session");
       return PAM_AUTHTOK_RECOVER_ERR;
     }

@@ -122,11 +122,12 @@ class Browser:
         self.pixels_label = pixels_label
         self.machine = machine
         path = os.path.dirname(__file__)
-        self.cdp = cdp.CDP("C.utf8", verbose=opts.trace, trace=opts.trace,
+        self.cdp = cdp.CDP("C.utf8", verbose=opts.trace, trace=opts.trace, fixed_content_size=self.pixels_label,
                            inject_helpers=[os.path.join(path, "test-functions.js"), os.path.join(path, "sizzle.js")])
         self.password = "foobar"
         self.timeout_factor = int(os.getenv("TEST_TIMEOUT_FACTOR", "1"))
         self.failed_pixel_tests = 0
+        self.body_clip = None
 
     def title(self):
         return self.cdp.eval('document.title')
@@ -573,7 +574,7 @@ class Browser:
 
         This differs from login_and_go() by not expecting any particular result.
 
-        The "superuser" parameter determines wether the new session
+        The "superuser" parameter determines whether the new session
         will try to get Administrative Access.
 
         The "legacy_authorized" parameter is or old versions of the
@@ -594,6 +595,16 @@ class Browser:
             self.eval_js('window.localStorage.setItem("superuser:%s", "%s");' % (user, "any" if superuser else "none"))
         self.click('#login-button')
 
+    def adjust_window_for_fixed_content_size(self):
+        # When doing pixel tests, try to give the content iframe the
+        # expected fixed size so that pixel tests don't have to adapt
+        # to changes in the shell layout too much.  But don't bother
+        # when the browser is visible since we don't control its
+        # window size and it will likely be too small.
+        if self.pixels_label and not self.cdp.show_browser:
+            self.call_js_func("ph_adjust_content_size", self.cdp.content_width, self.cdp.content_height)
+            self.body_clip = self.call_js_func('ph_element_clip', 'body')
+
     def login_and_go(self, path=None, user=None, host=None, superuser=True, urlroot=None, tls=False, password=None,
                      legacy_authorized=None):
         href = path
@@ -610,6 +621,7 @@ class Browser:
         self.expect_load()
         self._wait_present('#content')
         self.wait_visible('#content')
+        self.adjust_window_for_fixed_content_size()
         if path:
             self.enter_page(path.split("#")[0], host=host)
 
@@ -644,6 +656,7 @@ class Browser:
         self.expect_load()
         self._wait_present('#content')
         self.wait_visible('#content')
+        self.adjust_window_for_fixed_content_size()
         if path:
             if path.startswith("/@"):
                 host = path[2:].split("/")[0]
@@ -732,7 +745,10 @@ class Browser:
             self.cdp.command("clearExceptions()")
 
             filename = "{0}-{1}.png".format(label or self.label, title)
-            ret = self.cdp.invoke("Page.captureScreenshot", no_trace=True)
+            if self.body_clip:
+                ret = self.cdp.invoke("Page.captureScreenshot", clip=self.body_clip, no_trace=True)
+            else:
+                ret = self.cdp.invoke("Page.captureScreenshot", no_trace=True)
             if "data" in ret:
                 with open(filename, 'wb') as f:
                     f.write(base64.standard_b64decode(ret["data"]))
@@ -756,21 +772,45 @@ class Browser:
             return
 
         self.call_js_func('ph_scrollIntoViewIfNeeded', selector)
+        self.call_js_func('ph_blur_active')
+
+        # Wait for all animations to be over.  This is done by
+        # counting them all over and over again until there are zero.
+        # Calling `.finish()` on all animations would miss those that
+        # are created while we wait, and would also fail with an
+        # exception if any unlimited animations are present, like
+        # spinners.
+        #
+        # There is another complication with tooltips.  They are shown
+        # on top of certain elements, but are not DOM children of
+        # these elements. Also, Patternfly sometimes creates tooltips
+        # on dialog titles that are too long for the dialog, but only
+        # a little bit after the dialog has appeared.
+        #
+        # We don't want to predict whether tooltips will appear, and
+        # thus we can't wait for them to be present before waiting for
+        # their fade-in animation to be over.
+        #
+        # But we know that tooltips fade in within 300ms, so we just
+        # wait half a second to and side-step all that complexity.
+
+        time.sleep(0.5)
+        self.wait_js_cond('ph_count_animations(%s) == 0' % jsquote(selector))
 
         rect = self.call_js_func('ph_element_clip', selector)
 
-        def relative_clip(sel):
-            r = self.call_js_func('ph_element_clip', sel)
-            return (r['x'] - rect['x'],
-                    r['y'] - rect['y'],
-                    r['x'] - rect['x'] + r['width'],
-                    r['y'] - rect['y'] + r['height'])
+        def relative_clips(sels):
+            return list(map(lambda r: (r['x'] - rect['x'],
+                                       r['y'] - rect['y'],
+                                       r['x'] - rect['x'] + r['width'],
+                                       r['y'] - rect['y'] + r['height']),
+                            self.call_js_func('ph_selector_clips', sels)))
 
         reference_dir = os.path.join(TEST_DIR, 'reference')
         if not os.path.exists(os.path.join(reference_dir, '.git')):
             subprocess.check_call([f'{TEST_DIR}/common/pixel-tests', 'pull'])
 
-        ignore_rects = list(map(relative_clip, map(lambda item: selector + " " + item, ignore)))
+        ignore_rects = relative_clips(list(map(lambda item: selector + " " + item, ignore)))
         base = self.pixels_label + "-" + key
         if self.cdp.mobile:
             base += "-mobile"
@@ -988,7 +1028,9 @@ class MachineCase(unittest.TestCase):
             machine = self.machine
         label = self.label() + "-" + machine.label
         pixels_label = None
-        if machine.image == testvm.TEST_OS_DEFAULT and os.environ.get("TEST_BROWSER", "chromium") == "chromium" and not self.is_devel_build():
+        with open(f'{TEST_DIR}/reference-image') as fp:
+            reference_image = fp.read().strip()
+        if machine.image == reference_image and os.environ.get("TEST_BROWSER", "chromium") == "chromium" and not self.is_devel_build():
             pixels_label = self.label()
         browser = Browser(machine.web_address, label=label, pixels_label=pixels_label, port=machine.web_port, machine=self)
         self.addCleanup(browser.kill)
@@ -1282,7 +1324,7 @@ class MachineCase(unittest.TestCase):
         r"#3\) With great power comes great responsibility.",
 
         # starting out with empty PCP logs and pmlogger not running causes these metrics channel messages
-        "pcp-archive: no such metric: kernel.all.cpu.nice: Unknown metric name",
+        "pcp-archive: no such metric: kernel.all.cpu..*: Unknown metric name",
         "pcp-archive: instance name lookup failed:.*",
         "pcp-archive: couldn't create pcp archive context for.*",
     ]
@@ -1312,6 +1354,7 @@ class MachineCase(unittest.TestCase):
 
     def allow_restart_journal_messages(self):
         self.allow_journal_messages(".*Connection reset by peer.*",
+                                    "connection unexpectedly closed by peer",
                                     ".*Broken pipe.*",
                                     "g_dbus_connection_real_closed: Remote peer vanished with error: Underlying GIOStream returned 0 bytes on an async read \\(g-io-error-quark, 0\\). Exiting.",
                                     "connection unexpectedly closed by peer",
@@ -1354,11 +1397,17 @@ class MachineCase(unittest.TestCase):
             "SYSLOG_IDENTIFIER=cockpit-ws",
             "SYSLOG_IDENTIFIER=cockpit-bridge",
             "SYSLOG_IDENTIFIER=cockpit/ssh",
+            # also catch GLIB_DOMAIN=<library> which apply to cockpit-ws (but not to -bridge, too much random noise)
+            "_COMM=cockpit-ws",
             "GLIB_DOMAIN=cockpit-ws",
             "GLIB_DOMAIN=cockpit-bridge",
             "GLIB_DOMAIN=cockpit-ssh",
             "GLIB_DOMAIN=cockpit-pcp"
         ]
+
+        # older c-ws versions always log an assertion, fixed in PR #16765
+        if self.image == "rhel-8-5-distropkg":
+            self.allowed_messages.append("json_object_get_string_member: assertion 'node != NULL' failed")
 
         if not self.allow_core_dumps:
             matches += ["SYSLOG_IDENTIFIER=systemd-coredump"]

@@ -238,6 +238,13 @@ function ph_blur(sel)
     ph_find(sel).blur();
 }
 
+function ph_blur_active()
+{
+    const elt = window.document.activeElement;
+    if (elt)
+        elt.blur();
+}
+
 class PhWaitCondTimeout extends Error {
     constructor(description) {
         if (description && description.apply)
@@ -304,8 +311,47 @@ function currentFrameAbsolutePosition() {
     }, { x: 0, y: 0 });
 }
 
-function ph_element_clip(sel) {
-    var r = ph_find(sel).getBoundingClientRect();
+function flatten(array_of_arrays) {
+    if (array_of_arrays.length > 0)
+        return Array.prototype.concat.apply([], array_of_arrays);
+    else
+        return [];
+}
+
+function ph_selector_clips(sels) {
     var f = currentFrameAbsolutePosition();
-    return { x: r.x + f.x, y: r.y + f.y, width: r.width, height: r.height, scale: 1 };
+    var elts = flatten(sels.map(ph_select))
+    return elts.map(e => {
+        const r = e.getBoundingClientRect();
+        return { x: r.x + f.x, y: r.y + f.y, width: r.width, height: r.height, scale: 1 };
+    });
+}
+
+function ph_element_clip(sel) {
+    ph_find(sel); // just to make sure it is not ambiguous
+    return ph_selector_clips([sel])[0];
+}
+
+function ph_count_animations(sel) {
+    return ph_find(sel).getAnimations({subtree:true}).length;
+}
+
+function ph_adjust_content_size(w, h) {
+    const body = document.body;
+    const content = document.getElementById("content");
+    const dx = w - content.offsetWidth;
+    const dy = h - content.offsetHeight;
+
+    // Making the body bigger doesn't really work.  It already fills
+    // the whole browser window and making it bigger would cause parts
+    // of it to stick out and we couldn't take snapshots of them.
+    // Let's just warn about this here and hope it doesn't matter.
+
+    if (dx > 0 || dy > 0) {
+        console.warn("Can't adjust content iframe size.  Browser window is too small.");
+        return;
+    }
+
+    body.style.width = (body.offsetWidth + dx) + "px";
+    body.style.height = (body.offsetHeight + dy) + "px";
 }

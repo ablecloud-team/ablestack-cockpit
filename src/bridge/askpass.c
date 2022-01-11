@@ -19,11 +19,16 @@
  * Author: Stef Walter <stefw@redhat.com>
  */
 
+#include "config.h"
+
 #include "common/cockpitframe.h"
 #include "common/cockpithex.h"
 #include "common/cockpitjson.h"
 #include "common/cockpitmemory.h"
 #include "common/cockpittransport.h"
+#if WITH_DEBUG
+#include "common/cockpittest.h"
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
@@ -138,7 +143,7 @@ main (int argc,
   const gchar *command = NULL;
   const gchar *field = NULL;
   const gchar *response = NULL;
-  gchar *user = NULL;
+  char *user = NULL;
   gchar *cookie = NULL;
   gchar *challenge = NULL;
   gint ret = 1;
@@ -219,7 +224,7 @@ main (int argc,
 
   g_free (cookie);
   g_free (challenge);
-  g_free (user);
+  free (user);
 
   /* Clear the password memory owned by JsonObject */
   if (response)

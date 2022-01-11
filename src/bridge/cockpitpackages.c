@@ -17,9 +17,9 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-
 #include "config.h"
+
+#include <stdio.h>
 
 #include "cockpitpackages.h"
 
@@ -990,7 +990,17 @@ package_content (CockpitPackages *packages,
         {
           /* On the first round */
           if (l == names)
-            cockpit_web_response_error (response, 404, NULL, NULL);
+            {
+              /* cockpit_packages_resolve() only fails if the entire
+               * package is missing.  Check if that's a package that
+               * ought to have been available and issue a more helpful
+               * message.
+               */
+              if (g_str_equal (name, "shell") || g_str_equal (name, "systemd"))
+                cockpit_web_response_error (response, 404, NULL, _("Server is missing the cockpit-system package"));
+              else
+                cockpit_web_response_error (response, 404, NULL, NULL);
+            }
           else
             cockpit_web_response_abort (response);
           goto out;

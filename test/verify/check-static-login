@@ -164,7 +164,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
             b.wait_not_visible("#option-group")
 
             # test login with tcsh
-            if not m.image.startswith("rhel") and not m.image.startswith("centos") and not m.image == "arch":  # no tcsh in RHEL and in Arch Linux (TOOD: available in [community])
+            if not m.image.startswith("rhel") and not m.image.startswith("centos") and not m.image == "arch":  # no tcsh in RHEL and in Arch Linux (TODO: available in [community])
                 m.execute("sed -r -i.bak '/^admin:/ s_:[^:]+$_:/bin/tcsh_' /etc/passwd")
                 b.login_and_go()
                 b.enter_page('/system')
@@ -189,7 +189,6 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         self.allow_restart_journal_messages()
 
-    @skipImage("TOOD: Arch's pam configuration locks account after 3 failed logons", "arch")
     @skipImage("logs in via ssh, not cockpit-session", "fedora-coreos")
     def testLogging(self):
         m = self.machine
@@ -224,6 +223,9 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         # Clean out the relevant logfiles
         m.execute("truncate -s0 /var/log/{[bw]tmp,lastlog} /var/run/utmp")
+
+        if m.image == "arch":
+            self.sed_file("s/# deny = 3/deny = 4/", "/etc/security/faillock.conf")
 
         # First login should have no messages
         verify_correct(False, 0)
@@ -397,7 +399,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         m = self.machine
         b = self.browser
 
-        m.execute("useradd user --shell /usr/bin/tlog-rec-session || true")
+        m.execute("useradd user --shell /usr/bin/tlog-rec-session")
         m.execute("echo user:abcdefg | chpasswd")
         # this doesn't actually record anything, but logging into cockpit should work
         m.start_cockpit()
@@ -491,7 +493,7 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         # This should work, but it will not because of
         # https://bugzilla.redhat.com/show_bug.cgi?id=1814569
-        working_images = []  # none yet :-(
+        working_images = ["fedora-testing"]
         if m.image in working_images:
             self.assertIn('result: uid=0', b.text(".super-channel span"))
         else:
@@ -558,7 +560,6 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
     def testFailingWebsocketSafariNoCA(self):
         self.testFailingWebsocket(safari=True, cacert=False)
 
-    @skipImage("TODO: Arch Linux default's to faillock with 3 failed logins", "arch")
     def testTally(self):
         m = self.machine
         b = self.browser
@@ -607,7 +608,9 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
             b.logout()
 
         # ensure we have no module in our pam config already
-        m.execute(f"! grep -r '{module}' /etc/pam.d")
+        # arch has faillock enabled by default
+        if m.image != "arch":
+            m.execute(f"! grep -r '{module}' /etc/pam.d")
 
         # add it to the pam config
         if is_pam_tally2:
@@ -617,6 +620,8 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
             self.sed_file("""s/re.*pam_deny.so/[default=die] pam_faillock.so authfail deny=4/;
                              s/re.*pam_permit.so/sufficient pam_faillock.so authsucc deny=4/;
                           """, "/etc/pam.d/common-auth")
+        elif m.image == "arch":
+            self.sed_file("s/# deny = 3/deny = 4/", "/etc/security/faillock.conf")
         else:
             # see https://access.redhat.com/solutions/62949
             self.sed_file("""/pam_unix/ {
@@ -749,7 +754,9 @@ matchrule = <SUBJECT>^DC=LAN,DC=COCKPIT,CN=alice$
             err = m.execute('! busctl call org.freedesktop.sssd.infopipe /org/freedesktop/sssd/infopipe/Users '
                             'org.freedesktop.sssd.infopipe.Users FindByValidCertificate s -- '
                             '''"$(cat %s)" 2>&1''' % alice_cert)
-            self.assertIn("Invalid certificate provided", err)
+            # HACK: sssd 2.6.1 has a broken error message ("Invalid certificate provided"), accept that as well
+            # until 2.6.2 is available everywhere. https://github.com/SSSD/sssd/issues/5911
+            self.assertRegex(err, "Invalid certificate provided|Certificate authority file not found")
 
             m.execute("mkdir -p /etc/sssd/pki")
             # install our CA, so that sssd can validate

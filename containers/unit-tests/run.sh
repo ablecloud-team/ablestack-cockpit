@@ -1,17 +1,5 @@
 #!/bin/bash
 
-if [ -z "${TEST_SCENARIO:-}" ]; then
-    echo 'Required variable TEST_SCENARIO not set'
-    exit 1
-fi
-
-if [ "$1" = "--build" ]; then
-    BUILD_ONLY=1
-elif [ -n "$1" ]; then
-    echo 'Usage: run.sh [--build]' >&2
-    exit 1
-fi
-
 set -o pipefail
 set -eux
 
@@ -23,12 +11,14 @@ export MAKEFLAGS="-j $(nproc)"
 # information about the running processes in order to give us a better chance
 # of tracking down problems.
 ( set +x
-  sleep 18m
-  echo ===== 18 mins ====================
-  ps auxwfe
+  sleep 28m
+  echo ===== 28 mins ====================
+  ps auxwe
+  echo
+  ps auxwf
   echo
   top -b -n1
-  echo ===== 18 mins ====================
+  echo ===== 28 mins ====================
 )&
 
 # copy host's source tree to avoid changing that, and make sure we have a clean tree
@@ -42,10 +32,6 @@ if [ -d /source/node_modules ]; then
 fi
 cd /tmp/source
 
-containers/unit-tests/build.sh
-
-if [ -n "${BUILD_ONLY:-}" ]; then
-    exit 0
-fi
-
-containers/unit-tests/scenario-${TEST_SCENARIO}.sh
+for scenario in "$@"; do
+    containers/unit-tests/scenario/${scenario}
+done

@@ -27,8 +27,8 @@
 
 #include "common/cockpitauthorize.h"
 #include "common/cockpitconf.h"
-#include "common/cockpitcloserange.h"
 #include "common/cockpiterror.h"
+#include "common/cockpithacks.h"
 #include "common/cockpithex.h"
 #include "common/cockpitjson.h"
 #include "common/cockpitmemory.h"
@@ -514,11 +514,7 @@ session_child_setup (gpointer data)
 
   close (child->io);
 
-  if (cockpit_close_range (3, INT_MAX, 0) < 0)
-    {
-      g_printerr ("couldn't close file descriptors: %m\n");
-      _exit (127);
-    }
+  closefrom (3);
 }
 
 static CockpitTransport *
@@ -1230,7 +1226,6 @@ build_authorize_challenge (CockpitAuth *self,
 {
   const gchar *challenge = NULL;
   gchar *type = NULL;
-  JsonObject *object;
   GList *l, *names;
 
   if (!cockpit_json_get_string (authorize, "challenge", NULL, &challenge) ||
@@ -1255,7 +1250,7 @@ build_authorize_challenge (CockpitAuth *self,
       cockpit_authorize_subject (challenge, conversation);
     }
 
-  object = json_object_new ();
+  g_autoptr(JsonObject) object = json_object_new ();
   names = json_object_get_members (authorize);
   for (l = names; l != NULL; l = g_list_next (l))
     {
@@ -1263,7 +1258,7 @@ build_authorize_challenge (CockpitAuth *self,
         json_object_set_member (object, l->data, json_object_dup_member (authorize, l->data));
     }
   if (body)
-    *body = object;
+    *body = g_steal_pointer (&object);
 
   g_list_free (names);
   g_free (type);
@@ -1502,9 +1497,9 @@ cockpit_auth_login_async (CockpitAuth *self,
 
   /* If the client sends a TLS certificate to cockpit-tls, treat this as a
    * definitive login type, and don't just silently fall back to other types */
-  const gchar *client_certificate;
+  const gchar *client_certificate = NULL;
   JsonObject *metadata = get_connection_metadata (connection);
-  if (metadata && (client_certificate = json_object_get_string_member (metadata, "client-certificate")))
+  if (metadata && cockpit_json_get_string (metadata, "client-certificate", NULL, &client_certificate) && client_certificate)
     {
       g_debug ("TLS connection has peer certificate, using tls-cert auth type");
       type = g_strdup ("tls-cert");

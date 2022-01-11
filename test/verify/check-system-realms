@@ -443,6 +443,7 @@ class CommonTests:
 
         # valid user certificate which fails CA validation; this requires sssd ≥ 2.6.1
         m.execute("mv /etc/sssd/pki/sssd_auth_ca_db.pem /etc/sssd/pki/sssd_auth_ca_db.pem.valid")
+        self.allow_journal_messages("cockpit-session: Failed to map certificate to user: .* Certificate authority file not found")
         with open("src/tls/ca/alice-expired.pem") as f:
             m.write("/etc/sssd/pki/sssd_auth_ca_db.pem", f.read())
         api = m.execute("busctl introspect org.freedesktop.sssd.infopipe /org/freedesktop/sssd/infopipe/Users")
@@ -588,6 +589,9 @@ ExecStart=/bin/true
         b.wait_visible("a[href='/@x0.cockpit.lan']")
         b.logout()
 
+        # FIXME: Something above triggers this error message
+        self.allow_journal_messages("Received unexpected TLS connection and no certificate was configured")
+
     def checkBackendSpecificCleanup(self):
         '''Check domain backend specific integration after leaving domain'''
 
@@ -607,6 +611,13 @@ ExecStart=/bin/true
         m = self.machine
         b = self.browser
 
+        super().testUnqualifiedUsers()
+
+        # now try 2FA with OTP
+        # This does not yet work with sssd < 2.2.2-1 on Ubuntu
+        if m.image in ["ubuntu-2004", "ubuntu-stable"]:
+            return
+
         # set up "alice" user with HOTP; that won't affect existing users (admin)
         # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/linux_domain_identity_authentication_and_policy_guide/otp
         out = self.machines['services'].execute("""podman exec -i freeipa sh -ec '
@@ -616,20 +627,16 @@ ExecStart=/bin/true
             ipa user-mod --password-expiration="2030-01-01T00:00:00Z" alice
             ipa otptoken-add --type=hotp --owner=alice
             ' """)
-        # if the default ever changes, the HOTP algorithm below needs to be updated
+        # if the default ever changes, hotp_token() needs to be updated
         self.assertIn("  Algorithm: sha1\n", out)
         alice_hotp_key = re.search(r'^  Key: (.*)', out, re.M).group(1)
         # print("alice's HOTP key:", alice_hotp_key)
         alice_hotp_key = base64.b64decode(alice_hotp_key)
 
-        super().testUnqualifiedUsers()
+        # wait until this propagates to the client
+        wait(lambda: m.execute("su -s /bin/sh -c 'su - alice </dev/null' - nobody 2>&1 | grep 'Second Factor'"))
 
         m.start_cockpit()
-
-        # now try 2FA with OTP
-        # This does not yet work with sssd < 2.2.2-1 on Ubuntu
-        if m.image in ["ubuntu-2004", "ubuntu-stable"]:
-            return
 
         # normal b.login_and_go() doesn't support 2FA
         b.open("/")
@@ -780,7 +787,7 @@ ipa-advise enable-admins-sudo | sh -ex
         # now sudo works with the delegated ticket
         # this requires https://github.com/sudo-project/sudo/commit/3b7977a42c0 (see https://bugzilla.redhat.com/show_bug.cgi?id=1917379)
         # to actually work, so on older distros it fails
-        supports_sudo_krb = m.image not in ["rhel-8-5", "rhel-8-6", "centos-8-stream", "ubuntu-2004"]
+        supports_sudo_krb = m.image not in ["rhel-8-5", "ubuntu-2004"]
         b.open_superuser_dialog()
 
         if supports_sudo_krb:

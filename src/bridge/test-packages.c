@@ -17,9 +17,9 @@
  * along with Cockpit; If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-
 #include "config.h"
+
+#include <stdio.h>
 
 #include "cockpithttpstream.h"
 #include "cockpitpackages.h"
@@ -1208,6 +1208,10 @@ main (int argc,
   cockpit_bridge_local_address = "127.0.0.1";
 
   cockpit_test_init (&argc, &argv);
+
+  extern const gchar *cockpit_webresponse_fail_html_text;
+  cockpit_webresponse_fail_html_text =
+    "<html><head><title>@@message@@</title></head><body>@@message@@</body></html>\n";
 
   g_test_add ("/packages/simple", TestCase, &fixture_simple,
               setup, test_simple, teardown);

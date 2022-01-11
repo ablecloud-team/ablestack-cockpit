@@ -14,9 +14,6 @@ noinst_DATA =
 nodist_noinst_DATA =
 nodist_noinst_SCRIPTS =
 
-dist_systemdunit_DATA   =
-nodist_systemdunit_DATA =
-
 TESTS = $(NULL)
 
 CLEANFILES = \
@@ -39,32 +36,8 @@ clean-local::
 SUFFIXES = \
 	.jsx \
 	.mo .po \
-	.service .service.in \
-	.socket .socket.in \
 	.1 .8 .5 \
 	$(NULL)
-
-MV = mv -f
-
-SUBST_RULE = \
-	$(AM_V_GEN) mkdir -p $(dir $@) && sed \
-	-e 's,[@]PACKAGE[@],$(PACKAGE),g' \
-	-e 's,[@]admin_group[@],$(admin_group),g' \
-	-e 's,[@]datadir[@],$(datadir),g' \
-	-e 's,[@]group[@],$(COCKPIT_GROUP),g' \
-	-e 's,[@]libexecdir[@],$(libexecdir),g' \
-	-e 's,[@]prefix[@],$(prefix),g' \
-	-e 's,[@]sysconfdir[@],$(sysconfdir),g' \
-	-e 's,[@]user[@],$(COCKPIT_USER),g' \
-	-e 's,[@]wsinstancegroup[@],$(COCKPIT_WSINSTANCE_GROUP),g' \
-	-e 's,[@]wsinstanceuser[@],$(COCKPIT_WSINSTANCE_USER),g' \
-	$< > $@.tmp && $(MV) $@.tmp $@ \
-	$(NULL)
-
-.service.in.service:
-	$(SUBST_RULE)
-.socket.in.socket:
-	$(SUBST_RULE)
 
 # Webpack related
 include pkg/build
@@ -101,8 +74,17 @@ uninstall-local::
 	  (find $(DESTDIR)$(debugdir)$(pkgdatadir) -ignore_readdir_race -type f -delete && \
 	   find $(DESTDIR)$(debugdir)$(pkgdatadir) -ignore_readdir_race -type d -empty -delete)
 dist-hook:: $(WEBPACK_INPUTS) $(WEBPACK_OUTPUTS) $(WEBPACK_TEST_DEPS) $(MANIFESTS)
+if !ENABLE_DOC
+	@echo "*** doc must be enabled (ie: --enable-doc) in order to make dist or distcheck"
+	@false
+endif
 	$(V_TAR) tar --format=posix -cf - $^ | tar -C $(distdir) -xf -
 	cp $(srcdir)/tools/README.node_modules $(distdir)/node_modules/README
+	( cd $(srcdir); git ls-tree HEAD --name-only -r $(COMMITTED_DIST) || (echo $(COMMITTED_DIST) | tr ' ' '\n' ) ) | \
+		tar --format=posix -C $(srcdir) --exclude test/reference -cf - -T - | tar -C $(distdir) -xf -
+	echo $(VERSION) > $(distdir)/.tarball
+	[ ! -e $(distdir)/tools/cockpit.spec ] || $(srcdir)/tools/gen-spec-dependencies $(distdir)/tools/cockpit.spec
+	tools/adjust-distdir-timestamps "$(distdir)"
 
 #
 
@@ -127,7 +109,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
-	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT \
+	-D_REENTRANT \
 	$(NULL)
 
 AM_LDFLAGS = -Wl,--as-needed
@@ -188,14 +170,6 @@ else
 	@true
 endif
 
-dist-hook::
-if ENABLE_DOC
-	@true
-else
-	@echo "*** doc must be enabled (ie: --enable-doc) in order to make dist or distcheck"
-	@false
-endif
-
 # See test/image-prepare
 dump-dist:
 	@echo "$(abs_builddir)/$(distdir).tar.xz"
@@ -208,21 +182,13 @@ COMMITTED_DIST = \
 
 tools/debian/copyright: tools/debian/copyright.template $(MANIFESTS)
 	$(AM_V_GEN) (cd $(srcdir) && NODE_ENV=$(NODE_ENV) ./tools/build-debian-copyright) > $@.tmp && \
-	$(MV) $@.tmp $@
+	mv -f $@.tmp $@
 
 # This is the stock rule with $(BUILT_SOURCES) dependency removed.
 # In the future, we can do this via "no-dist-built-sources" automake option:
 # https://git.savannah.gnu.org/cgit/automake.git/commit/?id=13659a7385
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am
-
-# Build up the distribution using $COMMITTED_DIST and include node_modules licenses
-# also automatically update minimum base dependency in RPM spec file
-dist-hook:: $(MANIFESTS)
-	( cd $(srcdir); git ls-tree HEAD --name-only -r $(COMMITTED_DIST) || (echo $(COMMITTED_DIST) | tr ' ' '\n' ) ) | \
-		tar --format=posix -C $(srcdir) --exclude test/reference -cf - -T - | tar -C $(distdir) -xf -
-	echo $(VERSION) > $(distdir)/.tarball
-	[ ! -e $(distdir)/tools/cockpit.spec ] || $(srcdir)/tools/gen-spec-dependencies $(distdir)/tools/cockpit.spec
 
 distcheck-hook::
 	$(srcdir)/tools/check-dist $(distdir)
@@ -239,8 +205,13 @@ multi-word: po/cockpit.pot
 title2sentence: multi-word
 	tools/title2sentence.py -i titles -o t2s.sh
 
-include po/Makefile.am
+include containers/Makefile.am
+include containers/flatpak/Makefile.am
+include doc/Makefile-doc.am
+include doc/guide/Makefile-guide.am
+include doc/man/Makefile-man.am
 include pkg/Makefile.am
+include po/Makefile.am
 include src/branding/arch/Makefile.am
 include src/branding/centos/Makefile.am
 include src/branding/debian/Makefile.am
@@ -255,16 +226,12 @@ include src/branding/ubuntu/Makefile.am
 include src/bridge/Makefile.am
 include src/client/Makefile.am
 include src/common/Makefile-common.am
-include src/websocket/Makefile-websocket.am
-include tools/Makefile-tools.am
-include src/ssh/Makefile-ssh.am
-include src/ws/Makefile-ws.am
-include src/session/Makefile-session.am
-include src/tls/Makefile-tls.am
-include src/retest/Makefile.am
 include src/pam-ssh-add/Makefile.am
-include containers/flatpak/Makefile.am
-include containers/Makefile.am
-include doc/Makefile-doc.am
-include doc/guide/Makefile-guide.am
-include doc/man/Makefile-man.am
+include src/retest/Makefile.am
+include src/session/Makefile-session.am
+include src/ssh/Makefile-ssh.am
+include src/systemd/Makefile.am
+include src/tls/Makefile-tls.am
+include src/websocket/Makefile-websocket.am
+include src/ws/Makefile-ws.am
+include tools/Makefile-tools.am

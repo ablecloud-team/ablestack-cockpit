@@ -43,6 +43,7 @@ export class ShutdownModal extends React.Component {
             isOpen: false,
             selected: "1",
             dateObj: undefined,
+            startDate: undefined,
             date: "",
             time: "",
             when: "+1",
@@ -52,6 +53,7 @@ export class ShutdownModal extends React.Component {
         this.updateDate = this.updateDate.bind(this);
         this.updateTime = this.updateTime.bind(this);
         this.calculate = this.calculate.bind(this);
+        this.dateRangeValidator = this.dateRangeValidator.bind(this);
 
         this.server_time = new ServerTime();
     }
@@ -66,6 +68,7 @@ export class ShutdownModal extends React.Component {
                     this.setState({
                         dateObject,
                         date,
+                        startDate: new Date(dateObject.toDateString()),
                         time: hour.toString().padStart(2, "0") + ":" + minute.toString().padStart(2, "0"),
                     });
                 })
@@ -77,7 +80,7 @@ export class ShutdownModal extends React.Component {
     }
 
     updateTime(value, hour, minute) {
-        this.setState({ time: value, hour, minute });
+        this.setState({ time: value, hour, minute }, this.calculate);
     }
 
     calculate() {
@@ -107,7 +110,7 @@ export class ShutdownModal extends React.Component {
             return;
         }
 
-        const cmd = ["date", "--date=" + (new Intl.DateTimeFormat().format(this.state.dateObject)) + " " + this.state.time, "+%s"];
+        const cmd = ["date", "--date=" + (new Intl.DateTimeFormat('en-us').format(this.state.dateObject)) + " " + this.state.time, "+%s"];
         this.date_spawn = cockpit.spawn(cmd, { err: "message" });
         this.date_spawn.then(data => {
             const input_timestamp = parseInt(data, 10);
@@ -131,7 +134,7 @@ export class ShutdownModal extends React.Component {
         this.date_spawn.catch(e => {
             if (e.problem == "cancelled")
                 return;
-            this.setState({ error: e });
+            this.setState({ error: e.message });
         });
         this.date_spawn.finally(() => { this.date_spawn = null });
     }
@@ -147,6 +150,13 @@ export class ShutdownModal extends React.Component {
 
         event.preventDefault();
         return false;
+    }
+
+    dateRangeValidator(date) {
+        if (this.state.startDate && date < this.state.startDate) {
+            return _("Cannot schedule event in the past");
+        }
+        return '';
     }
 
     render() {
@@ -196,11 +206,12 @@ export class ShutdownModal extends React.Component {
                                                 dateParse={timeformat.parseShortDate}
                                                 invalidFormatText=""
                                                 isDisabled={!this.state.formFilled}
-                                                locale={cockpit.language}
+                                                locale={timeformat.dateFormatLang()}
                                                 weekStart={timeformat.firstDayOfWeek()}
                                                 onBlur={this.calculate}
                                                 onChange={(d, ds) => this.updateDate(d, ds)}
                                                 placeholder={timeformat.dateShortFormat()}
+                                                validators={[this.dateRangeValidator]}
                                                 value={this.state.date} />
                                     <TimePicker time={this.state.time} is24Hour
                                                 className='shutdown-time-picker'
