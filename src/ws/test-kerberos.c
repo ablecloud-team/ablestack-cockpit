@@ -26,6 +26,8 @@
 #include "common/cockpittest.h"
 #include "common/cockpitwebserver.h"
 
+#include "common/cockpitwebrequest-private.h"
+
 #include <krb5/krb5.h>
 #include <gssapi/gssapi_krb5.h>
 
@@ -304,7 +306,7 @@ test_authenticate (TestCase *test,
   build_authorization_header (in_headers, &output);
   gss_release_buffer (&minor, &output);
 
-  cockpit_auth_login_async (test->auth, "/cockpit+test", NULL, in_headers, on_ready_get_result, &result);
+  cockpit_auth_login_async (test->auth, WebRequest(.path="/cockpit+test", .headers=in_headers), on_ready_get_result, &result);
   g_hash_table_unref (in_headers);
 
   while (result == NULL)
@@ -321,7 +323,7 @@ test_authenticate (TestCase *test,
 
   include_cookie_as_if_client (out_headers, out_headers);
 
-  service = cockpit_auth_check_cookie (test->auth, "/cockpit+test", out_headers);
+  service = cockpit_auth_check_cookie (test->auth, WebRequest(.path="/cockpit+test", .headers=out_headers));
   g_assert (service != NULL);
 
   creds = cockpit_web_service_get_creds (service);
@@ -492,9 +494,6 @@ main (int argc,
   cockpit_ws_session_program = BUILDDIR "/cockpit-session";
 
   cockpit_test_init (&argc, &argv);
-
-  /* Try to debug crashing during tests */
-  signal (SIGABRT, cockpit_test_signal_backtrace);
 
   if (g_strcmp0 (g_get_user_name (), "root") != 0)
     mock_kdc_start ();

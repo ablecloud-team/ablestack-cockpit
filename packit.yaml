@@ -1,18 +1,12 @@
-specfile_path: cockpit.spec
 actions:
   post-upstream-clone:
-    # this is being triggered immediately on a pull_request event; wait for
-    # build-dist.yml to generate the dist tarball.  git rebase needs an
-    # identity in order to rewrite the committer field.
-    - git config --global user.name 'nobody'
-    - git config --global user.email '<>'
-    - tools/webpack-jumpstart --wait --rebase
-    # the upstream git spec file has unresolved macros which are normally put
-    # in at `make dist` time; they are not important for CI
-    # also, build optional packages for CentOS 8
-    - sh -c 'sed "s/%{npm-version:.*}/0/; s/build_optional 0/build_optional 1/" tools/cockpit.spec > cockpit.spec'
+    # packit will overwrite the version in its "fix spec file" stage
+    - tools/create-spec --version 0 --build-all -o cockpit.spec tools/cockpit.spec.in
   create-archive:
-    - ./autogen.sh --disable-polkit --disable-ssh --disable-pcp --with-systemdunitdir=/invalid CPPFLAGS=-Itools/mock-build-env PKG_CONFIG_PATH=tools/mock-build-env
+    - ./autogen.sh --disable-polkit --disable-ssh --disable-pcp --enable-prefix-only CPPFLAGS=-Itools/mock-build-env PKG_CONFIG_PATH=tools/mock-build-env
+    # The sandcastle doesn't have enough ram to run webpack, so wait
+    # until the webpack-jumpstart workflow has run and grab the result.
+    - tools/webpack-jumpstart --wait --rebase
     - make XZ_OPT=-0 dist
     - sh -c 'echo cockpit-*.tar.xz'
 jobs:
@@ -24,3 +18,13 @@ jobs:
       - fedora-35
       - centos-stream-8-x86_64
       - centos-stream-9-x86_64
+
+  # run build/unit tests on some interesting architectures
+  - job: copr_build
+    trigger: pull_request
+    metadata:
+      targets:
+        # 32 bit
+        - fedora-development-i386
+        # big-endian
+        - fedora-development-s390x

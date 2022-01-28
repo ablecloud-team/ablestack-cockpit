@@ -57,6 +57,18 @@ AC_ARG_ENABLE([prefix-only],
               [], [enable_prefix_only=no])
 AC_MSG_RESULT($enable_prefix_only)
 
+
+# --enable-selinux-policy=[type]
+AC_MSG_CHECKING([whether to build selinux policy, and which])
+AC_ARG_ENABLE([selinux-policy], [AS_HELP_STRING([--enable-selinux-policy=type], [Whether to build selinux policy])])
+if test "${enable_selinux_policy:=no}" = 'yes'; then
+    AC_MSG_ERROR([--enable-selinux-policy requires a type (eg: targeted)])
+fi
+AM_CONDITIONAL(SELINUX_POLICY_ENABLED, test "$enable_selinux_policy" != "no")
+AC_SUBST(SELINUX_POLICY_TYPE, [${enable_selinux_policy}])
+AC_MSG_RESULT($enable_selinux_policy)
+
+
 # Initialization
 #
 
@@ -139,7 +151,6 @@ if test "$enable_ssh" != "no"; then
   AC_SUBST(COCKPIT_SSH_SESSION_CFLAGS)
 else
   enable_ssh="no"
-  key_auth="no"
   AC_MSG_RESULT([$enable_ssh])
 fi
 
@@ -253,7 +264,8 @@ if test "x$GCC" = "xyes"; then
           -Werror=pointer-arith -Werror=init-self \
           -Werror=format=2 \
           -Werror=return-type \
-          -Werror=missing-include-dirs $CFLAGS"
+          -Werror=missing-include-dirs \
+          $CFLAGS"
 fi
 changequote([,])dnl
 
@@ -388,7 +400,7 @@ AC_MSG_CHECKING([whether to install cockpit-client])
 AC_ARG_ENABLE([cockpit-client],
               [AS_HELP_STRING([--enable-cockpit-client], [Whether to install cockpit-client])],
               [], [enable_cockpit_client=no])
-AC_MSG_RESULT($enable_prefix_only)
+AC_MSG_RESULT($enable_cockpit_client)
 AM_CONDITIONAL([ENABLE_COCKPIT_CLIENT], [test "$enable_cockpit_client" = "yes"])
 
 # Debug
@@ -508,11 +520,10 @@ echo "
         With address sanitizer:     ${asan_status}
         With PCP:                   ${enable_pcp}
         With polkit:                ${enable_polkit}
-        Branding:                   ${BRAND}
+        SELinux Policy:             ${enable_selinux_policy}
 
         cockpit-client:             ${enable_cockpit_client}
         cockpit-ssh:                ${enable_ssh}
-        Supports key auth:          ${key_auth}
 
         ssh-add:                    ${SSH_ADD}
         ssh-agent:                  ${SSH_AGENT}

@@ -33,12 +33,12 @@ files and other components. The following should work in a fresh Git clone:
 
     $ sudo dnf install dnf-utils python-srpm-macros
     $ TEMPFILE=$(mktemp -u --suffix=.spec) && \
-      sed 's/%{npm-version:.*}/0/' tools/cockpit.spec >$TEMPFILE && \
-      sudo dnf builddep --spec $TEMPFILE && \
-      rm $TEMPFILE
+      ./tools/create-spec --version 1 -o "$TEMPFILE" tools/cockpit.spec.in && \
+      sudo dnf builddep --spec "$TEMPFILE" &&
+      rm "$TEMPFILE"
 
-Note that `tools/cockpit.spec` is a template filled in by
-`tools/gen-spec-dependencies` when building RPMs, and cannot be directly parsed
+Note that `tools/cockpit.spec.in` is a template filled in by
+`tools/create-spec` when building RPMs, and cannot be directly parsed
 by dnf.
 
 For running the browser unit tests, the following dependencies are required:
@@ -106,12 +106,18 @@ variable:
 
 There are also static code and syntax checks which you should run often:
 
-    $ tools/test-static-code
+    $ test/static-code
 
-It is highly recommended to set this up as a git pre-push hook, to avoid pushing
-PRs that will fail on trivial errors:
+It is highly recommended to set up a git pre-push hook, to avoid pushing PRs
+that will fail on trivial errors:
 
-    $ ln -s ../../tools/test-static-code .git/hooks/pre-push
+    $ ln -s ../../test/git-hook-pre-push .git/hooks/pre-push
+
+This calls `test/static-code` for each commit you're trying to push.
+
+You can also set up a post-commit hook to do the same, after each commit:
+
+    $ ln -s ../../test/git-hook-post-commit .git/hooks/post-commit
 
 ## Running the integration test suite
 

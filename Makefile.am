@@ -14,7 +14,10 @@ noinst_DATA =
 nodist_noinst_DATA =
 nodist_noinst_SCRIPTS =
 
-TESTS = $(NULL)
+TESTS = \
+	test/check-dist \
+	test/static-code \
+	$(NULL)
 
 CLEANFILES = \
 	$(man_MANS) \
@@ -22,7 +25,6 @@ CLEANFILES = \
 	$(NULL)
 
 EXTRA_DIST = \
-	selinux \
 	package.json \
 	package-lock.json \
 	README.md \
@@ -83,7 +85,7 @@ endif
 	( cd $(srcdir); git ls-tree HEAD --name-only -r $(COMMITTED_DIST) || (echo $(COMMITTED_DIST) | tr ' ' '\n' ) ) | \
 		tar --format=posix -C $(srcdir) --exclude test/reference -cf - -T - | tar -C $(distdir) -xf -
 	echo $(VERSION) > $(distdir)/.tarball
-	[ ! -e $(distdir)/tools/cockpit.spec ] || $(srcdir)/tools/gen-spec-dependencies $(distdir)/tools/cockpit.spec
+	tools/create-spec --version '$(VERSION)' -o $(distdir)/tools/cockpit.spec $(srcdir)/tools/cockpit.spec.in
 	tools/adjust-distdir-timestamps "$(distdir)"
 
 #
@@ -143,7 +145,7 @@ check-memory: valgrind-suppressions
 	$(MAKE) LOG_FLAGS="valgrind $(VALGRIND_ARGS)" \
 	        HTML_LOG_FLAGS="valgrind $(VALGRIND_ARGS)" \
 		COCKPIT_SKIP_SLOW_TESTS=1 \
-		$(AM_MAKEFLAGS) check TESTS="$(filter-out tools/% bots/%,$(TESTS))"
+		$(AM_MAKEFLAGS) check TESTS="$(filter-out test/% bots/%,$(TESTS))"
 recheck-memory: valgrind-suppressions
 	$(MAKE) LOG_FLAGS="-- valgrind $(VALGRIND_ARGS)" \
 	        HTML_LOG_FLAGS="valgrind $(VALGRIND_ARGS)" \
@@ -212,6 +214,7 @@ include doc/guide/Makefile-guide.am
 include doc/man/Makefile-man.am
 include pkg/Makefile.am
 include po/Makefile.am
+include selinux/Makefile.am
 include src/branding/arch/Makefile.am
 include src/branding/centos/Makefile.am
 include src/branding/debian/Makefile.am

@@ -886,7 +886,7 @@ class CardsPage extends React.Component {
                             <FlexItem>
                                 <Popover aria-label="More information popover"
                                          bodyContent={_("When the Web Console is restarted, you will no longer see progress information. However, the update process will continue in the background. Reconnect to continue watching the update process.")}>
-                                    <a href="#">{_("More info...")}</a>
+                                    <Button variant="link" isInline>{_("More info...")}</Button>
                                 </Popover>
                             </FlexItem>
                         </Flex>}
@@ -1411,7 +1411,7 @@ class OsUpdates extends React.Component {
                                              <Text component={TextVariants.p}>
                                                  {this.state.errorMessages
                                                          .filter((m, index) => index == 0 || m != this.state.errorMessages[index - 1])
-                                                         .map(m => <div key={m}>{m}</div>)}
+                                                         .map(m => <span key={m}>{m}</span>)}
                                              </Text>
                                              <Text component={TextVariants.p}>
                                                  {_("Please reload the page after resolving the issue.")}

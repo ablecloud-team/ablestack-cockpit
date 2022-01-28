@@ -39,10 +39,10 @@ class TestPages(MachineCase):
         expected += "About Web Console"
         # DOCUMENTATION_URL is only in Fedora, RHEL and Arch
         if "fedora" in m.image:
-            if m.image in ["fedora-35", "fedora-coreos"]:
-                expected = "Fedora Linux documentation" + expected
-            else:
+            if m.image in ["fedora-34"]:
                 expected = "Fedora documentation" + expected
+            else:
+                expected = "Fedora Linux documentation" + expected
         elif m.image.startswith("rhel-"):
             expected = "Red Hat Enterprise Linux documentation" + expected
         elif m.image == "arch":
@@ -462,6 +462,10 @@ OnCalendar=daily
         b.wait_visible("#host-apps li a:contains('Services')")
         b.wait_text("#host-apps li a:contains('Services')", "ServicesContains: systemd")
         b.wait_text("#host-apps li a:contains('Services') mark", "systemd")
+
+        # Clean up failed services for screenshots
+        m.execute("systemctl reset-failed")
+        b.wait_not_present("#services-error")
         b.assert_pixels("#nav-system", "menu-search")
 
         # Check that enter activates first result

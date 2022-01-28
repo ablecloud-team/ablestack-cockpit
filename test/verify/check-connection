@@ -629,13 +629,13 @@ class TestConnection(MachineCase):
                 m.execute("rpm --erase cockpit cockpit-ws")
 
         # upgrade from distro version (our images have cockpit-ws preinstalled) sets up dynamic motd/issue symlink
-        self.assertEqual(m.execute("readlink /etc/motd.d/cockpit").strip(), "/run/cockpit/motd")
-        self.assertEqual(m.execute("readlink /etc/issue.d/cockpit.issue").strip(), "/run/cockpit/motd")
+        self.assertIn('Activate the web console', m.execute("cat /etc/motd.d/cockpit"))
+        self.assertIn('Activate the web console', m.execute("cat /etc/issue.d/cockpit.issue"))
 
         # package upgrade keeps them
         install()
-        self.assertEqual(m.execute("readlink /etc/motd.d/cockpit").strip(), "/run/cockpit/motd")
-        self.assertEqual(m.execute("readlink /etc/issue.d/cockpit.issue").strip(), "/run/cockpit/motd")
+        self.assertIn('Activate the web console', m.execute("cat /etc/motd.d/cockpit"))
+        self.assertIn('Activate the web console', m.execute("cat /etc/issue.d/cockpit.issue"))
 
         # HACK: On Arch Linux the symlink is overwritten, bug?
         if m.image != "arch":
@@ -652,8 +652,9 @@ class TestConnection(MachineCase):
 
         # fresh install (most of our test images have cockpit-ws preinstalled, so the first test above does not cover that)
         install()
-        self.assertEqual(m.execute("readlink /etc/motd.d/cockpit").strip(), "/run/cockpit/motd")
-        self.assertEqual(m.execute("readlink /etc/issue.d/cockpit.issue").strip(), "/run/cockpit/motd")
+        # verify that we installed relative links in the new package
+        self.assertEqual(m.execute("readlink /etc/motd.d/cockpit").strip(), "../../run/cockpit/motd")
+        self.assertEqual(m.execute("readlink /etc/issue.d/cockpit.issue").strip(), "../../run/cockpit/motd")
 
     @skipImage("OSTree doesn't have cockpit-ws", "fedora-coreos")
     def testCommandline(self):
@@ -831,18 +832,25 @@ G_MESSAGES_DEBUG=all XDG_CONFIG_DIRS=/usr/local %s -p 9999 -a 127.0.0.90 --local
 
         # cockpit-desktop can start a privileged bridge through polkit
         # we don't have an agent, so just allow the privilege without interactive authentication
-        polkit_loc = "/etc/polkit-1/rules.d" if m.image == "arch" else "/etc/polkit-1/localauthority/50-local.d"
-        m.write(f"{polkit_loc}/test.pkla", r"""
+        if m.image == "arch":
+            m.write("/etc/polkit-1/rules.d/test.rules", r"""
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.cockpit-project.cockpit.root-bridge" && subject.user == "admin")
+        return polkit.Result.YES;
+}); """)
+        else:
+            m.write("/etc/polkit-1/localauthority/50-local.d/test.pkla", r"""
 [Testing without an agent]
 Identity=unix-user:admin
 Action=org.cockpit-project.cockpit.root-bridge
 ResultAny=yes
 ResultInactive=yes
 ResultActive=yes""")
+
         m.write(r"/tmp/browser.sh", """#!/bin/sh -e
 curl --silent --compressed -o /tmp/out.html "$@"
 # wait until privileged bridge starts
-until pgrep -f cockpit-bridge.*--privileged; do sleep 1; done
+until pgrep -f '^/usr/bin/cockpit-bridge.*--privileged'; do sleep 1; done
 """)
         m.execute("chmod 755 /tmp/browser.sh")
         m.execute(f"su - -c 'BROWSER=/tmp/browser.sh {self.libexecdir}/cockpit-desktop system' admin")

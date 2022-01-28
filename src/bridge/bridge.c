@@ -43,7 +43,6 @@
 #include "common/cockpitjson.h"
 #include "common/cockpitpipetransport.h"
 #include "common/cockpitsystem.h"
-#include "common/cockpittest.h"
 #include "common/cockpitwebresponse.h"
 
 #include <sys/prctl.h>
@@ -176,6 +175,8 @@ start_helper_process (const gchar * const  *argv,
                       const gchar          *socket_pattern,
                       const gchar          *socket_envvar)
 {
+  g_return_val_if_fail (argv[0] != NULL, NULL);
+
   {
     const gchar *env = g_getenv (socket_envvar);
     if (env && env[0])
@@ -535,10 +536,6 @@ main (int argc,
   };
 
   signal (SIGPIPE, SIG_IGN);
-
-  /* Debugging issues during testing */
-  signal (SIGABRT, cockpit_test_signal_backtrace);
-  signal (SIGSEGV, cockpit_test_signal_backtrace);
 
   if (g_strv_contains ((const gchar **) argv, "--privileged"))
     {

@@ -172,7 +172,7 @@ class TestUpdates(NoSubManCase):
         b.wait_in_text("#kpatch-settings", "Disabled")
         b.click("#kpatch-settings button:contains('Enable')")
 
-        # Apply kernel patches for current and future kernels
+        # Apply kernel live patches for current and future kernels
         b.click("#apply-kpatch")
         b.wait_visible("#apply-kpatch:checked")
         b.wait_visible("#current-future:checked")
@@ -206,7 +206,7 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
         b.wait_visible(".pf-c-badge:contains('patches')")
         b.click("button:contains('Install all updates')")
         b.click("button:contains('Continue')")
-        b.wait_in_text("#status", "Kernel patch kpatch_3_10_0_1062_1_1 is active")
+        b.wait_in_text("#status", "Kernel live patch kpatch_3_10_0_1062_1_1 is active")
 
         # Switch to 'for current kernel only'
         b.click("#kpatch-settings button:contains('Edit')")
@@ -254,7 +254,7 @@ echo -e "Loaded patch modules:\nkpatch_3_10_0_1062_1_1 [enabled]\n\nInstalled pa
         b.wait_in_text("#kpatch-settings", "Disabled")
         b.click("#kpatch-settings button:contains('Enable')")
 
-        # Apply kernel patches for current and future kernels
+        # Apply kernel live patches for current and future kernels
         b.click("#apply-kpatch")
         b.wait_visible("#apply-kpatch:checked")
         b.click("#current-only")
@@ -946,7 +946,7 @@ ExecStart=/usr/local/bin/{packageName}
         # error message visible
         b.wait_visible("#app .pf-c-page .pf-c-empty-state__body")
 
-        self.assertRegex(b.text("#app .pf-c-page .pf-c-empty-state__body .pf-c-content div:first-of-type"),
+        self.assertRegex(b.text("#app .pf-c-page .pf-c-empty-state__body .pf-c-content span:first-of-type"),
                          "missing|downloading|not.*available|No such file or directory|download library error")
 
         # not expecting any buttons
@@ -1121,8 +1121,13 @@ class TestKpatchInstall(NoSubManCase):
         m.start_cockpit()
         b.login_and_go("/updates")
         b.wait_visible("#status")
-        time.sleep(5)
-        b.wait_not_present("#kpatch-settings")
+        b.wait_in_text("#kpatch-settings", "Not available")
+        # show unavailable packages in popover
+        b.click("#kpatch-settings .ct-info-circle")
+        b.wait_in_text(".pf-c-popover", "Unavailable packages")
+        b.wait_in_text(".pf-c-popover", "kpatch-dnf")
+        b.click("#kpatch-settings .ct-info-circle")
+        b.wait_not_present(".pf-c-popover")
 
         dummy_service = "[Service]\nExecStart=/bin/sleep infinity\n[Install]\nWantedBy=multi-user.target\n"
         self.createPackage("kpatch", "999", "1", content={"/lib/systemd/system/kpatch.service": dummy_service})

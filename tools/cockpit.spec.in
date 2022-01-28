@@ -23,10 +23,6 @@
 #
 # Check first cockpit-devel@lists.fedorahosted.org
 #
-# Globals that may be defined elsewhere
-#  * Version 122
-#  * wip 1
-#
 
 # earliest base that the subpackages work on; the instances of this get computed/updated
 # by tools/gen-spec-dependencies during "make dist", but keep a hardcoded fallback
@@ -53,20 +49,17 @@ Summary:        Web Console for Linux servers
 License:        LGPLv2+
 URL:            https://cockpit-project.org/
 
-Version:        0
-%if %{defined wip}
-Release:        1.%{wip}%{?dist}
-Source0:        cockpit-%{version}.tar.xz
-%else
-Release:        1%{?dist}
-Source0:        https://github.com/cockpit-project/cockpit/releases/download/%{version}/cockpit-%{version}.tar.xz
-%endif
+Version:        @VERSION@
+Release:        @RELEASE@%{?dist}
+Source0:        @PATH@cockpit-@VERSION@.tar.xz
 
 # in RHEL 8 the source package is duplicated: cockpit (building basic packages like cockpit-{bridge,system})
 # and cockpit-appstream (building optional packages like cockpit-{pcp})
 # This split does not apply to EPEL/COPR.
 # In Fedora ELN/RHEL 9+ there is just one source package, which ships rpms in both BaseOS and AppStream
-%if 0%{?rhel} == 8 && 0%{?epel} == 0
+# We also provide an override mechanism if you want to build all packages.
+%define build_all @BUILD_ALL@
+%if 0%{?rhel} == 8 && 0%{?epel} == 0 && !%{build_all}
 
 %if "%{name}" == "cockpit"
 %define build_basic 1
@@ -84,8 +77,7 @@ Source0:        https://github.com/cockpit-project/cockpit/releases/download/%{v
 # Ship custom SELinux policy (but not for cockpit-appstream)
 %if "%{name}" == "cockpit"
 %define selinuxtype targeted
-%define with_selinux 1
-%define selinux_policy_version %(rpm --quiet -q selinux-policy && rpm -q --queryformat "%{V}-%{R}" selinux-policy || echo 1)
+%define selinux_configure_arg --enable-selinux-policy=%{selinuxtype}
 %endif
 
 BuildRequires: gcc
@@ -132,10 +124,8 @@ BuildRequires: gdb
 # For documentation
 BuildRequires: xmlto
 
-%if 0%{?with_selinux}
 BuildRequires:  selinux-policy
 BuildRequires:  selinux-policy-devel
-%endif
 
 # This is the "cockpit" metapackage. It should only
 # Require, Suggest or Recommend other cockpit-xxx subpackages
@@ -161,12 +151,10 @@ Recommends: subscription-manager-cockpit
 %setup -q -n cockpit-%{version}
 
 %build
-exec 2>&1
 %configure \
-    --disable-silent-rules \
+    %{?selinux_configure_arg} \
     --with-cockpit-user=cockpit-ws \
     --with-cockpit-ws-instance-user=cockpit-wsinstance \
-    --with-selinux-config-type=etc_t \
 %if 0%{?suse_version}
     --docdir=%_defaultdocdir/%{name} \
 %endif
@@ -175,12 +163,7 @@ exec 2>&1
     --disable-ssh \
 %endif
 
-make -j4 %{?extra_flags} all
-
-%if 0%{?with_selinux}
-    make -f /usr/share/selinux/devel/Makefile cockpit.pp
-    bzip2 -9 cockpit.pp
-%endif
+%make_build
 
 %check
 exec 2>&1
@@ -206,14 +189,6 @@ install -p -m 644 tools/cockpit.pam $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/cockpit
 rm -f %{buildroot}/%{_libdir}/cockpit/*.so
 install -D -p -m 644 AUTHORS COPYING README.md %{buildroot}%{_docdir}/cockpit/
 
-%if 0%{?with_selinux}
-    install -D -m 644 %{name}.pp.bz2 %{buildroot}%{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
-    install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_session_selinux.8cockpit
-    install -D -m 644 -t %{buildroot}%{_mandir}/man8 selinux/%{name}_ws_selinux.8cockpit
-    # create this directory in the build root so that %ghost sees the desired mode
-    install -d -m 700 %{buildroot}%{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
-%endif
-
 # only ship deprecated PatternFly API for stable releases
 %if 0%{?rhel} <= 8
     ln -s cockpit.css.gz %{buildroot}/%{_datadir}/cockpit/base1/patternfly.css.gz
@@ -231,10 +206,10 @@ echo '%dir %{_datadir}/cockpit/ssh' >> base.list
 find %{buildroot}%{_datadir}/cockpit/ssh -type f >> base.list
 echo '%{_libexecdir}/cockpit-ssh' >> base.list
 
-echo '%dir %{_datadir}/cockpit/pcp' >> pcp.list
+echo '%dir %{_datadir}/cockpit/pcp' > pcp.list
 find %{buildroot}%{_datadir}/cockpit/pcp -type f >> pcp.list
 
-echo '%dir %{_datadir}/cockpit/tuned' >> system.list
+echo '%dir %{_datadir}/cockpit/tuned' > system.list
 find %{buildroot}%{_datadir}/cockpit/tuned -type f >> system.list
 
 echo '%dir %{_datadir}/cockpit/shell' >> system.list
@@ -249,7 +224,7 @@ find %{buildroot}%{_datadir}/cockpit/users -type f >> system.list
 echo '%dir %{_datadir}/cockpit/metrics' >> system.list
 find %{buildroot}%{_datadir}/cockpit/metrics -type f >> system.list
 
-echo '%dir %{_datadir}/cockpit/kdump' >> kdump.list
+echo '%dir %{_datadir}/cockpit/kdump' > kdump.list
 find %{buildroot}%{_datadir}/cockpit/kdump -type f >> kdump.list
 
 echo '%dir %{_datadir}/cockpit/sosreport' > sosreport.list
@@ -261,7 +236,7 @@ find %{buildroot}%{_datadir}/cockpit/storaged -type f >> storaged.list
 echo '%dir %{_datadir}/cockpit/networkmanager' > networkmanager.list
 find %{buildroot}%{_datadir}/cockpit/networkmanager -type f >> networkmanager.list
 
-echo '%dir %{_datadir}/cockpit/packagekit' >> packagekit.list
+echo '%dir %{_datadir}/cockpit/packagekit' > packagekit.list
 find %{buildroot}%{_datadir}/cockpit/packagekit -type f >> packagekit.list
 
 echo '%dir %{_datadir}/cockpit/apps' >> packagekit.list
@@ -433,7 +408,7 @@ Requires: sos
 Recommends: (reportd if abrt)
 %endif
 # NPM modules which are also available as packages
-Provides: bundled(xstatic-patternfly-common) = %{npm-version:patternfly}
+Provides: bundled(xstatic-patternfly-common) = @PATTERNFLY_VERSION@
 
 %description system
 This package contains the Cockpit shell and system configuration interfaces.
@@ -446,10 +421,8 @@ Summary: Cockpit Web Service
 Requires: glib-networking
 Requires: openssl
 Requires: glib2 >= 2.50.0
-%if 0%{?with_selinux}
-Requires: (selinux-policy >= %{selinux_policy_version} if selinux-policy-%{selinuxtype})
+Requires: (selinux-policy >= %{_selinux_policy_version} if selinux-policy-%{selinuxtype})
 Requires(post): (policycoreutils if selinux-policy-%{selinuxtype})
-%endif
 Conflicts: firewalld < 0.6.0-1
 Recommends: sscg >= 2.3
 Recommends: system-logos
@@ -504,13 +477,10 @@ authentication via sssd/FreeIPA.
 %{_libexecdir}/cockpit-certificate-helper
 %attr(4750, root, cockpit-wsinstance) %{_libexecdir}/cockpit-session
 %{_datadir}/cockpit/branding
-
-%if 0%{?with_selinux}
-    %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
-    %{_mandir}/man8/%{name}_session_selinux.8cockpit.*
-    %{_mandir}/man8/%{name}_ws_selinux.8cockpit.*
-    %ghost %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
-%endif
+%{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
+%{_mandir}/man8/%{name}_session_selinux.8cockpit.*
+%{_mandir}/man8/%{name}_ws_selinux.8cockpit.*
+%ghost %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{name}
 
 %pre ws
 getent group cockpit-ws >/dev/null || groupadd -r cockpit-ws
@@ -518,25 +488,21 @@ getent passwd cockpit-ws >/dev/null || useradd -r -g cockpit-ws -d /nonexisting 
 getent group cockpit-wsinstance >/dev/null || groupadd -r cockpit-wsinstance
 getent passwd cockpit-wsinstance >/dev/null || useradd -r -g cockpit-wsinstance -d /nonexisting -s /sbin/nologin -c "User for cockpit-ws instances" cockpit-wsinstance
 
-%if 0%{?with_selinux}
 if %{_sbindir}/selinuxenabled 2>/dev/null; then
     %selinux_relabel_pre -s %{selinuxtype}
 fi
-%endif
 
 %post ws
-%if 0%{?with_selinux}
 if [ -x %{_sbindir}/selinuxenabled ]; then
     %selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/%{selinuxtype}/%{name}.pp.bz2
     %selinux_relabel_post -s %{selinuxtype}
 fi
-%endif
 
 # set up dynamic motd/issue symlinks on first-time install; don't bring them back on upgrades if admin removed them
 if [ "$1" = 1 ]; then
     mkdir -p /etc/motd.d /etc/issue.d
-    ln -s /run/cockpit/motd /etc/motd.d/cockpit
-    ln -s /run/cockpit/motd /etc/issue.d/cockpit.issue
+    ln -s ../../run/cockpit/motd /etc/motd.d/cockpit
+    ln -s ../../run/cockpit/motd /etc/issue.d/cockpit.issue
 fi
 
 %tmpfiles_create cockpit-tempfiles.conf
@@ -556,12 +522,10 @@ fi
 %systemd_preun cockpit.socket cockpit.service
 
 %postun ws
-%if 0%{?with_selinux}
 if [ -x %{_sbindir}/selinuxenabled ]; then
     %selinux_modules_uninstall -s %{selinuxtype} %{name}
     %selinux_relabel_post -s %{selinuxtype}
 fi
-%endif
 %systemd_postun_with_restart cockpit.socket cockpit.service
 
 # -------------------------------------------------------------------------------
@@ -571,8 +535,8 @@ fi
 
 %package kdump
 Summary: Cockpit user interface for kernel crash dumping
-Requires: cockpit-bridge >= %{required_base}
-Requires: cockpit-shell >= %{required_base}
+Requires: cockpit-bridge >= @REQUIRED_BASE@
+Requires: cockpit-shell >= @REQUIRED_BASE@
 Requires: kexec-tools
 BuildArch: noarch
 
@@ -584,8 +548,8 @@ The Cockpit component for configuring kernel crash dumping.
 
 %package sosreport
 Summary: Cockpit user interface for diagnostic reports
-Requires: cockpit-bridge >= %{required_base}
-Requires: cockpit-shell >= %{required_base}
+Requires: cockpit-bridge >= @REQUIRED_BASE@
+Requires: cockpit-shell >= @REQUIRED_BASE@
 Requires: sos
 BuildArch: noarch
 
@@ -599,8 +563,8 @@ sosreport tool.
 
 %package networkmanager
 Summary: Cockpit user interface for networking, using NetworkManager
-Requires: cockpit-bridge >= %{required_base}
-Requires: cockpit-shell >= %{required_base}
+Requires: cockpit-bridge >= @REQUIRED_BASE@
+Requires: cockpit-shell >= @REQUIRED_BASE@
 Requires: NetworkManager >= 1.6
 # Optional components
 Recommends: NetworkManager-team
@@ -617,8 +581,8 @@ The Cockpit component for managing networking.  This package uses NetworkManager
 
 %package selinux
 Summary: Cockpit SELinux package
-Requires: cockpit-bridge >= %{required_base}
-Requires: cockpit-shell >= %{required_base}
+Requires: cockpit-bridge >= @REQUIRED_BASE@
+Requires: cockpit-shell >= @REQUIRED_BASE@
 Requires: setroubleshoot-server >= 3.3.3
 BuildArch: noarch
 
@@ -648,7 +612,7 @@ Dummy package from building optional packages only; never install or publish me.
 
 %package -n cockpit-storaged
 Summary: Cockpit user interface for storage, using udisks
-Requires: cockpit-shell >= %{required_base}
+Requires: cockpit-shell >= @REQUIRED_BASE@
 Requires: udisks2 >= 2.6
 Recommends: udisks2-lvm2 >= 2.6
 Recommends: udisks2-iscsi >= 2.6
@@ -685,7 +649,7 @@ These files are not required for running Cockpit.
 
 %package -n cockpit-pcp
 Summary: Cockpit PCP integration
-Requires: cockpit-bridge >= %{required_base}
+Requires: cockpit-bridge >= @REQUIRED_BASE@
 Requires: pcp
 
 %description -n cockpit-pcp
@@ -701,7 +665,7 @@ systemctl reload-or-try-restart pmlogger
 %package -n cockpit-packagekit
 Summary: Cockpit user interface for packages
 BuildArch: noarch
-Requires: cockpit-bridge >= %{required_base}
+Requires: cockpit-bridge >= @REQUIRED_BASE@
 Requires: PackageKit
 Recommends: python3-tracer
 # HACK: https://bugzilla.redhat.com/show_bug.cgi?id=1800468

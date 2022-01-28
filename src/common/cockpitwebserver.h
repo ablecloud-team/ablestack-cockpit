@@ -22,7 +22,62 @@
 
 #include <gio/gio.h>
 
+#include "cockpitwebresponse.h"
+
 G_BEGIN_DECLS
+
+#define COCKPIT_TYPE_WEB_REQUEST (cockpit_web_request_get_type ())
+typedef struct _CockpitWebRequest CockpitWebRequest;
+
+GType
+cockpit_web_request_get_type (void);
+
+CockpitWebResponse *
+cockpit_web_request_respond (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_original_path (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_path (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_query (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_method (CockpitWebRequest *self);
+
+GHashTable *
+cockpit_web_request_get_headers (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_lookup_header (CockpitWebRequest *self,
+                                   const gchar *header);
+
+gchar *
+cockpit_web_request_parse_cookie (CockpitWebRequest *self,
+                                  const gchar *name);
+
+GIOStream *
+cockpit_web_request_get_io_stream (CockpitWebRequest *self);
+
+GHashTable *
+cockpit_web_request_get_headers (CockpitWebRequest *self);
+
+GByteArray *
+cockpit_web_request_get_buffer (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_host (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_protocol (CockpitWebRequest *self);
+
+gchar *
+cockpit_web_request_get_remote_address (CockpitWebRequest *self);
+
+const gchar *
+cockpit_web_request_get_client_certificate (CockpitWebRequest *self);
 
 #define COCKPIT_TYPE_WEB_SERVER  (cockpit_web_server_get_type ())
 G_DECLARE_FINAL_TYPE(CockpitWebServer, cockpit_web_server, COCKPIT, WEB_SERVER, GObject)
@@ -66,6 +121,10 @@ cockpit_web_server_add_fd_listener (CockpitWebServer *self,
 
 GIOStream *
 cockpit_web_server_connect (CockpitWebServer *self);
+
+void
+cockpit_web_server_set_protocol_header (CockpitWebServer *self,
+                                        const gchar *protocol_header);
 
 G_END_DECLS
 

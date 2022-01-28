@@ -282,6 +282,12 @@ open_session (pam_handle_t *pamh)
       return PAM_SYSTEM_ERR;
     }
 
+  if (pwd->pw_shell == NULL)
+    {
+      warnx ("user %s has no shell", name);
+      return PAM_SYSTEM_ERR;
+    }
+
   /*
    * If we're already running as the right user, and have authenticated
    * then skip starting a new session. This is used when testing, or
@@ -838,6 +844,7 @@ user_has_valid_login_shell (const char **envp)
    * <pitti> https://xkcd.com/221/
    */
   const char *argv[] = { pwd->pw_shell, "-c", "exit 71;", NULL };
+  assert (argv[0] != NULL);
 
   int devnull = open ("/dev/null", O_RDONLY);
   if (devnull < 0)
@@ -897,14 +904,14 @@ main (int argc,
   int res;
   int i;
 
-  program_name = basename (argv[0]);
-
   if (isatty (0))
     errx (2, "this command is not meant to be run from the console");
 
   /* COMPAT: argv[1] used ot be used, but is now ignored */
   if (argc != 1 && argc != 2)
     errx (2, "invalid arguments to cockpit-session");
+
+  program_name = basename (argv[0]);
 
   /* Cleanup the umask */
   umask (077);

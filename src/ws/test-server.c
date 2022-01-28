@@ -117,12 +117,13 @@ on_bus_acquired (GDBusConnection *connection,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
-mock_http_qs (CockpitWebResponse *response)
+mock_http_qs (CockpitWebRequest *request,
+              CockpitWebResponse *response)
 {
   const gchar *qs;
   GBytes *bytes;
 
-  qs = cockpit_web_response_get_query (response);
+  qs = cockpit_web_request_get_query (request);
   if (!qs)
     {
       cockpit_web_response_error (response, 400, NULL, "No query string");
@@ -247,6 +248,7 @@ mock_http_expect_warnings (CockpitWebResponse *response,
 
 static gboolean
 on_handle_mock (CockpitWebServer *server,
+                CockpitWebRequest *request,
                 const gchar *path,
                 GHashTable *headers,
                 CockpitWebResponse *response,
@@ -256,7 +258,7 @@ on_handle_mock (CockpitWebServer *server,
   path += 5;
 
   if (g_str_equal (path, "/qs"))
-    return mock_http_qs (response);
+    return mock_http_qs (request, response);
   if (g_str_equal (path, "/stream"))
     return mock_http_stream (response);
   if (g_str_equal (path, "/headers"))
@@ -301,14 +303,11 @@ on_transport_control (CockpitTransport *transport,
 
 static gboolean
 on_handle_stream_socket (CockpitWebServer *server,
-                         const gchar *original_path,
-                         const gchar *path,
-                         const gchar *method,
-                         GIOStream *io_stream,
-                         GHashTable *headers,
-                         GByteArray *input,
+                         CockpitWebRequest *request,
                          gpointer user_data)
 {
+  const gchar *path = cockpit_web_request_get_path (request);
+
   CockpitTransport *transport;
   const gchar *query = NULL;
   CockpitCreds *creds;
@@ -390,7 +389,7 @@ on_handle_stream_socket (CockpitWebServer *server,
       g_signal_handler_disconnect (transport, handler);
     }
 
-  cockpit_web_service_socket (service, path, io_stream, headers, input, FALSE /* for_tls_proxy */);
+  cockpit_web_service_socket (service, request);
 
   /* Keeps ref on itself until it closes */
   g_object_unref (service);
@@ -426,26 +425,23 @@ on_echo_socket_close (WebSocketConnection *ws,
 
 static gboolean
 on_handle_stream_external (CockpitWebServer *server,
-                           const gchar *original_path,
-                           const gchar *path,
-                           const gchar *method,
-                           GIOStream *io_stream,
-                           GHashTable *headers,
-                           GByteArray *input,
+                           CockpitWebRequest *request,
                            gpointer user_data)
 {
-  CockpitWebResponse *response;
+  const gchar *path = cockpit_web_request_get_path (request);
+  GIOStream *io_stream = cockpit_web_request_get_io_stream (request);
+  GByteArray *input = cockpit_web_request_get_buffer (request);
+  GHashTable *headers = cockpit_web_request_get_headers (request);
+
   gboolean handled = FALSE;
   const gchar *upgrade;
   CockpitCreds *creds;
   const gchar *expected;
-  const gchar *query;
   const gchar *segment;
   JsonObject *open = NULL;
   GBytes *bytes;
   guchar *decoded;
   gsize length;
-  gsize seglen;
 
   if (g_str_has_prefix (path, "/cockpit/echosocket"))
     {
@@ -479,16 +475,10 @@ on_handle_stream_external (CockpitWebServer *server,
       expected = cockpit_creds_get_csrf_token (creds);
       g_return_val_if_fail (expected != NULL, FALSE);
 
-      /* The end of the token */
-      query = strchr (segment, '?');
-      if (!query)
-        query = segment + strlen (segment);
-
       /* No such path is valid */
-      seglen = query - segment;
-      if (strlen(expected) == seglen && memcmp (expected, segment, seglen) == 0)
+      if (g_str_equal (segment, expected))
         {
-          decoded = g_base64_decode (query, &length);
+          decoded = g_base64_decode (cockpit_web_request_get_query (request), &length);
           if (decoded)
             {
               bytes = g_bytes_new_take (decoded, length);
@@ -506,15 +496,12 @@ on_handle_stream_external (CockpitWebServer *server,
           upgrade = g_hash_table_lookup (headers, "Upgrade");
           if (upgrade && g_ascii_strcasecmp (upgrade, "websocket") == 0)
             {
-              cockpit_channel_socket_open (service, open, path, path, io_stream, headers, input, FALSE /* for_tls_proxy */);
+              cockpit_channel_socket_open (service, open, request);
               handled = TRUE;
             }
           else
             {
-              response = cockpit_web_response_new (io_stream, path, path, NULL, headers, COCKPIT_WEB_RESPONSE_NONE);
-              cockpit_web_response_set_method (response, method);
-              cockpit_channel_response_open (service, headers, response, open);
-              g_object_unref (response);
+              cockpit_channel_response_open (service, request, open);
               handled = TRUE;
             }
 
@@ -607,6 +594,7 @@ handle_package_file (CockpitWebServer *server,
 
 static gboolean
 on_handle_resource (CockpitWebServer *server,
+                    CockpitWebRequest *request,
                     const gchar *path,
                     GHashTable *headers,
                     CockpitWebResponse *response,
@@ -632,6 +620,7 @@ on_handle_resource (CockpitWebServer *server,
 
 static gboolean
 on_handle_source (CockpitWebServer *server,
+                  CockpitWebRequest *request,
                   const gchar *path,
                   GHashTable *headers,
                   CockpitWebResponse *response,
@@ -649,10 +638,11 @@ on_handle_source (CockpitWebServer *server,
 
 static gboolean
 on_handle_favicon (CockpitWebServer *server,
-                  const gchar *path,
-                  GHashTable *headers,
-                  CockpitWebResponse *response,
-                  gpointer user_data)
+                   CockpitWebRequest *request,
+                   const gchar *path,
+                   GHashTable *headers,
+                   CockpitWebResponse *response,
+                   gpointer user_data)
 {
   const char* roots[] = { SRCDIR "/src/branding/default", NULL };
   cockpit_web_response_file (response, NULL, roots);

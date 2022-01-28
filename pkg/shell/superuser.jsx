@@ -64,7 +64,7 @@ class UnlockDialog extends React.Component {
                           validated={!state.error ? "default" : validated || "error"}
                         >
                             <TextInput
-                                autoFocus
+                                autoFocus // eslint-disable-line jsx-a11y/no-autofocus
                                 id="switch-to-admin-access-password"
                                 isDisabled={state.busy}
                                 onChange={state.change}
@@ -102,6 +102,9 @@ class UnlockDialog extends React.Component {
                     {_("Close")}
                 </Button>);
         }
+
+        if (body === null)
+            return null;
 
         return (
             <Modal isOpen={!state.closed} position="top" variant="medium"

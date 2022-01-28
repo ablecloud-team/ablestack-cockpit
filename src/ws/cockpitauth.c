@@ -315,55 +315,8 @@ cockpit_auth_nonce (CockpitAuth *self)
                                   (guchar *)&seed, sizeof (seed));
 }
 
-static JsonObject *
-get_connection_metadata (GIOStream *io)
-{
-  if (io == NULL)
-    return NULL;
-
-  return g_object_get_qdata (G_OBJECT (io), g_quark_from_static_string ("metadata"));
-}
-
 static gchar *
-get_remote_address (GIOStream *io)
-{
-  gchar *result = NULL;
-
-  if (io)
-    {
-      JsonObject *metadata = get_connection_metadata (io);
-      if (metadata)
-        {
-          const gchar *tmp;
-
-          if (cockpit_json_get_string (metadata, "origin-ip", NULL, &tmp))
-            result = g_strdup (tmp);
-        }
-
-      if (result == NULL)
-        {
-          g_autoptr(GIOStream) base = NULL;
-
-          if (G_IS_TLS_CONNECTION (io))
-            g_object_get (io, "base-io-stream", &base, NULL);
-          else
-            base = g_object_ref (io);
-
-          if (G_IS_SOCKET_CONNECTION (base))
-            {
-              g_autoptr(GSocketAddress) remote = g_socket_connection_get_remote_address (G_SOCKET_CONNECTION (base), NULL);
-              if (remote && G_IS_INET_SOCKET_ADDRESS (remote))
-                result = g_inet_address_to_string (g_inet_socket_address_get_address (G_INET_SOCKET_ADDRESS (remote)));
-            }
-        }
-    }
-
-  return result;
-}
-
-gchar *
-cockpit_auth_steal_authorization (GHashTable *headers,
-                                  GIOStream *connection,
+cockpit_auth_steal_authorization (CockpitWebRequest *request,
                                   gchar **ret_type,
                                   gchar **ret_conversation)
 {
@@ -372,11 +325,13 @@ cockpit_auth_steal_authorization (GHashTable *headers,
   gchar *line;
   gpointer key;
 
-  g_assert (headers != NULL);
+  g_assert (request != NULL);
   g_assert (ret_conversation != NULL);
   g_assert (ret_type != NULL);
 
   /* Avoid copying as it can contain passwords */
+  GHashTable *headers = cockpit_web_request_get_headers (request);
+  g_assert (headers != NULL);
   if (g_hash_table_lookup_extended (headers, "Authorization", &key, (gpointer *)&line))
     {
       g_hash_table_steal (headers, "Authorization");
@@ -412,6 +367,8 @@ cockpit_auth_steal_authorization (GHashTable *headers,
       g_message ("received invalid 'Authorization: tls-cert' header");
       goto out;
     }
+
+  GIOStream *connection = cockpit_web_request_get_io_stream (request);
 
   /* If this is a conversation, get that part out too */
   if (g_str_equal (type, "x-conversation"))
@@ -529,6 +486,8 @@ session_start_process (const gchar **argv,
   gboolean ret;
   GPid pid = 0;
   int fds[2];
+
+  g_return_val_if_fail (argv[0] != NULL, NULL);
 
   g_debug ("spawning %s", argv[0]);
 
@@ -941,8 +900,7 @@ on_transport_closed (CockpitTransport *transport,
 
 static CockpitCreds *
 build_session_credentials (CockpitAuth *self,
-                           GIOStream *connection,
-                           GHashTable *headers,
+                           CockpitWebRequest *request,
                            const char *application,
                            const char *host,
                            const char *type,
@@ -958,7 +916,7 @@ build_session_credentials (CockpitAuth *self,
   gchar *remote_peer = NULL;
   gchar *csrf_token = NULL;
 
-  superuser = g_hash_table_lookup (headers, "X-Superuser");
+  superuser = cockpit_web_request_lookup_header (request, "X-Superuser");
   if (!superuser)
     superuser = "none";
 
@@ -989,7 +947,7 @@ build_session_credentials (CockpitAuth *self,
         }
     }
 
-  remote_peer = get_remote_address (connection);
+  remote_peer = cockpit_web_request_get_remote_address (request);
   csrf_token = cockpit_auth_nonce (self);
 
   creds = cockpit_creds_new (application,
@@ -1099,8 +1057,7 @@ cockpit_session_create (CockpitAuth *self,
 
 static CockpitSession *
 cockpit_session_launch (CockpitAuth *self,
-                        GIOStream *connection,
-                        GHashTable *headers,
+                        CockpitWebRequest *request,
                         const gchar *type,
                         const gchar *authorization,
                         const gchar *application,
@@ -1134,8 +1091,7 @@ cockpit_session_launch (CockpitAuth *self,
     }
 
   /* These are the credentials we'll carry around for this session */
-  creds = build_session_credentials (self, connection, headers,
-                                     application, host, type, authorization);
+  creds = build_session_credentials (self, request, application, host, type, authorization);
 
   if (host)
     section = COCKPIT_CONF_SSH_SECTION;
@@ -1180,7 +1136,7 @@ cockpit_session_launch (CockpitAuth *self,
                               cockpit_creds_get_rhost (creds),
                               TRUE);
     }
-  if (g_strcmp0 (g_hash_table_lookup (headers, "X-SSH-Connect-Unknown-Hosts"), "yes") == 0)
+  if (g_strcmp0 (cockpit_web_request_lookup_header (request, "X-SSH-Connect-Unknown-Hosts"), "yes") == 0)
     {
       env = g_environ_setenv (env, "COCKPIT_SSH_CONNECT_TO_UNKNOWN_HOSTS",
                               "1",
@@ -1301,9 +1257,8 @@ base64_decode_string (const char *enc)
 }
 
 static CockpitSession *
-session_for_headers (CockpitAuth *self,
-                     const gchar *path,
-                     GHashTable *in_headers)
+session_for_request (CockpitAuth *self,
+                     CockpitWebRequest *request)
 {
   gchar *cookie = NULL;
   gchar *raw = NULL;
@@ -1313,14 +1268,13 @@ session_for_headers (CockpitAuth *self,
   gchar *cookie_name = NULL;
 
   g_return_val_if_fail (self != NULL, FALSE);
-  g_return_val_if_fail (in_headers != NULL, FALSE);
 
-  application = cockpit_auth_parse_application (path, NULL);
+  application = cockpit_auth_parse_application (cockpit_web_request_get_path (request), NULL);
   if (!application)
     return NULL;
 
   cookie_name = application_cookie_name (application);
-  raw = cockpit_web_server_parse_cookie (in_headers, cookie_name);
+  raw = cockpit_web_request_parse_cookie (request, cookie_name);
   if (raw)
     {
       cookie = base64_decode_string (raw);
@@ -1350,13 +1304,12 @@ session_for_headers (CockpitAuth *self,
 
 CockpitWebService *
 cockpit_auth_check_cookie (CockpitAuth *self,
-                           const gchar *path,
-                           GHashTable *in_headers)
+                           CockpitWebRequest *request)
 {
   CockpitSession *session;
   CockpitCreds *creds;
 
-  session = session_for_headers (self, path, in_headers);
+  session = session_for_request (self, request);
   if (session)
     {
       creds = cockpit_web_service_get_creds (session->service);
@@ -1462,9 +1415,7 @@ can_start_auth (CockpitAuth *self)
 
 void
 cockpit_auth_login_async (CockpitAuth *self,
-                          const gchar *path,
-                          GIOStream *connection,
-                          GHashTable *headers,
+                          CockpitWebRequest *request,
                           GAsyncReadyCallback callback,
                           gpointer user_data)
 {
@@ -1476,8 +1427,7 @@ cockpit_auth_login_async (CockpitAuth *self,
   g_autofree gchar *authorization = NULL;
   g_autofree gchar *application = NULL;
 
-  g_return_if_fail (path != NULL);
-  g_return_if_fail (headers != NULL);
+  g_return_if_fail (request != NULL);
 
   self->startups++;
 
@@ -1493,13 +1443,13 @@ cockpit_auth_login_async (CockpitAuth *self,
       goto out;
     }
 
+  const gchar *path = cockpit_web_request_get_path (request);
   application = cockpit_auth_parse_application (path, NULL);
 
   /* If the client sends a TLS certificate to cockpit-tls, treat this as a
    * definitive login type, and don't just silently fall back to other types */
-  const gchar *client_certificate = NULL;
-  JsonObject *metadata = get_connection_metadata (connection);
-  if (metadata && cockpit_json_get_string (metadata, "client-certificate", NULL, &client_certificate) && client_certificate)
+  const gchar *client_certificate;
+  if ((client_certificate = cockpit_web_request_get_client_certificate (request)))
     {
       g_debug ("TLS connection has peer certificate, using tls-cert auth type");
       type = g_strdup ("tls-cert");
@@ -1512,7 +1462,7 @@ cockpit_auth_login_async (CockpitAuth *self,
   else
     {
       g_debug ("No peer certificate");
-      authorization = cockpit_auth_steal_authorization (headers, connection, &type, &conversation);
+      authorization = cockpit_auth_steal_authorization (request, &type, &conversation);
 
       if (!authorization)
         {
@@ -1546,7 +1496,7 @@ cockpit_auth_login_async (CockpitAuth *self,
     }
   else
     {
-      session = cockpit_session_launch (self, connection, headers, type, authorization, application, &error);
+      session = cockpit_session_launch (self, request, type, authorization, application, &error);
       if (!session)
         {
           g_simple_async_result_take_error (result, error);
