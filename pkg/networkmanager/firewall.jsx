@@ -119,6 +119,8 @@ function serviceRow(props) {
                 const service = firewall.services[s];
                 if (service && service.description)
                     return <li key={service.id}><strong>{service.id}</strong>: {service.description}</li>;
+                else
+                    return null;
             })} </ul></>;
     }
 
@@ -204,6 +206,8 @@ function ZoneSection(props) {
                                           onRemoveService: service => props.onRemoveService(props.zone.id, service),
                                           readonly: firewall.readonly,
                                       });
+                                  } else {
+                                      return null;
                                   }
                               }).concat(
                                   props.zone.ports.length > 0
@@ -211,7 +215,8 @@ function ZoneSection(props) {
                                           key: props.zone.id + "-ports",
                                           zone: props.zone,
                                           readonly: firewall.readonly
-                                      }) : [])
+                                      })
+                                      : [])
                                       .filter(Boolean)}
 
             />
@@ -577,21 +582,22 @@ class AddServicesModal extends React.Component {
                     </FormGroup>
                     { this.state.custom ||
                         <div>
-                            { services ? (
-                                <>
-                                    <SearchInput id="filter-services-input"
+                            { services
+                                ? (
+                                    <>
+                                        <SearchInput id="filter-services-input"
                                                  value={this.state.filter}
                                                  onChange={this.onFilterChanged} />
-                                    <DataList className="service-list" isCompact>
-                                        {services.map(s => (
-                                            <DataListItem key={s.id} aria-labelledby={s.id}>
-                                                <DataListItemRow>
-                                                    <DataListCheck aria-labelledby={s.id}
+                                        <DataList className="service-list" isCompact>
+                                            {services.map(s => (
+                                                <DataListItem key={s.id} aria-labelledby={s.id}>
+                                                    <DataListItemRow>
+                                                        <DataListCheck aria-labelledby={s.id}
                                                                    isChecked={this.state.selected.has(s.id)}
                                                                    onChange={(value, event) => this.onToggleService(event, s.id)}
                                                                    id={"firewall-service-" + s.id}
                                                                    name={s.id + "-checkbox"} />
-                                                    <DataListItemCells
+                                                        <DataListItemCells
                                                             dataListCells={[
                                                                 <DataListCell key="service-list-item">
                                                                     <label htmlFor={"firewall-service-" + s.id}
@@ -601,14 +607,15 @@ class AddServicesModal extends React.Component {
                                                                     {renderPorts(s)}
                                                                 </DataListCell>,
                                                             ]} />
-                                                </DataListItemRow>
-                                            </DataListItem>
-                                        ))}
-                                    </DataList>
-                                </>
-                            ) : (
-                                <EmptyStatePanel loading />
-                            )}
+                                                    </DataListItemRow>
+                                                </DataListItem>
+                                            ))}
+                                        </DataList>
+                                    </>
+                                )
+                                : (
+                                    <EmptyStatePanel loading />
+                                )}
                         </div>
                     }
                     { !this.state.custom ||

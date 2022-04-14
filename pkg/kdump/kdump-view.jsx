@@ -24,6 +24,7 @@ import React from "react";
 import {
     Button, Checkbox,
     Card, CardBody,
+    CodeBlockCode,
     Flex,
     Form, FormGroup, FormSection,
     FormSelect, FormSelectOption,
@@ -280,11 +281,19 @@ export class KdumpPage extends React.Component {
     }
 
     handleSaveClick() {
-        return new Promise((resolve, reject) => {
-            this.props.onSaveSettings(this.state.dialogSettings)
-                    .then(resolve)
-                    .catch(error => reject(cockpit.format(_("Unable to save settings: $0"), String(error))));
-        });
+        return this.props.onSaveSettings(this.state.dialogSettings)
+                .catch(error => {
+                    if (error.details) {
+                        // avoid bad summary like "systemd job RestartUnit ["kdump.service","replace"] failed with result failed"
+                        // if we have a more concrete journal
+                        error.message = _("Unable to save settings");
+                        error.details = <CodeBlockCode>{ error.details }</CodeBlockCode>;
+                    } else {
+                        // without a journal, show the error as-is
+                        error = new Error(cockpit.format(_("Unable to save settings: $0"), String(error)));
+                    }
+                    return Promise.reject(error);
+                });
     }
 
     handleTestSettingsClick(e) {

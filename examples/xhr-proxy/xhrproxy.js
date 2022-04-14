@@ -37,13 +37,13 @@ function setupCockpitXHR() {
                             window.btoa(JSON.stringify(channel));
 
         origXHROpen.apply(this, ["GET", channel_url]);
-    }
+    };
 }
 
 /* Send a 'init' message. After that we have the Cockpit transport token.
  * This also tells integration tests that we are ready to go. */
+/* global cockpit */
 cockpit.transport.wait(setupCockpitXHR);
-
 
 /* The following implements the example page, and represents an application that uses
  * XMLHttpRequest() and is oblivious of running inside of Cockpit */
@@ -52,10 +52,10 @@ document.getElementById("get").addEventListener("click", () => {
     const url = document.getElementById("address").value;
     const xhr = new XMLHttpRequest();
 
-    xhr.open("GET", address.value);
+    xhr.open("GET", url);
     xhr.onreadystatechange = () => {
         if (xhr.readyState === XMLHttpRequest.DONE) {
-            console.log("XMLHttpRequest to", address.value, "done with status", xhr.status, "text", xhr.responseText);
+            console.log("XMLHttpRequest to", url, "done with status", xhr.status, "text", xhr.responseText);
             document.getElementById("result").innerHTML = xhr.status.toString();
             const output = document.getElementById("output");
             output.innerHTML = "";

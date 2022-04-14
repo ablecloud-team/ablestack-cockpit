@@ -540,7 +540,7 @@ function ChangeSystimeBody({ state, errors, change }) {
                                         is24Hour
                                         menuAppendTo={() => document.body}
                                         invalidFormatErrorMessage=""
-                                        onChange={(time, h, m, valid) => change("manual_time", time, valid) } />
+                                        onChange={(time, h, m, s, valid) => change("manual_time", time, valid) } />
                         </ValidatedInput>
                         <Validated errors={errors} error_key="manual_date" />
                         <Validated errors={errors} error_key="manual_time" />
@@ -576,7 +576,7 @@ function change_systime_dialog(server_time, timezone) {
         mode: null,
         ntp_supported: server_time.get_ntp_supported(),
         custom_ntp: null,
-        manual_time_valid: null,
+        manual_time_valid: true,
     };
     let errors = { };
 

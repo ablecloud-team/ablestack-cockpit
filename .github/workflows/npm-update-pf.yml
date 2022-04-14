@@ -1,7 +1,7 @@
-name: npm-update
+name: npm-update-pf
 on:
   schedule:
-    - cron: '0 3 * * 2,4,6'
+    - cron: '0 3 * * 1'
   # can be run manually on https://github.com/cockpit-project/cockpit/actions
   workflow_dispatch:
 jobs:
@@ -29,7 +29,7 @@ jobs:
           echo ${{ github.token }} >> ~/.config/cockpit-dev/github-token
           eval $(ssh-agent)
           ssh-add - <<< '${{ secrets.NODE_CACHE_DEPLOY_KEY }}'
-          bots/npm-update ~@patternfly >&2
+          bots/npm-update @patternfly >&2
           ssh-add -D
           ssh-agent -k
 

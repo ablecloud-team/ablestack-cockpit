@@ -3,6 +3,9 @@
 # (Re-)generate all deploy keys on
 #   https://github.com/cockpit-project/cockpit/settings/environments
 #
+# Your personal access token needs `public_repo` for this to work:
+#   https://github.com/settings/tokens
+#
 # You might want this first:
 #   dnf install python3-pynacl
 #
@@ -27,16 +30,13 @@ fi
 
 deploy_env() {
     ENVIRONMENT="$1"
-    if [ -n "${2:-}" ]; then
-        DEPLOY_TO="${ORG}/$2"
-    else
-        DEPLOY_TO="${ORG}/${ENVIRONMENT}"
-    fi
+    DEPLOY_TO="${2:-${ORG}/${ENVIRONMENT}}"
+    SECRET_NAME="${3:-DEPLOY_KEY}"
 
     bots/github-upload-secrets $DRY_RUN \
         --receiver "${ORG}/${THIS}" \
         --env "${ENVIRONMENT}" \
-        --ssh-keygen DEPLOY_KEY \
+        --ssh-keygen "${SECRET_NAME}" \
         --deploy-to "${DEPLOY_TO}"
 }
 
@@ -46,7 +46,7 @@ deploy_env() {
 # https://github.com/cockpit-project/cockpit
 #   - npm-update.yml
 #   - weblate-sync-po.yml
-deploy_env self cockpit
+deploy_env self cockpit-project/cockpit
 
 # https://github.com/cockpit-project/cockpit-weblate
 #   - weblate-sync-pot.yml
@@ -58,10 +58,17 @@ deploy_env "${THIS}-weblate"
 deploy_env "${THIS}-dist"
 
 # https://github.com/cockpit-project/node-cache
-#   - npm-install.yml
 #   - release.yml
 deploy_env node-cache
 
 # https://github.com/cockpit-project/org.cockpit_project.CockpitClient
 #   - update-flathub.yml
-deploy_env flathub org.cockpit_project.CockpitClient
+deploy_env flathub cockpit-project/org.cockpit_project.CockpitClient
+
+# https://github.com/cockpit-project/cockpit (COCKPIT_DEPLOY_KEY)
+# https://github.com/cockpit-project/node-cache (NODE_CACHE_DEPLOY_KEY)
+#   - npm-update.yml
+#   - npm-update-pf.yml
+# Installed additionally to the above keys (+).
+deploy_env npm-update +cockpit-project/cockpit COCKPIT_DEPLOY_KEY
+deploy_env npm-update +cockpit-project/node-cache NODE_CACHE_DEPLOY_KEY

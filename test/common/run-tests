@@ -73,7 +73,7 @@ class Test:
 
         return poll_result
 
-    def finish(self, affected_tests, print_tap=True, thorough=False):
+    def finish(self, affected_tests, print_tap=True, thorough=False, track_naughties=False):
         """Returns if a test should retry or not
 
         Call test-failure-policy on the test's output, print if needed.
@@ -103,7 +103,10 @@ class Test:
             return None, 0
 
         if not thorough:
-            cmd = ["test-failure-policy", testvm.DEFAULT_IMAGE]
+            cmd = ["test-failure-policy"]
+            if not track_naughties:
+                cmd.append("--offline")
+            cmd.append(testvm.DEFAULT_IMAGE)
             try:
                 proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
                 reason = proc.communicate(self.output + ("not ok " + str(self)).encode())[0].strip()
@@ -228,6 +231,8 @@ def build_command(filename, test, opts):
         cmd.append("--nonet")
     if opts.list:
         cmd.append("-l")
+    if opts.coverage:
+        cmd.append("--coverage")
     cmd.append(test)
     return cmd
 
@@ -262,7 +267,7 @@ def get_affected_tests(test_dir, base_branch, test_files):
     # Drop changes in css files - this does not affect tests thus no reason to retry
     files = [f.decode("utf-8") for f in diff_out.strip().splitlines() if not f.endswith(b"css")]
 
-    changed_pkgs = set(pkg.split('/')[1] for pkg in files)
+    changed_pkgs = set("check-" + pkg.split('/')[1] for pkg in files)
     changed_tests.extend([test for test in test_files if any(pkg in test for pkg in changed_pkgs)])
 
     return changed_tests
@@ -331,6 +336,10 @@ def run(opts, image):
     fail_count = 0
     start_time = time.time()
 
+    if opts.coverage:
+        # This gives us a convenient link at the top of the logs, see link-patterns.json
+        print("Code coverage report in Coverage")
+
     test_files = glob.glob(os.path.join(opts.test_dir, "check-*"))
     changed_tests = get_affected_tests(opts.test_dir, opts.base, test_files)
     serial_tests, parallel_tests = detect_tests(test_files, image, opts)
@@ -368,7 +377,7 @@ def run(opts, image):
                 made_progress = True
                 running_tests.remove(test)
                 test_machine = test.machine_id  # test_finish() resets it
-                retry_reason, test_result = test.finish(changed_tests, print_tap=not opts.list, thorough=opts.thorough)
+                retry_reason, test_result = test.finish(changed_tests, print_tap=not opts.list, thorough=opts.thorough, track_naughties=opts.track_naughties)
                 fail_count += test_result
                 logging.debug(f"test {test} finished; result {test_result} retry reason {retry_reason}")
 
@@ -434,6 +443,17 @@ def run(opts, image):
         if not made_progress:
             time.sleep(0.5)
 
+    # Create coverage report
+    if opts.coverage:
+        base_dir = os.path.realpath(f'{__file__}/../../..')
+        output = os.environ.get("TEST_ATTACHMENTS", base_dir)
+        lcov_files = glob.glob(f"{base_dir}/lcov/*.info.gz")
+        if len(lcov_files) > 0:
+            try:
+                subprocess.check_call(["genhtml", "--no-function-coverage", "--output-dir", f"{output}/Coverage"] + lcov_files)
+            except subprocess.CalledProcessError as e:
+                print(f"Failed to create coverage report: {e}")
+
     # print summary
     duration = int(time.time() - start_time)
     hostname = socket.gethostname().split(".")[0]
@@ -476,6 +496,8 @@ def main():
                         help="RAM size for nondestructive test global machines")
     parser.add_argument('--base', default=os.environ.get("BASE_BRANCH"),
                         help="Retry affected tests compared to given base branch; default: %(default)s")
+    parser.add_argument('--track-naughties', action='store_true',
+                        help='Update the occurrence of naughties on cockpit-project/bots')
     opts = parser.parse_args()
 
     if opts.machine:

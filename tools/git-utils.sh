@@ -13,6 +13,7 @@ unset GIT_DIR GIT_EXEC_PATH GIT_PREFIX GIT_REFLOG_ACTION GIT_WORK_TREE
 GITHUB_BASE="${GITHUB_BASE:-cockpit-project/cockpit}"
 GITHUB_REPOSITORY="${GITHUB_BASE%/*}/${GITHUB_REPO}"
 HTTPS_REMOTE="https://github.com/${GITHUB_REPOSITORY}"
+SSH_REMOTE="git@github.com:${GITHUB_REPOSITORY}"
 
 CACHE_DIR="${XDG_CACHE_HOME-${HOME}/.cache}/cockpit-dev/${GITHUB_REPOSITORY}.git"
 
@@ -51,7 +52,7 @@ init_cache() {
 # we use git rev-list --objects to to avoid problems with incomplete fetches:
 # we want to make sure the complete commit is there
 check_ref() {
-    git_cache rev-list --quiet --objects "$1"
+    git_cache rev-list --quiet --objects "$1" -- 2>/dev/null
 }
 
 # Fetch a specific commit ID into the cache
@@ -115,4 +116,33 @@ clone_from_cache() {
 unpack_from_cache() {
     message "UNPACK" "${SUBDIR}  [ref: $1]"
     git_cache archive "$1" "${SUBDIR}" | tar -x --touch "${SUBDIR}"
+}
+
+# This stores a .tar file from stdin into the cache as a tree object.
+# Returns the ID.  Opposite of `git archive`, basically.
+tar_to_cache() {
+    init_cache
+
+    # Use a sub-shell to enable cleanup of the temporary directory
+    (
+        tmpdir="$(mktemp --tmpdir --directory cockpit-tar-to-git.XXXXXX)"
+        trap "rm -r '${tmpdir}'" EXIT
+
+        export GIT_INDEX_FILE="${tmpdir}/tmp-index"
+        export GIT_WORK_TREE="${tmpdir}/work"
+
+        mkdir "${GIT_WORK_TREE}"
+        cd "${GIT_WORK_TREE}"
+
+        tar --extract --exclude '.git*'
+        message INDEX "${SUBDIR}"
+        git_cache add --all
+        git_cache write-tree
+    )
+}
+
+ # Small helper to run a git command on the cache directory
+cmd_git() {
+    init_cache
+    git_cache "$@"
 }

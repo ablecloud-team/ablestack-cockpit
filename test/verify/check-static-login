@@ -162,12 +162,14 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
             # test login with tcsh
             if not m.image.startswith("rhel") and not m.image.startswith("centos") and not m.image == "arch":  # no tcsh in RHEL and in Arch Linux (TODO: available in [community])
-                m.execute("sed -r -i.bak '/^admin:/ s_:[^:]+$_:/bin/tcsh_' /etc/passwd")
-                b.login_and_go()
-                b.enter_page('/system')
-                b.wait_visible('.system-information')
-                b.logout()
-                m.execute("mv /etc/passwd.bak /etc/passwd")
+                try:
+                    m.execute("sed -r -i.bak '/^admin:/ s_:[^:]+$_:/bin/tcsh_' /etc/passwd")
+                    b.login_and_go()
+                    b.enter_page('/system')
+                    b.wait_visible('.system-information')
+                    b.logout()
+                finally:
+                    m.execute("mv /etc/passwd.bak /etc/passwd")
 
             # login with user shell that prints some stdout/err noise
             # having stdout output in ~/.bashrc confuses docker, so don't run on OSTree
@@ -640,10 +642,11 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
         if is_pam_tally2:
             self.sed_file("/common-auth/ { iauth required pam_tally2.so deny=4\n }", "/etc/pam.d/cockpit")
         elif m.image.startswith('debian-') or m.image.startswith('ubuntu'):
-            # enable pam_faillock.  see example in pam_faillock(8), adopted for sss
-            self.sed_file("""s/re.*pam_deny.so/[default=die] pam_faillock.so authfail deny=4/;
-                             s/re.*pam_permit.so/sufficient pam_faillock.so authsucc deny=4/;
-                          """, "/etc/pam.d/common-auth")
+            # enable pam_faillock.  see example in pam_faillock(8)
+            self.sed_file(r"/fallback if no module succeeds/ s/^/"
+                          r"auth [default=die] pam_faillock.so authfail deny=4\n"
+                          r"auth sufficient pam_faillock.so authsucc deny=4\n/",
+                          "/etc/pam.d/common-auth")
         elif m.image == "arch":
             self.sed_file("s/# deny = 3/deny = 4/", "/etc/security/faillock.conf")
         else:
@@ -717,6 +720,22 @@ account    required     pam_succeed_if.so user ingroup %s""" % m.get_admin_group
 
         self.allow_journal_messages(".*[aA]ccount .*locked due to .* failed logins.*")
         self.allow_journal_messages(".*minutes left to unlock.*")
+
+    @skipImage("root logins disabled by default with ssh", "fedora-coreos")
+    def testPamAccess(self):
+        b = self.browser
+
+        # root login works by default
+        self.login_and_go(user="root")
+        b.logout()
+
+        # disable root login with pam_access
+        self.write_file("/etc/security/access.conf", "- : root : ALL\n", append=True)
+        self.sed_file("1 aaccount required pam_access.so", "/etc/pam.d/cockpit")
+        b.try_login(user="root")
+        b.wait_in_text("#login-error-message", "Permission denied")
+
+        self.allow_journal_messages(r"cockpit-session: user account access failed.*root.*")
 
     @skipImage("sssd not available", "fedora-coreos")
     def testClientCertAuthentication(self):
