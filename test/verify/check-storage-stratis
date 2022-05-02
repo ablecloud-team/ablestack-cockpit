@@ -24,7 +24,7 @@ from testlib import *
 
 
 # TODO: Arch Linux has Stratis packages, tests need adjustments
-@skipImage("No Stratis", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2004", "ubuntu-2204", "arch")
+@skipImage("No Stratis", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2204", "arch")
 class TestStorageStratis(StorageCase):
 
     def testBasic(self):
@@ -375,7 +375,7 @@ class TestStorageStratis(StorageCase):
         self.wait_mounted(1, 1)
 
 
-@skipImage("No Stratis", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2004", "ubuntu-2204", "arch")
+@skipImage("No Stratis", "debian-stable", "debian-testing", "ubuntu-stable", "ubuntu-2204", "arch")
 @skipImage("No Stratis on demand", "rhel-9-0", "rhel-9-1", "rhel-8-6")
 class TestStoragePackagesStratis(PackageCase, StorageCase):
 
@@ -399,7 +399,8 @@ class TestStoragePackagesStratis(PackageCase, StorageCase):
         self.devices_dropdown("Create Stratis pool")
         self.dialog_wait_open()
         b.wait_in_text("#dialog", "The fake-stratisd package must be installed")
-        self.dialog_apply()
+        with b.wait_timeout(60):
+            self.dialog_apply()
         self.dialog_wait_val("name", "pool0")
         self.dialog_set_val("disks", {dev_1: True})
         self.dialog_apply()

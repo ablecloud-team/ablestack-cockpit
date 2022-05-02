@@ -81,6 +81,12 @@ def redisService(image):
     return "redis"
 
 
+def applySettings(browser):
+    browser.click("#pcp-settings-modal button.pf-m-primary")
+    with browser.wait_timeout(30):
+        browser.wait_not_present("#pcp-settings-modal")
+
+
 def login(self):
     # HACK: Ubuntu and Debian need some time until metrics channel is available
     # Really no idea what it needs to wait for, so let's just try channel until it succeeds
@@ -200,6 +206,8 @@ class TestHistoryMetrics(MachineCase):
     def testEvents(self):
         b = self.browser
         m = self.machine
+
+        b.wait_timeout(60)
 
         def events_at(hour, minute):
             return b.text(f"#metrics-hour-{hour} div.metrics-minute[data-minute={minute}] .metrics-events")
@@ -396,7 +404,7 @@ class TestHistoryMetrics(MachineCase):
 
         # Journal was recorded on Fedora 33 and when trying to use it with older systemd it fails with:
         # `Journal file /var/log/journal/*/journal.journal uses an unsupported feature, ignoring file.`
-        if self.machine.image in ["centos-8-stream", "rhel-8-6", "ubuntu-2004", "debian-stable"]:
+        if self.machine.image in ["centos-8-stream", "rhel-8-6", "debian-stable"]:
             return
 
         prepareArchive(m, "with_journal.tar.gz", 1615200500, "m1.cockpit.lan")
@@ -443,8 +451,7 @@ class TestHistoryMetrics(MachineCase):
         b.wait_visible("#switch-pmlogger:not(:checked)")
         b.click("#switch-pmlogger")
         b.wait_visible("#switch-pmlogger:checked")
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
 
         m.execute("until systemctl is-active pmlogger; do sleep 1; done")
 
@@ -480,8 +487,10 @@ class TestHistoryMetrics(MachineCase):
 
         # Troubleshoot
         b.click(".pf-c-empty-state button.pf-m-link")
-        b.enter_page("/system/services")
-        b.wait_in_text("#service-details", "pmlogger.service")
+        # FIXME: Services page is too slow
+        with b.wait_timeout(30):
+            b.enter_page("/system/services")
+            b.wait_in_text("#service-details", "pmlogger.service")
 
     @nondestructive
     @skipImage("no PCP support", "fedora-coreos")
@@ -501,8 +510,7 @@ class TestHistoryMetrics(MachineCase):
         b.wait_visible("#switch-pmlogger:checked")
         b.click("#switch-pmlogger")
         b.wait_visible("#switch-pmlogger:not(:checked)")
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
 
         self.assertEqual(m.execute("systemctl is-active pmlogger || true").strip(), "inactive")
         self.assertEqual(m.execute("systemctl is-enabled pmlogger || true").strip(), "disabled")
@@ -513,8 +521,7 @@ class TestHistoryMetrics(MachineCase):
         b.wait_visible("#switch-pmlogger:not(:checked)")
         b.click("#switch-pmlogger")
         b.wait_visible("#switch-pmlogger:checked")
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
 
         m.execute("until systemctl is-active pmlogger; do sleep 1; done")
         self.assertEqual(m.execute("systemctl is-enabled pmlogger").strip(), "enabled")
@@ -537,8 +544,7 @@ class TestHistoryMetrics(MachineCase):
             b.wait_visible("#switch-pmproxy:not(:checked)")
             b.click('#switch-pmproxy')
             b.wait_visible('#switch-pmproxy:checked')
-            b.click("#pcp-settings-modal button.pf-m-primary")
-            b.wait_not_present("#pcp-settings-modal")
+            applySettings(b)
             if firewalld_alert:
                 b.wait_visible(".pf-c-alert:contains(pmproxy)")
             else:
@@ -556,8 +562,7 @@ class TestHistoryMetrics(MachineCase):
             b.wait_visible('#switch-pmproxy:checked')
             b.click('#switch-pmproxy')
             b.wait_visible("#switch-pmproxy:not(:checked)")
-            b.click("#pcp-settings-modal button.pf-m-primary")
-            b.wait_not_present("#pcp-settings-modal")
+            applySettings(b)
             # always clears the firewalld alert
             b.wait_not_present(".pf-c-alert:contains(pmproxy)")
             self.assertEqual(m.execute("! systemctl is-active pmproxy").strip(), "inactive")
@@ -585,8 +590,7 @@ class TestHistoryMetrics(MachineCase):
         # enable pmlogger
         b.click('#switch-pmlogger')
         b.wait_visible('#switch-pmlogger:checked')
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
         m.execute('while [ $(systemctl is-active pmlogger) = activating ]; do sleep 1; done')
         self.assertEqual(m.execute("systemctl is-active pmlogger").strip(), "active")
         b.wait_not_present(".pf-c-alert:contains(pmproxy)")
@@ -708,6 +712,8 @@ class TestCurrentMetrics(MachineCase):
         b = self.browser
         m = self.machine
 
+        b.wait_timeout(60)
+
         nproc = m.execute("nproc").strip()
         b.wait_in_text("#current-cpu-usage", nproc + " CPU")
         # top CPU core is not visible with just 1 core; our upstream test VMs have only 1 core,
@@ -760,7 +766,7 @@ class TestCurrentMetrics(MachineCase):
 
         # Test link to user services
         # older releases don't have CPU accounting enabled for user services
-        if m.image not in ["ubuntu-2004", "rhel-8-6", "centos-8-stream"]:
+        if m.image not in ["rhel-8-6", "centos-8-stream"]:
             m.execute("su - admin -c 'XDG_RUNTIME_DIR=/run/user/$(id -u admin) systemd-run --user --collect --slice cockpittest -p CPUQuota=60% --unit cpu-userhog dd if=/dev/urandom of=/dev/null'")
             # user services are always running underneath user@1000.service, so these two will compete for row 1 or 2
             b.wait_in_text("table[aria-label='Top 5 CPU services'] tbody", "cpu-userhog")
@@ -808,7 +814,9 @@ BEGIN {{
         # table entries are links to Services page
         b.click("table[aria-label='Top 5 memory services'] tbody tr:nth-of-type(1) td[data-label='Service'] a span")
         b.enter_page("/system/services")
-        b.wait_in_text("#path", "/mem-hog.service")
+        # FIXME: Services page is too slow
+        with b.wait_timeout(30):
+            b.wait_in_text("#path", "/mem-hog.service")
         b.wait_in_text(".service-name", "memhog.sh")
 
         b.go("/metrics")
@@ -841,7 +849,7 @@ BEGIN {{
 
         # Test link to user services
         # older releases don't have memory accounting enabled for user services
-        if m.image not in ["ubuntu-2004", "rhel-8-6", "centos-8-stream"]:
+        if m.image not in ["rhel-8-6", "centos-8-stream"]:
             m.execute("su - admin -c 'XDG_RUNTIME_DIR=/run/user/$(id -u admin) systemd-run --user --collect --slice cockpittest --unit mem-userhog memhog.sh'")
             m.execute("while [ ! -e /tmp/hogged ]; do sleep 1; done")
             # user services are always running underneath user@1000.service, so these two will compete for row 1 or 2
@@ -854,6 +862,8 @@ BEGIN {{
         b = self.browser
         m = self.machine
         login(self)
+
+        b.wait_timeout(60)
 
         # test env should be quiet enough to not transmit MB/s
         b.wait(lambda: re.match(r'^(0|[0-9.]+ (kB|B)/s)$', b.text("#current-disks-read")))
@@ -1028,8 +1038,7 @@ class TestMetricsPackages(packagelib.PackageCase):
         b.wait_visible("#switch-pmlogger:not(:checked)")
         b.click("#switch-pmlogger")
         b.wait_visible("#switch-pmlogger:checked")
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
         # install dialog
         b.click("#dialog button:contains('Install')")
         b.wait_not_present("#dialog")
@@ -1055,8 +1064,7 @@ class TestMetricsPackages(packagelib.PackageCase):
         b.wait_visible("#switch-pmproxy:not(:checked)")
         b.click("#switch-pmproxy")
         b.wait_visible("#switch-pmproxy:checked")
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
         # install dialog
         b.click("#dialog button:contains('Install')")
         b.wait_not_present("#dialog")
@@ -1089,6 +1097,8 @@ class TestMultiCPU(MachineCase):
         # next minute, both cores are busy
         self.assertGreaterEqual(getMaximumSpike(self, "cpu", False, 1598968800000, 45), 0.5)
         self.assertLessEqual(getMaximumSpike(self, "cpu", False, 1598968800000, 45), 1.0)
+
+        b.wait_timeout(60)
 
         # Test current usage of cores
         b.wait_text("#current-cpu-usage-description", "2 CPUs")
@@ -1147,8 +1157,7 @@ class TestGrafanaClient(MachineCase):
         b.wait_visible("#switch-pmlogger:not(:checked)")
         b.click("#switch-pmlogger")
         b.wait_visible("#switch-pmlogger:checked")
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
 
         # enable pmproxy+redis (none of our test OSes have both of them running by default)
         b.click("#metrics-header-section button.pf-m-secondary")
@@ -1156,8 +1165,7 @@ class TestGrafanaClient(MachineCase):
         b.wait_visible("#switch-pmproxy:not(:checked)")
         b.click('#switch-pmproxy')
         b.wait_visible('#switch-pmproxy:checked')
-        b.click("#pcp-settings-modal button.pf-m-primary")
-        b.wait_not_present("#pcp-settings-modal")
+        applySettings(b)
 
         # enable pmproxy service in firewalld in the alert
         b.wait_visible("#firewalld-request-pmproxy")
@@ -1177,10 +1185,11 @@ class TestGrafanaClient(MachineCase):
             # HACK Unsigned plugin needs to be enabled manually
             # See https://github.com/performancecopilot/grafana-pcp/issues/94
             bg.open("/plugins/performancecopilot-pcp-app")
-            bg.wait_visible(".gf-form-button-row button")
-            if bg.text(".gf-form-button-row button") == "Enable":
-                bg.click(".gf-form-button-row button")
-                bg.wait_text(".gf-form-button-row button", "Disable")
+            with bg.wait_timeout(30):
+                bg.wait_visible(".gf-form-button-row button")
+                if bg.text(".gf-form-button-row button") == "Enable":
+                    bg.click(".gf-form-button-row button")
+                    bg.wait_text(".gf-form-button-row button", "Disable")
 
             # Add the PCP redis data source for our client machine
             # Cog (Configuration) menu → Data Sources → Add

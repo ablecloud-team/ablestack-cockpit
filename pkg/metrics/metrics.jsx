@@ -252,7 +252,6 @@ class CurrentMetrics extends React.Component {
 
         if (!cockpit.hidden && this.metrics_channel === null) {
             this.metrics_channel = cockpit.channel({ payload: "metrics1", source: "internal", interval: 3000, metrics: CURRENT_METRICS });
-            this.metrics_channel.addEventListener("close", (ev, error) => console.error("metrics closed:", error));
             this.metrics_channel.addEventListener("message", this.onMetricsUpdate);
         }
     }
@@ -723,15 +722,11 @@ class MetricsMinute extends React.Component {
 
         const logsUrl = `/system/logs/#/?priority=info&since=${encodeURIComponent(since)}&until=${encodeURIComponent(until)}&follow=false`;
 
-        journalctl.stream((entries) => {
+        journalctl.stream(entries => {
             entries.forEach(entry => render.prepend(entry));
             render.prepend_flush();
-            this.setState({ logs: out.logs, logsUrl: logsUrl });
         })
-                .then(() => {
-                    if (out.logs.length === 0)
-                        this.setState({ logs: [], logsUrl: logsUrl });
-                });
+                .then(() => this.setState({ logs: out.logs, logsUrl }));
     }
 
     render() {

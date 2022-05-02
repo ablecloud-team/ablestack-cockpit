@@ -658,42 +658,32 @@ machine         : 8561
         else:
             self.assertIn('nosmt', m.execute('cat /proc/cmdline'))
 
-        # Ensure that future kernel upgrades also retain the option; various
-        # Fedora and RHEL version are in different stages of the BLS
-        # transition, so there are three cases:
-        # - no BLS, options go into /etc/default/grub and grub.cfg (oldest)
-        # - BLS, options go directly into entries (RHEL 8.0)
-        # - BLS, entries use $kernelopt, that is defined in grubenv (newest)
+        # Ensure that future kernel upgrades also retain the option
+        # - Debian: no BLS, options go into /etc/default/grub and grub.cfg
+        # - BLS, options go directly into entries, or entries use $kernelopt (defined in grubenv)
         if not m.ostree_image:
             m.execute(r"""set -e
-. /etc/os-release
 touch /boot/vmlinuz-42.0.0; mkdir -p /lib/modules/42.0.0/
 if type update-grub >/dev/null 2>&1; then
     update-grub  # Debian/Ubuntu
+    grep -q 'linux.*/vmlinuz-42.0.0.*nosmt' /boot/grub*/grub.cfg
 else
-    if [ "$ID" = rhel -o "$ID" = centos ] && [ "${VERSION_ID#7}" != "$VERSION_ID" ]; then
-        new-kernel-pkg --package kernel --install 42.0.0  # RHEL/CentOS 7
-    else
-        kernel-install add 42.0.0 /boot/vmlinuz-42.0.0 2>/dev/null # Fedora/RHEL >= 8
-    fi
+    cp -a /boot/grub2/grubenv /boot/grub2/grubenv.prev
+    kernel-install add 42.0.0 /boot/vmlinuz-42.0.0 2>/dev/null
+    grep -q '^options.*\bnosmt\b' /boot/loader/entries/*42.0.0*.conf ||
+    ( grub2-editenv list | grep -q kernelopts.*nosmt &&
+      grep -q '^options.*$kernelopts' /boot/loader/entries/*42.0.0*.conf )
 fi
-grep -q 'linux.*/vmlinuz-42.0.0.*nosmt' /boot/grub*/grub.cfg ||
-  grep -q '^options.*\bnosmt\b' /boot/loader/entries/*42.0.0*.conf ||
-  ( grub2-editenv list | grep -q kernelopts.*nosmt &&
-    grep -q '^options.*$kernelopts' /boot/loader/entries/*42.0.0*.conf )
 """)
             # clean up so that next reboot works
             m.execute(r"""set -e
-. /etc/os-release
 rm /boot/vmlinuz-42.0.0
 if type update-grub >/dev/null 2>&1; then
     update-grub  # Debian/Ubuntu
 else
-    if [ "$ID" = rhel -o "$ID" = centos ] && [ "${VERSION_ID#7}" != "$VERSION_ID" ]; then
-        new-kernel-pkg --package kernel --remove 42.0.0  # RHEL/CentOS 7
-    else
-        kernel-install remove 42.0.0 /boot/vmlinuz-42.0.0  # Fedora/RHEL >= 8
-    fi
+    kernel-install remove 42.0.0 /boot/vmlinuz-42.0.0
+    # HACK: https://bugzilla.redhat.com/show_bug.cgi?id=2078359 and https://bugzilla.redhat.com/show_bug.cgi?id=2078379
+    mv /boot/grub2/grubenv.prev /boot/grub2/grubenv
 fi
 """)
 
@@ -881,7 +871,7 @@ password=foobar
         dbus_call = 'busctl get-property org.freedesktop.login1 /org/freedesktop/login1  org.freedesktop.login1.Manager ScheduledShutdown'
         self.assertEqual('(st) "" 0', m.execute(dbus_call).strip())
 
-    @skipImage("crypto-policies not available", "fedora-coreos", "debian-stable", "debian-testing", "ubuntu-2004", "ubuntu-2204", "ubuntu-stable", "arch")
+    @skipImage("crypto-policies not available", "fedora-coreos", "debian-stable", "debian-testing", "ubuntu-2204", "ubuntu-stable", "arch")
     def testCryptoPolicies(self):
         m = self.machine
         b = self.browser
@@ -925,7 +915,7 @@ password=foobar
         b.wait_in_text(".pf-c-menu__item.pf-m-selected", "Custom crypto policy")
         b.click("#crypto-policy-dialog button.pf-c-button.pf-m-link")
 
-    @skipImage("crypto-policies not available", "fedora-coreos", "debian-stable", "debian-testing", "ubuntu-2204", "ubuntu-2004", "ubuntu-stable", "arch")
+    @skipImage("crypto-policies not available", "fedora-coreos", "debian-stable", "debian-testing", "ubuntu-2204", "ubuntu-stable", "arch")
     def testInconsistentCryptoPolicy(self):
         m = self.machine
         b = self.browser
